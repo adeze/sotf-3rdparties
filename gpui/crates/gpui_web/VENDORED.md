@@ -26,6 +26,19 @@
   `multithreaded` feature, and the `supports_threads` selection uses
   `cfg!(feature = "multithreaded")` so the SharedArrayBuffer warning is only
   emitted when threading was actually requested.
+- `src/window.rs` no longer derives the logical (CSS px) window size as
+  `devicePixelContentBoxSize / devicePixelRatio` (sotf-3rdparties#1): under
+  DevTools DPR emulation the box tracks the real display while the ratio
+  reports the emulated value, which produced a garbage logical size and a
+  too-small (blurry) canvas backing store. The logical size now always comes
+  from `contentRect` (CSS px on every browser) and new
+  `src/canvas_size.rs::resolve_physical_size` keeps the browser-reported
+  device pixels when they agree with `round(css * dpr)`, falling back to the
+  computed size on divergence. Upstream `zed/main` still mixes the two
+  sources, so there is no upstream commit to port yet. `src/gpui_web.rs`
+  gates each `wasm`-only module individually so the dependency-free
+  `canvas_size` module (with host unit tests) also compiles under
+  `cfg(test)`; the crate is otherwise unchanged on other targets.
 
 ## Deliberately not ported (from upstream zed PR #61707, commit c97b7c0ea4)
 

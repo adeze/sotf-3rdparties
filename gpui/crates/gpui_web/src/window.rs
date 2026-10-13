@@ -234,26 +234,35 @@ impl WebWindow {
             let dpr = inner.browser_window.device_pixel_ratio();
             let dpr_f32 = dpr as f32;
 
-            let (physical_width, physical_height, logical_width, logical_height) =
-                if inner.has_device_pixel_support {
-                    let size: web_sys::ResizeObserverSize = entry
-                        .device_pixel_content_box_size()
-                        .get(0)
-                        .unchecked_into();
-                    let pw = size.inline_size() as u32;
-                    let ph = size.block_size() as u32;
-                    let lw = pw as f64 / dpr;
-                    let lh = ph as f64 / dpr;
-                    (pw, ph, lw as f32, lh as f32)
-                } else {
-                    // Safari fallback: use contentRect (always CSS px).
-                    let rect = entry.content_rect();
-                    let lw = rect.width() as f32;
-                    let lh = rect.height() as f32;
-                    let pw = (lw as f64 * dpr).round() as u32;
-                    let ph = (lh as f64 * dpr).round() as u32;
-                    (pw, ph, lw, lh)
-                };
+            // `contentRect` is always CSS px on every browser, even when the
+            // observer watches the device-pixel box, so it is the source of
+            // truth for the logical size. Under DevTools DPR emulation the
+            // device-pixel box keeps tracking the real display while
+            // `devicePixelRatio` reports the emulated value, so the logical
+            // size must never be derived by dividing one by the other.
+            let content_rect = entry.content_rect();
+            let logical_width = content_rect.width() as f32;
+            let logical_height = content_rect.height() as f32;
+
+            let (physical_width, physical_height) = if inner.has_device_pixel_support {
+                let size: web_sys::ResizeObserverSize = entry
+                    .device_pixel_content_box_size()
+                    .get(0)
+                    .unchecked_into();
+                crate::canvas_size::resolve_physical_size(
+                    content_rect.width(),
+                    content_rect.height(),
+                    size.inline_size(),
+                    size.block_size(),
+                    dpr,
+                )
+            } else {
+                // Safari fallback: no device-pixel box, scale the CSS box.
+                (
+                    (content_rect.width() * dpr).round() as u32,
+                    (content_rect.height() * dpr).round() as u32,
+                )
+            };
 
             let scale_changed = inner.notify_scale.replace(false);
             let prev = inner.last_physical_size.get();
