@@ -348,6 +348,10 @@ impl WindowsWindowInner {
     pub(crate) fn system_settings(&self) -> &WindowsSystemSettings {
         &self.system_settings
     }
+
+    pub(crate) fn hwnd(&self) -> HWND {
+        self.hwnd
+    }
 }
 
 #[derive(Default)]
@@ -528,6 +532,138 @@ impl WindowsWindow {
 
         Ok(Self(this))
     }
+
+    /// Create a `WS_CHILD` window inside a host-owned parent `HWND`.
+    ///
+    /// Foreign-parent path (VST3 editors): the host owns the parent, the
+    /// geometry, and the message loop. Unlike [`WindowsWindow::new`], this
+    /// strips every top-level assumption — no caption, sysmenu, thick
+    /// frame, dialog modality, window placement, DWM dark-mode setup, or
+    /// drag-drop registration — and positions the borderless child at the
+    /// parent origin with the host size. The child is created visible
+    /// (`WS_VISIBLE`) so it paints as soon as the host pumps frames; the
+    /// host hides it with `ShowWindow` when needed.
+    pub(crate) fn new_foreign(
+        handle: AnyWindowHandle,
+        params: WindowParams,
+        creation_info: WindowCreationInfo,
+        info: ForeignParentInfo,
+    ) -> Result<Self> {
+        let WindowCreationInfo {
+            icon,
+            executor,
+            current_cursor,
+            drop_target_helper,
+            validation_number,
+            main_receiver,
+            platform_window_handle,
+            disable_direct_composition,
+            directx_devices,
+            invalidate_devices,
+        } = creation_info;
+        register_window_class(icon);
+        let parent_hwnd = HWND(info.parent as *mut std::ffi::c_void);
+        if parent_hwnd.is_invalid() || unsafe { !IsWindow(Some(parent_hwnd)).as_bool() } {
+            anyhow::bail!("foreign parent is not a live window");
+        }
+        if !info.scale.is_finite() || info.scale <= 0.0 {
+            anyhow::bail!("foreign scale must be finite and positive");
+        }
+        let width = info.width.max(1);
+        let height = info.height.max(1);
+
+        // Child styles only: visible, clipped to the parent and siblings.
+        let dwstyle = WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
+        let dwexstyle = if disable_direct_composition {
+            WINDOW_EX_STYLE(0)
+        } else {
+            WS_EX_NOREDIRECTIONBITMAP
+        };
+
+        let hinstance = get_module_handle();
+        let monitor = unsafe { MonitorFromWindow(parent_hwnd, MONITOR_DEFAULTTONEAREST) };
+        let display = WindowsDisplay::new_with_handle(monitor)
+            .or_else(|_| {
+                WindowsDisplay::primary_monitor().context("foreign window needs a display")
+            })
+            .context("foreign window needs a display")?;
+        let appearance = system_appearance().unwrap_or_default();
+        let mut context = WindowCreateContext {
+            inner: None,
+            handle,
+            // Borderless child: no title-bar frame handling on WM_CREATE.
+            hide_title_bar: false,
+            display,
+            // The host moves the child; GPUI never repositions it.
+            is_movable: false,
+            min_size: params.window_min_size,
+            executor,
+            current_cursor,
+            // Stored but unused: the foreign path skips drag-drop
+            // registration so host drop handling stays in charge.
+            drop_target_helper,
+            validation_number,
+            main_receiver,
+            platform_window_handle,
+            appearance,
+            disable_direct_composition,
+            directx_devices,
+            invalidate_devices,
+            // Never the modal-dialog parent: destroy must not touch the
+            // host window (`handle_destroy_msg` re-enables `parent_hwnd`).
+            parent_hwnd: None,
+        };
+        let window_name = HSTRING::from("");
+        let creation_result = unsafe {
+            CreateWindowExW(
+                dwexstyle,
+                WINDOW_CLASS_NAME,
+                &window_name,
+                dwstyle,
+                0,
+                0,
+                width,
+                height,
+                Some(parent_hwnd),
+                None,
+                Some(hinstance.into()),
+                Some(&context as *const _ as *const _),
+            )
+        };
+
+        let this = context.inner.take().transpose()?;
+        let hwnd = creation_result?;
+        let this = this.unwrap();
+
+        // Host-owned geometry and scale: no `SetWindowPlacement`, no DWM
+        // setup, no drag-drop registration. The state constructor derived
+        // logical bounds from the monitor DPI; re-derive them from the
+        // host scale and the real client rect instead.
+        this.state.scale_factor.set(info.scale);
+        let mut client = RECT::default();
+        unsafe {
+            GetClientRect(hwnd, &mut client).context("foreign child GetClientRect")?;
+        }
+        let device_size = size(
+            DevicePixels((client.right - client.left).max(1)),
+            DevicePixels((client.bottom - client.top).max(1)),
+        );
+        this.state.logical_size.set(device_size.to_pixels(info.scale));
+        unsafe {
+            SetWindowPos(
+                hwnd,
+                None,
+                0,
+                0,
+                width,
+                height,
+                SWP_NOZORDER | SWP_NOACTIVATE,
+            )
+            .context("foreign child SetWindowPos")?;
+        }
+
+        Ok(Self(this))
+    }
 }
 
 impl rwh::HasWindowHandle for WindowsWindow {
@@ -554,6 +690,13 @@ impl Drop for WindowsWindow {
             .executor
             .spawn(async move {
                 let handle = this.hwnd;
+                // The foreign path destroys its child synchronously at
+                // detach; skip the already-gone `HWND` instead of logging
+                // spurious errors. App-path windows are always alive here,
+                // so their behavior is unchanged.
+                if unsafe { !IsWindow(Some(handle)).as_bool() } {
+                    return;
+                }
                 unsafe {
                     RevokeDragDrop(handle).log_err();
                     DestroyWindow(handle).log_err();

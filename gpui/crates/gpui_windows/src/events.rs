@@ -199,7 +199,7 @@ impl WindowsWindowInner {
         Some(0)
     }
 
-    fn handle_size_change(
+    pub(crate) fn handle_size_change(
         &self,
         device_size: Size<DevicePixels>,
         scale_factor: f32,
@@ -1169,7 +1169,7 @@ impl WindowsWindowInner {
     }
 
     #[inline]
-    fn draw_window(&self, handle: HWND, force_render: bool) -> Option<isize> {
+    pub(crate) fn draw_window(&self, handle: HWND, force_render: bool) -> Option<isize> {
         let mut request_frame = self.state.callbacks.request_frame.take()?;
 
         self.state.direct_manipulation.update();

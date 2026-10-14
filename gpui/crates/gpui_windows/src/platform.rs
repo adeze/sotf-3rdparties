@@ -46,6 +46,10 @@ pub struct WindowsPlatform {
     invalidate_devices: Arc<AtomicBool>,
     handle: HWND,
     disable_direct_composition: bool,
+    /// Foreign-parent mode (VST3 editors): the host owns the message loop,
+    /// so `run` invokes the launch callback synchronously and returns
+    /// instead of pumping messages and exiting the process.
+    foreign: bool,
 }
 
 impl std::fmt::Debug for WindowsPlatform {
@@ -199,7 +203,21 @@ impl WindowsPlatform {
             disable_direct_composition,
             drop_target_helper,
             invalidate_devices: Arc::new(AtomicBool::new(false)),
+            foreign: false,
         })
+    }
+
+    /// Create a platform for foreign-parent embedding (VST3 editors).
+    ///
+    /// Full device and text-system initialization like [`Self::new`], but
+    /// [`Platform::run`](gpui::Platform::run) invokes the launch callback
+    /// synchronously and returns: the host owns the message loop, pumps
+    /// frames, and forwards resizes. One platform (and one `Application`)
+    /// per editor; every call must happen on the host UI thread.
+    pub fn new_foreign() -> Result<Self> {
+        let mut this = Self::new(false)?;
+        this.foreign = true;
+        Ok(this)
     }
 
     pub(crate) fn window_from_hwnd(&self, hwnd: HWND) -> Option<Rc<WindowsWindowInner>> {
@@ -400,6 +418,11 @@ impl Platform for WindowsPlatform {
 
     fn run(&self, on_finish_launching: Box<dyn 'static + FnOnce()>) {
         on_finish_launching();
+        if self.foreign {
+            // The host owns the message loop: no vsync thread (frames are
+            // host-pumped), no `GetMessage` loop, and no `ExitProcess`.
+            return;
+        }
         if !self.headless {
             self.begin_vsync_thread();
         }
@@ -526,6 +549,15 @@ impl Platform for WindowsPlatform {
         handle: AnyWindowHandle,
         options: WindowParams,
     ) -> Result<Box<dyn PlatformWindow>> {
+        if let Some(info) = take_pending_foreign() {
+            let window =
+                WindowsWindow::new_foreign(handle, options, self.generate_creation_info(), info)?;
+            let handle = window.get_raw_handle();
+            self.raw_window_handles.write().push(handle.into());
+            stash_opened_foreign(window.0.clone());
+
+            return Ok(Box::new(window));
+        }
         let window = WindowsWindow::new(handle, options, self.generate_creation_info())?;
         let handle = window.get_raw_handle();
         self.raw_window_handles.write().push(handle.into());
