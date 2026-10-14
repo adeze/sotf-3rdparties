@@ -254,9 +254,39 @@ pub struct Callbacks {
     button_layout_changed: Option<Box<dyn FnMut()>>,
 }
 
+/// Host-provided geometry for a foreign-parent child window (VST3/CLAP-x11).
+///
+/// The host owns the parent `Window` (XID) and the event loop; the guest
+/// creates exactly one undecorated child at origin (0, 0) of that parent.
+/// Converted from the public [`crate::linux::foreign_parent::X11ForeignParent`].
+#[derive(Debug, Clone, Copy)]
+pub(crate) struct X11ForeignChildParams {
+    /// Host-owned parent window. The child is created as a direct child of it.
+    pub parent: xproto::Window,
+    /// Logical size from the host, in CSS pixels.
+    pub width: u32,
+    pub height: u32,
+    /// Host backing scale (device pixels per logical pixel).
+    pub scale: f32,
+}
+
+impl X11ForeignChildParams {
+    /// Drawable size in device pixels; never zero on any axis.
+    fn device_size(&self) -> Size<DevicePixels> {
+        let width = (f64::from(self.width) * f64::from(self.scale)).round() as i32;
+        let height = (f64::from(self.height) * f64::from(self.scale)).round() as i32;
+        Size {
+            width: DevicePixels(width.max(1)),
+            height: DevicePixels(height.max(1)),
+        }
+    }
+}
+
 pub struct X11WindowState {
     pub destroyed: bool,
     parent: Option<X11WindowStatePtr>,
+    /// Host parent XID for foreign-parent child windows; `None` on the app path.
+    foreign_parent: Option<xproto::Window>,
     children: FxHashSet<xproto::Window>,
     client: X11ClientStatePtr,
     executor: ForegroundExecutor,
@@ -426,7 +456,91 @@ impl X11WindowState {
         appearance: WindowAppearance,
         parent_window: Option<X11WindowStatePtr>,
         supports_xinput_gestures: bool,
+        is_bgr: bool,
+    ) -> anyhow::Result<Self> {
+        Self::new_inner(
+            handle,
+            client,
+            executor,
+            gpu_context,
+            compositor_gpu,
+            params,
+            xcb,
+            client_side_decorations_supported,
+            x_main_screen_index,
+            x_window,
+            atoms,
+            scale_factor,
+            appearance,
+            parent_window,
+            supports_xinput_gestures,
+            is_bgr,
+            None,
+        )
+    }
+
+    /// Create an undecorated child of a host-owned X11 window (VST3/CLAP-x11).
+    ///
+    /// Unlike [`X11WindowState::new`], the window is parented to the host
+    /// XID at origin (0, 0), takes its size and scale from `foreign`, and
+    /// skips every window-manager property (titles, types, transient hints,
+    /// protocols, sync counter, size hints, icon). Input event selection
+    /// (core mask + XInput2) and renderer creation match the app path, and
+    /// `ConfigureNotify` from the host flows through the same `set_bounds`.
+    pub(crate) fn new_in_foreign_parent(
+        handle: AnyWindowHandle,
+        client: X11ClientStatePtr,
+        executor: ForegroundExecutor,
+        gpu_context: gpui_wgpu::GpuContext,
+        compositor_gpu: Option<CompositorGpuHint>,
+        params: WindowParams,
+        xcb: &Rc<XCBConnection>,
+        x_main_screen_index: usize,
+        x_window: xproto::Window,
+        atoms: &XcbAtoms,
+        appearance: WindowAppearance,
+        supports_xinput_gestures: bool,
+        foreign: X11ForeignChildParams,
+    ) -> anyhow::Result<Self> {
+        Self::new_inner(
+            handle,
+            client,
+            executor,
+            gpu_context,
+            compositor_gpu,
+            params,
+            xcb,
+            false,
+            x_main_screen_index,
+            x_window,
+            atoms,
+            foreign.scale,
+            appearance,
+            None,
+            supports_xinput_gestures,
+            false,
+            Some(foreign),
+        )
+    }
+
+    fn new_inner(
+        handle: AnyWindowHandle,
+        client: X11ClientStatePtr,
+        executor: ForegroundExecutor,
+        gpu_context: gpui_wgpu::GpuContext,
+        compositor_gpu: Option<CompositorGpuHint>,
+        params: WindowParams,
+        xcb: &Rc<XCBConnection>,
+        client_side_decorations_supported: bool,
+        x_main_screen_index: usize,
+        x_window: xproto::Window,
+        atoms: &XcbAtoms,
+        scale_factor: f32,
+        appearance: WindowAppearance,
+        parent_window: Option<X11WindowStatePtr>,
+        supports_xinput_gestures: bool,
         _is_bgr: bool,
+        foreign: Option<X11ForeignChildParams>,
     ) -> anyhow::Result<Self> {
         let x_screen_index = params
             .display_id
@@ -470,7 +584,15 @@ impl X11WindowState {
                     | xproto::EventMask::VISIBILITY_CHANGE,
             );
 
-        let mut bounds = params.bounds.to_device_pixels(scale_factor);
+        // Foreign children take geometry from the host record, not from
+        // `WindowParams`: device size at the host scale, origin (0, 0).
+        let mut bounds = match foreign {
+            Some(foreign) => Bounds {
+                origin: Point::default(),
+                size: foreign.device_size(),
+            },
+            None => params.bounds.to_device_pixels(scale_factor),
+        };
         if bounds.size.width.0 == 0 || bounds.size.height.0 == 0 {
             log::warn!(
                 "Window bounds contain a zero value. height={}, width={}. Falling back to defaults.",
@@ -481,15 +603,26 @@ impl X11WindowState {
             bounds.size.height = 600.into();
         }
 
+        // Foreign children attach to the host XID at the parent origin; the
+        // app path keeps the root parent and the +2 default-position shift.
+        let (create_parent, origin_x, origin_y) = match foreign {
+            Some(foreign) => (foreign.parent, 0, 0),
+            None => (
+                visual_set.root,
+                bounds.origin.x.0 + 2,
+                bounds.origin.y.0,
+            ),
+        };
+
         check_reply(
             || {
                 format!(
-                    "X11 CreateWindow failed. depth: {}, x_window: {}, visual_set.root: {}, bounds.origin.x.0: {}, bounds.origin.y.0: {}, bounds.size.width.0: {}, bounds.size.height.0: {}",
+                    "X11 CreateWindow failed. depth: {}, x_window: {}, parent: {}, bounds.origin.x.0: {}, bounds.origin.y.0: {}, bounds.size.width.0: {}, bounds.size.height.0: {}",
                     visual.depth,
                     x_window,
-                    visual_set.root,
-                    bounds.origin.x.0 + 2,
-                    bounds.origin.y.0,
+                    create_parent,
+                    origin_x,
+                    origin_y,
                     bounds.size.width.0,
                     bounds.size.height.0
                 )
@@ -497,9 +630,9 @@ impl X11WindowState {
             xcb.create_window(
                 visual.depth,
                 x_window,
-                visual_set.root,
-                (bounds.origin.x.0 + 2) as i16,
-                bounds.origin.y.0 as i16,
+                create_parent,
+                origin_x as i16,
+                origin_y as i16,
                 bounds.size.width.0 as u16,
                 bounds.size.height.0 as u16,
                 0,
@@ -511,32 +644,42 @@ impl X11WindowState {
 
         // Collect errors during setup, so that window can be destroyed on failure.
         let setup_result = maybe!({
-            let pid = std::process::id();
-            check_reply(
-                || "X11 ChangeProperty for _NET_WM_PID failed.",
-                xcb.change_property32(
-                    xproto::PropMode::REPLACE,
-                    x_window,
-                    atoms._NET_WM_PID,
-                    xproto::AtomEnum::CARDINAL,
-                    &[pid],
-                ),
-            )?;
-
-            let reply = get_reply(|| "X11 GetGeometry failed.", xcb.get_geometry(x_window))?;
-            if reply.x == 0 && reply.y == 0 {
-                bounds.origin.x.0 += 2;
-                // Work around a bug where our rendered content appears
-                // outside the window bounds when opened at the default position
-                // (14px, 49px on X + Gnome + Ubuntu 22).
-                let x = bounds.origin.x.0;
-                let y = bounds.origin.y.0;
+            // Window-manager properties are skipped for foreign children: the
+            // host owns the parent, the frame, and the loop, so titles,
+            // types, transient hints, protocols, and the sync counter do not
+            // apply. Input selection and renderer setup below are shared.
+            if foreign.is_none() {
+                let pid = std::process::id();
                 check_reply(
-                    || format!("X11 ConfigureWindow failed. x: {}, y: {}", x, y),
-                    xcb.configure_window(x_window, &xproto::ConfigureWindowAux::new().x(x).y(y)),
+                    || "X11 ChangeProperty for _NET_WM_PID failed.",
+                    xcb.change_property32(
+                        xproto::PropMode::REPLACE,
+                        x_window,
+                        atoms._NET_WM_PID,
+                        xproto::AtomEnum::CARDINAL,
+                        &[pid],
+                    ),
                 )?;
+
+                let reply = get_reply(|| "X11 GetGeometry failed.", xcb.get_geometry(x_window))?;
+                if reply.x == 0 && reply.y == 0 {
+                    bounds.origin.x.0 += 2;
+                    // Work around a bug where our rendered content appears
+                    // outside the window bounds when opened at the default position
+                    // (14px, 49px on X + Gnome + Ubuntu 22).
+                    let x = bounds.origin.x.0;
+                    let y = bounds.origin.y.0;
+                    check_reply(
+                        || format!("X11 ConfigureWindow failed. x: {}, y: {}", x, y),
+                        xcb.configure_window(
+                            x_window,
+                            &xproto::ConfigureWindowAux::new().x(x).y(y),
+                        ),
+                    )?;
+                }
             }
-            if let Some(titlebar) = params.titlebar
+            if foreign.is_none()
+                && let Some(titlebar) = params.titlebar
                 && let Some(title) = titlebar.title
             {
                 check_reply(
@@ -561,7 +704,7 @@ impl X11WindowState {
                 )?;
             }
 
-            if params.kind == WindowKind::PopUp {
+            if foreign.is_none() && params.kind == WindowKind::PopUp {
                 check_reply(
                     || "X11 ChangeProperty32 setting window type for pop-up failed.",
                     xcb.change_property32(
@@ -574,7 +717,9 @@ impl X11WindowState {
                 )?;
             }
 
-            if params.kind == WindowKind::Floating || params.kind == WindowKind::Dialog {
+            if foreign.is_none()
+                && (params.kind == WindowKind::Floating || params.kind == WindowKind::Dialog)
+            {
                 if let Some(parent_window) = parent_window.as_ref().map(|w| w.x_window) {
                     // WM_TRANSIENT_FOR hint indicating the main application window. For floating windows, we set
                     // a parent window (WM_TRANSIENT_FOR) such that the window manager knows where to
@@ -603,7 +748,7 @@ impl X11WindowState {
                 None
             };
 
-            if params.kind == WindowKind::Dialog {
+            if foreign.is_none() && params.kind == WindowKind::Dialog {
                 // _NET_WM_WINDOW_TYPE_DIALOG indicates that this is a dialog (floating) window
                 // https://specifications.freedesktop.org/wm-spec/1.4/ar01s05.html
                 check_reply(
@@ -632,37 +777,46 @@ impl X11WindowState {
                 )?;
             }
 
-            check_reply(
-                || "X11 ChangeProperty32 setting protocols failed.",
-                xcb.change_property32(
-                    xproto::PropMode::REPLACE,
-                    x_window,
-                    atoms.WM_PROTOCOLS,
-                    xproto::AtomEnum::ATOM,
-                    &[atoms.WM_DELETE_WINDOW, atoms._NET_WM_SYNC_REQUEST],
-                ),
-            )?;
+            // No WM protocols or sync counter for foreign children: the
+            // host never sends `WM_DELETE_WINDOW` or `_NET_WM_SYNC_REQUEST`
+            // to a child window, and `set_bounds` only touches the counter
+            // when a sync value arrived, so id 0 stays inert.
+            let sync_request_counter = if foreign.is_some() {
+                0
+            } else {
+                check_reply(
+                    || "X11 ChangeProperty32 setting protocols failed.",
+                    xcb.change_property32(
+                        xproto::PropMode::REPLACE,
+                        x_window,
+                        atoms.WM_PROTOCOLS,
+                        xproto::AtomEnum::ATOM,
+                        &[atoms.WM_DELETE_WINDOW, atoms._NET_WM_SYNC_REQUEST],
+                    ),
+                )?;
 
-            get_reply(
-                || "X11 sync protocol initialize failed.",
-                sync::initialize(xcb, 3, 1),
-            )?;
-            let sync_request_counter = xcb.generate_id()?;
-            check_reply(
-                || "X11 sync CreateCounter failed.",
-                sync::create_counter(xcb, sync_request_counter, sync::Int64 { lo: 0, hi: 0 }),
-            )?;
+                get_reply(
+                    || "X11 sync protocol initialize failed.",
+                    sync::initialize(xcb, 3, 1),
+                )?;
+                let sync_request_counter = xcb.generate_id()?;
+                check_reply(
+                    || "X11 sync CreateCounter failed.",
+                    sync::create_counter(xcb, sync_request_counter, sync::Int64 { lo: 0, hi: 0 }),
+                )?;
 
-            check_reply(
-                || "X11 ChangeProperty32 setting sync request counter failed.",
-                xcb.change_property32(
-                    xproto::PropMode::REPLACE,
-                    x_window,
-                    atoms._NET_WM_SYNC_REQUEST_COUNTER,
-                    xproto::AtomEnum::CARDINAL,
-                    &[sync_request_counter],
-                ),
-            )?;
+                check_reply(
+                    || "X11 ChangeProperty32 setting sync request counter failed.",
+                    xcb.change_property32(
+                        xproto::PropMode::REPLACE,
+                        x_window,
+                        atoms._NET_WM_SYNC_REQUEST_COUNTER,
+                        xproto::AtomEnum::CARDINAL,
+                        &[sync_request_counter],
+                    ),
+                )?;
+                sync_request_counter
+            };
 
             let mut xi_event_mask = xinput::XIEventMask::MOTION
                 | xinput::XIEventMask::BUTTON_PRESS
@@ -726,26 +880,32 @@ impl X11WindowState {
                 };
                 WgpuRenderer::new(gpu_context, &raw_window, config, compositor_gpu)?
             };
-            // Set max window size hints based on the GPU's maximum texture dimension.
-            // This prevents the window from being resized larger than what the GPU can render.
-            let max_texture_size = renderer.max_texture_size();
-            let mut size_hints = WmSizeHints::new();
-            if let Some(size) = params.window_min_size {
-                size_hints.min_size =
-                    Some((f32::from(size.width) as i32, f32::from(size.height) as i32));
+            // Size hints and icons are window-manager concerns; the host
+            // owns geometry on the foreign path, so skip them there.
+            if foreign.is_none() {
+                // Set max window size hints based on the GPU's maximum texture dimension.
+                // This prevents the window from being resized larger than what the GPU can render.
+                let max_texture_size = renderer.max_texture_size();
+                let mut size_hints = WmSizeHints::new();
+                if let Some(size) = params.window_min_size {
+                    size_hints.min_size =
+                        Some((f32::from(size.width) as i32, f32::from(size.height) as i32));
+                }
+                size_hints.max_size = Some((max_texture_size as i32, max_texture_size as i32));
+                check_reply(
+                    || {
+                        format!(
+                            "X11 change of WM_SIZE_HINTS failed. max_size: {:?}",
+                            max_texture_size
+                        )
+                    },
+                    size_hints.set_normal_hints(xcb, x_window),
+                )?;
             }
-            size_hints.max_size = Some((max_texture_size as i32, max_texture_size as i32));
-            check_reply(
-                || {
-                    format!(
-                        "X11 change of WM_SIZE_HINTS failed. max_size: {:?}",
-                        max_texture_size
-                    )
-                },
-                size_hints.set_normal_hints(xcb, x_window),
-            )?;
 
-            if let Some(image) = params.icon {
+            if foreign.is_none()
+                && let Some(image) = params.icon
+            {
                 // https://specifications.freedesktop.org/wm-spec/1.4/ar01s05.html#id-1.6.13
                 let property_size = 2 + (image.width() * image.height()) as usize;
                 let mut property_data: Vec<u32> = Vec::with_capacity(property_size);
@@ -772,6 +932,7 @@ impl X11WindowState {
 
             Ok(Self {
                 parent,
+                foreign_parent: foreign.map(|foreign| foreign.parent),
                 children: FxHashSet::default(),
                 client,
                 executor,
@@ -913,6 +1074,50 @@ impl X11Window {
 
         let state = ptr.state.borrow_mut();
         ptr.set_wm_properties(state)?;
+
+        Ok(Self(ptr))
+    }
+
+    /// Create an undecorated child of a host-owned X11 window.
+    ///
+    /// Foreign counterpart of [`X11Window::new`]: no `set_wm_properties`
+    /// probe (a child carries no `_NET_WM_STATE`; the state defaults of
+    /// inactive/unmaximized already apply).
+    pub(crate) fn new_in_foreign_parent(
+        handle: AnyWindowHandle,
+        client: X11ClientStatePtr,
+        executor: ForegroundExecutor,
+        gpu_context: gpui_wgpu::GpuContext,
+        compositor_gpu: Option<CompositorGpuHint>,
+        params: WindowParams,
+        xcb: &Rc<XCBConnection>,
+        x_main_screen_index: usize,
+        x_window: xproto::Window,
+        atoms: &XcbAtoms,
+        appearance: WindowAppearance,
+        supports_xinput_gestures: bool,
+        foreign: X11ForeignChildParams,
+    ) -> anyhow::Result<Self> {
+        let ptr = X11WindowStatePtr {
+            state: Rc::new(RefCell::new(X11WindowState::new_in_foreign_parent(
+                handle,
+                client,
+                executor,
+                gpu_context,
+                compositor_gpu,
+                params,
+                xcb,
+                x_main_screen_index,
+                x_window,
+                atoms,
+                appearance,
+                supports_xinput_gestures,
+                foreign,
+            )?)),
+            callbacks: Rc::new(RefCell::new(Callbacks::default())),
+            xcb: xcb.clone(),
+            x_window,
+        };
 
         Ok(Self(ptr))
     }
@@ -1268,6 +1473,58 @@ impl X11WindowStatePtr {
         }
 
         Ok(())
+    }
+
+    /// True for host-parented child windows (VST3/CLAP-x11 embedding).
+    pub(crate) fn is_foreign(&self) -> bool {
+        self.state.borrow().foreign_parent.is_some()
+    }
+
+    /// Host-driven resize of a foreign child window.
+    ///
+    /// `width`/`height` are logical pixels and `scale` is the host backing
+    /// scale. Bounds, scale, the X child geometry, and the drawable update
+    /// synchronously, then the GPUI resize callback fires — the host-driven
+    /// counterpart of [`X11WindowStatePtr::set_bounds`], which stays the path
+    /// for host-initiated `ConfigureNotify`. A no-op on app-path windows.
+    pub(crate) fn resize_foreign(&self, width: u32, height: u32, scale: f32) {
+        if !self.is_foreign() {
+            return;
+        }
+        let drawable_width = ((f64::from(width) * f64::from(scale)).round() as i32).max(1);
+        let drawable_height = ((f64::from(height) * f64::from(scale)).round() as i32).max(1);
+        check_reply(
+            || {
+                format!(
+                    "X11 ConfigureWindow for foreign resize failed. width: {}, height: {}",
+                    drawable_width, drawable_height
+                )
+            },
+            self.xcb.configure_window(
+                self.x_window,
+                &xproto::ConfigureWindowAux::new()
+                    .width(drawable_width as u32)
+                    .height(drawable_height as u32),
+            ),
+        )
+        .log_err();
+        xcb_flush(&self.xcb);
+        let (content_size, scale_factor) = {
+            let mut state = self.state.borrow_mut();
+            state.scale_factor = scale;
+            state.bounds.size = Size {
+                width: px(width as f32),
+                height: px(height as f32),
+            };
+            state.renderer.update_drawable_size(Size {
+                width: DevicePixels(drawable_width),
+                height: DevicePixels(drawable_height),
+            });
+            (state.content_size(), state.scale_factor)
+        };
+        if let Some(ref mut fun) = self.callbacks.borrow_mut().resize {
+            fun(content_size, scale_factor);
+        }
     }
 
     pub fn set_active(&self, focus: bool) {

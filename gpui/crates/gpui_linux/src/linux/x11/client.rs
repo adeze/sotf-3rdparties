@@ -773,6 +773,88 @@ impl X11Client {
             .map(|window_reference| window_reference.window.clone())
     }
 
+    /// Resolve a live window by its GPUI handle (foreign-parent pump/resize).
+    pub(crate) fn window_by_handle(
+        &self,
+        handle: AnyWindowHandle,
+    ) -> Option<X11WindowStatePtr> {
+        let state = self.0.borrow();
+        state.windows.values().find_map(|window_reference| {
+            let window = &window_reference.window;
+            let window_state = window.state.borrow();
+            (window_state.handle == handle && !window_state.destroyed).then(|| window.clone())
+        })
+    }
+
+    /// Create an undecorated child of a host-owned X11 window.
+    ///
+    /// Reached from [`LinuxClient::open_window`] when the toolkit stashed a
+    /// foreign-parent record. The child is registered in the window map like
+    /// an app window, so `ConfigureNotify`, focus, and XInput events from the
+    /// host flow through the shared `handle_event` paths.
+    pub(crate) fn open_foreign_child_window(
+        &self,
+        handle: AnyWindowHandle,
+        params: WindowParams,
+        foreign: super::X11ForeignChildParams,
+    ) -> anyhow::Result<Box<dyn PlatformWindow>> {
+        let mut state = self.0.borrow_mut();
+        let x_window = state
+            .xcb_connection
+            .generate_id()
+            .context("X11: Failed to generate window ID")?;
+
+        let xcb_connection = state.xcb_connection.clone();
+        let x_root_index = state.x_root_index;
+        let atoms = state.atoms;
+        let appearance = state.common.appearance;
+        let compositor_gpu = state.compositor_gpu.take();
+        let supports_xinput_gestures = state.supports_xinput_gestures;
+        let window = X11Window::new_in_foreign_parent(
+            handle,
+            X11ClientStatePtr(Rc::downgrade(&self.0)),
+            state.common.foreground_executor.clone(),
+            state.gpu_context.clone(),
+            compositor_gpu,
+            params,
+            &xcb_connection,
+            x_root_index,
+            x_window,
+            &atoms,
+            appearance,
+            supports_xinput_gestures,
+            foreign,
+        )?;
+        xcb_flush(&state.xcb_connection);
+
+        let window_ref = WindowRef {
+            window: window.0.clone(),
+            refresh_state: None,
+            expose_event_received: false,
+            last_visibility: Visibility::UNOBSCURED,
+            is_mapped: false,
+        };
+
+        state.windows.insert(x_window, window_ref);
+        Ok(Box::new(window))
+    }
+
+    /// Dispatch pending X11 and executor events without blocking.
+    ///
+    /// Foreign-parent pump: the host owns the loop, so instead of `run()`
+    /// the embedding calls this on every frame tick. The calloop event loop
+    /// is taken out of the state for the dispatch (as `run()` does) so that
+    /// re-entrant source callbacks can borrow the state, then put back.
+    pub(crate) fn dispatch_pending(&self) {
+        let Some(mut event_loop) = self.0.borrow_mut().event_loop.take() else {
+            return;
+        };
+        event_loop
+            .dispatch(Some(Duration::ZERO), &mut self.clone())
+            .log_err();
+        self.0.borrow_mut().event_loop = Some(event_loop);
+    }
+
     fn handle_event(&self, event: Event) -> Option<()> {
         match event {
             Event::UnmapNotify(event) => {
@@ -1582,6 +1664,12 @@ impl LinuxClient for X11Client {
         handle: AnyWindowHandle,
         params: WindowParams,
     ) -> anyhow::Result<Box<dyn PlatformWindow>> {
+        // Foreign-parent embedding (VST3/CLAP-x11): the toolkit stashes the
+        // host record before `open_window`; take it one-shot so a later app
+        // window never inherits a stale parent.
+        if let Some(foreign) = crate::linux::foreign_parent::take_pending_x11_foreign_parent() {
+            return self.open_foreign_child_window(handle, params, foreign);
+        }
         let mut state = self.0.borrow_mut();
         let parent_window = state
             .keyboard_focused_window
@@ -1879,6 +1967,12 @@ impl X11ClientState {
         let Some(window_ref) = self.windows.get_mut(&x_window) else {
             return;
         };
+        // Foreign children are frame-pumped by the host (`ForeignParentPlatform`
+        // calls `refresh` directly); a calloop refresh timer here would
+        // double-frame against the host pump.
+        if window_ref.is_foreign() {
+            return;
+        }
         let is_visible = window_ref.is_mapped
             && !matches!(window_ref.last_visibility, Visibility::FULLY_OBSCURED);
         match (is_visible, window_ref.refresh_state.take()) {

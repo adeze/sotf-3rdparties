@@ -14,7 +14,7 @@ use wayland_backend::client::ObjectId;
 use wayland_client::WEnum;
 use wayland_client::{
     Proxy,
-    protocol::{wl_output, wl_surface},
+    protocol::{wl_output, wl_subsurface, wl_surface},
 };
 use wayland_protocols::wp::viewporter::client::wp_viewport;
 use wayland_protocols::xdg::decoration::zv1::client::zxdg_toplevel_decoration_v1;
@@ -41,16 +41,16 @@ use gpui_wgpu::{CompositorGpuHint, WgpuRenderer, WgpuSurfaceConfig, wgpu};
 
 #[derive(Default)]
 pub(crate) struct Callbacks {
-    request_frame: Option<Box<dyn FnMut(RequestFrameOptions)>>,
-    input: Option<Box<dyn FnMut(gpui::PlatformInput) -> gpui::DispatchEventResult>>,
-    active_status_change: Option<Box<dyn FnMut(bool)>>,
-    hover_status_change: Option<Box<dyn FnMut(bool)>>,
-    resize: Option<Box<dyn FnMut(Size<Pixels>, f32)>>,
-    moved: Option<Box<dyn FnMut()>>,
-    should_close: Option<Box<dyn FnMut() -> bool>>,
-    close: Option<Box<dyn FnOnce()>>,
-    appearance_changed: Option<Box<dyn FnMut()>>,
-    button_layout_changed: Option<Box<dyn FnMut()>>,
+    pub(crate) request_frame: Option<Box<dyn FnMut(RequestFrameOptions)>>,
+    pub(crate) input: Option<Box<dyn FnMut(gpui::PlatformInput) -> gpui::DispatchEventResult>>,
+    pub(crate) active_status_change: Option<Box<dyn FnMut(bool)>>,
+    pub(crate) hover_status_change: Option<Box<dyn FnMut(bool)>>,
+    pub(crate) resize: Option<Box<dyn FnMut(Size<Pixels>, f32)>>,
+    pub(crate) moved: Option<Box<dyn FnMut()>>,
+    pub(crate) should_close: Option<Box<dyn FnMut() -> bool>>,
+    pub(crate) close: Option<Box<dyn FnOnce()>>,
+    pub(crate) appearance_changed: Option<Box<dyn FnMut()>>,
+    pub(crate) button_layout_changed: Option<Box<dyn FnMut()>>,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -129,6 +129,11 @@ pub struct WaylandWindowState {
 pub enum WaylandSurfaceState {
     Xdg(WaylandXdgSurfaceState),
     LayerShell(WaylandLayerSurfaceState),
+    /// Host-parented subsurface (CLAP-wayland embedding). Carries no
+    /// toplevel role: no configure/ack cycle, no decorations, no window
+    /// geometry — the host owns size and position, and frames are pumped
+    /// by the host through `surface.frame` callbacks.
+    Subsurface(WaylandSubsurfaceState),
 }
 
 impl WaylandSurfaceState {
@@ -246,6 +251,20 @@ pub struct WaylandLayerSurfaceState {
     layer_surface: zwlr_layer_surface_v1::ZwlrLayerSurfaceV1,
 }
 
+pub struct WaylandSubsurfaceState {
+    subsurface: wl_subsurface::WlSubsurface,
+}
+
+impl WaylandSubsurfaceState {
+    pub fn new(subsurface: wl_subsurface::WlSubsurface) -> Self {
+        Self { subsurface }
+    }
+
+    pub fn subsurface(&self) -> &wl_subsurface::WlSubsurface {
+        &self.subsurface
+    }
+}
+
 impl WaylandSurfaceState {
     fn ack_configure(&self, serial: u32) {
         match self {
@@ -255,6 +274,8 @@ impl WaylandSurfaceState {
             WaylandSurfaceState::LayerShell(WaylandLayerSurfaceState { layer_surface, .. }) => {
                 layer_surface.ack_configure(serial);
             }
+            // Subsurfaces have no configure/ack cycle; the host owns size.
+            WaylandSurfaceState::Subsurface(_) => {}
         }
     }
 
@@ -283,10 +304,15 @@ impl WaylandSurfaceState {
                 // cannot set window position of a layer surface
                 layer_surface.set_size(width as u32, height as u32);
             }
+            WaylandSurfaceState::Subsurface(WaylandSubsurfaceState { subsurface, .. }) => {
+                // A subsurface has no window geometry; position it in the
+                // parent. Size is the committed buffer size.
+                subsurface.set_position(x, y);
+            }
         }
     }
 
-    fn destroy(&mut self) {
+    pub(crate) fn destroy(&mut self) {
         match self {
             WaylandSurfaceState::Xdg(WaylandXdgSurfaceState {
                 xdg_surface,
@@ -306,6 +332,10 @@ impl WaylandSurfaceState {
             }
             WaylandSurfaceState::LayerShell(WaylandLayerSurfaceState { layer_surface }) => {
                 layer_surface.destroy();
+            }
+            WaylandSurfaceState::Subsurface(WaylandSubsurfaceState { subsurface }) => {
+                // The role object must be destroyed before the wl_surface.
+                subsurface.destroy();
             }
         }
     }
