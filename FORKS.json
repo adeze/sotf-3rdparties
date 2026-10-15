@@ -43,8 +43,8 @@
       "license_status": "preserved",
       "upstream_base": "0.1.0",
       "upstream_revision_status": "recorded",
-      "reason": "Supply the pinned baseview revision required by NIH-plug standalone and egui-baseview without git dependencies.",
-      "retained_changes": "Exact pinned snapshot; SOTF manifest-only maintenance (crates.io description/repository, sotf- rename). Both pre-existing pins declare 0.1.0; the newer macOS event-deferral revision is kept for both consumers.",
+      "reason": "Supply the pinned baseview revision required by NIH-plug standalone without git dependencies.",
+      "retained_changes": "Exact pinned snapshot; SOTF manifest-only maintenance (crates.io description/repository, sotf- rename). The pre-existing pin declares 0.1.0; the newer macOS event-deferral revision is kept for the NIH-plug standalone backend.",
       "detail_document": "baseview/Cargo.toml",
       "owner": "SOTF dependency maintainers",
       "last_inventory_review": "2026-10-08",
@@ -208,31 +208,6 @@
       "verification_status": "required on update; migration acceptance recorded separately",
       "removal_condition": "Replace this source only when a selected upstream release covers the retained behavior and the listed consumer regression checks pass.",
       "maintenance_document": "forks/dst-decoder.md"
-    },
-    {
-      "directory": "egui-baseview",
-      "upstream_url": "https://github.com/BillyDM/egui-baseview.git",
-      "upstream_revision": "ec70c3fe6b2f070dcacbc22924431edbe24bd1c0",
-      "source_kind": "pinned-git-snapshot",
-      "snapshot_archive_sha256": "4f050062675a8f31600d4778815317e377ac182568007deafc7fc5084b0efa39",
-      "pinned_commit_subject": "update to egui 0.31",
-      "license": "MIT",
-      "license_files": [
-        "LICENSE"
-      ],
-      "license_status": "preserved",
-      "upstream_base": "0.5.0",
-      "upstream_revision_status": "recorded",
-      "reason": "Supply the pinned egui-baseview revision required by nih-plug-egui without git dependencies.",
-      "retained_changes": "Exact pinned snapshot; SOTF manifest-only maintenance (baseview path, screenshot exclude, sotf- rename).",
-      "detail_document": "egui-baseview/Cargo.toml",
-      "owner": "SOTF dependency maintainers",
-      "last_inventory_review": "2026-10-08",
-      "review_cadence_days": 90,
-      "verification_command": "cargo check --manifest-path sotf-3rdparties/egui-baseview/Cargo.toml --lib",
-      "verification_status": "required on update; migration acceptance recorded separately",
-      "removal_condition": "Replace this source only when a selected upstream release covers the retained behavior and the listed consumer regression checks pass.",
-      "maintenance_document": "forks/egui-baseview.md"
     },
     {
       "directory": "fontconfig-parser",
@@ -464,33 +439,6 @@
       "verification_status": "required on update; migration acceptance recorded separately",
       "removal_condition": "Replace this source only when a selected upstream release covers the retained behavior and the listed consumer regression checks pass.",
       "maintenance_document": "forks/nih-plug.md"
-    },
-    {
-      "directory": "nih-plug-egui",
-      "imported_from": "sotf-daw/crates/3rdparties/nih-plug-egui",
-      "source_repository": "sotf-daw",
-      "source_commit": "bbb0a8b924bbb368631f0d6a7426af25e66878f6",
-      "last_source_change": "88a14ecbda4c680ca491d1df17035fef6fcbf9b5",
-      "source_kind": "retained-local-fork",
-      "upstream_url": "https://github.com/robbert-vdh/nih-plug",
-      "license": "ISC",
-      "license_files": [
-        "LICENSE"
-      ],
-      "license_status": "preserved",
-      "upstream_base": "28b149ec4d62757d0b448809148a0c3ca6e09a95",
-      "upstream_revision": "28b149ec4d62757d0b448809148a0c3ca6e09a95",
-      "upstream_revision_status": "recorded",
-      "reason": "Keep the optional existing NIH GUI adapter paired with the maintained NIH source.",
-      "retained_changes": "Pinned adapter, sibling nih_plug path and explicit f32 stroke-width literal; this GUI is outside current release priority.",
-      "detail_document": "nih-plug-egui/UPSTREAM.md",
-      "owner": "SOTF dependency maintainers",
-      "last_inventory_review": "2026-10-07",
-      "review_cadence_days": 90,
-      "verification_command": "cargo check --manifest-path sotf-3rdparties/nih-plug-egui/Cargo.toml --lib",
-      "verification_status": "required on update; migration acceptance recorded separately",
-      "removal_condition": "Replace this source only when a selected upstream release covers the retained behavior and the listed consumer regression checks pass.",
-      "maintenance_document": "forks/nih-plug-egui.md"
     },
     {
       "directory": "nnnoiseless",

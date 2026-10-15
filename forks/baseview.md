@@ -8,7 +8,7 @@ License evidence status: preserved.
 
 ## Why retained
 
-NIH-plug's optional standalone backend and egui-baseview both pin baseview
+NIH-plug's optional standalone backend pins baseview
 from git, and crates.io forbids git dependencies, so the pinned source is
 vendored here for `sotf-baseview` publication.
 
@@ -17,9 +17,9 @@ vendored here for `sotf-baseview` publication.
 Exact pinned snapshot; no SOTF Rust patch. SOTF manifest maintenance only:
 crates.io description/repository added (description from the upstream registry
 text), `.github` workflows omitted as non-source files, package renamed
-`sotf-baseview` for publication. Both pre-existing pins (nih-plug's
-`579130e` and nih-plug-egui's `9a0b42c`) declare version `0.1.0`; the newer
-`9a0b42c` macOS event-deferral revision is kept for both consumers.
+`sotf-baseview` for publication. The pre-existing pin (nih-plug's
+`579130e`) declares version `0.1.0`; the newer
+`9a0b42c` macOS event-deferral revision is kept for the NIH-plug standalone backend.
 The `objc` dependency stays on the upstream registry release: baseview mixes
 `objc` types with `cocoa` types from crates.io, and a renamed fork cannot
 share that type universe (see `RELEASE.md`).

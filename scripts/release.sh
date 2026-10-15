@@ -11,8 +11,8 @@
 #
 # Publish order (each level needs the previous one live on crates.io):
 #   L0: leaves (no intra-collection dependencies)
-#   L1: derive_more egui-baseview nih-plug tract
-#   L2: gpui nih-plug-egui
+#   L1: derive_more nih-plug tract
+#   L2: gpui
 #
 # Prerequisites:
 #   - cargo-release installed (`cargo install cargo-release`)
@@ -48,8 +48,8 @@ if [ "${#LEVELS[@]}" -eq 0 ]; then
 fi
 
 L0=(async-task baseview block coreaudio-rs cosmic-text derive_more-impl dst-decoder fontconfig-parser headers librespot metaheuristics-nature-rs nalgebra nnnoiseless objc oo7 predicates rdsd2pcm rfd rubato rust-assert-no-alloc rusty-fork scap stacker tflitec vst3-sys wgpu xim-rs zed-font-kit)
-L1=(derive_more egui-baseview nih-plug tract)
-L2=(gpui nih-plug-egui)
+L1=(derive_more nih-plug tract)
+L2=(gpui)
 WORKSPACES=" gpui wgpu tract librespot nalgebra xim-rs vst3-sys nih-plug "
 
 echo "==> preflight: scripts/verify.py"

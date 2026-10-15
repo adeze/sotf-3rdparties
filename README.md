@@ -17,14 +17,13 @@ and existing `VENDORING.md` / `SOTF_FORK_PROVENANCE.json` records, which are pre
 | Source | Why retained |
 | --- | --- |
 | [async-task](forks/async-task.md) | Pin the compatible upstream async task implementation used by the GPUI dependency closure. |
-| [baseview](forks/baseview.md) | Supply the pinned baseview revision required by NIH-plug standalone and egui-baseview without git dependencies. |
+| [baseview](forks/baseview.md) | Supply the pinned baseview revision required by NIH-plug standalone without git dependencies. |
 | [block](forks/block.md) | Avoid the uninhabited extern-static future incompatibility in Apple Objective-C blocks. |
 | [coreaudio-rs](forks/coreaudio-rs.md) | Preserve CoreAudio input buffer allocation capacity and initialize WatchOS callback buffers correctly. |
 | [cosmic-text](forks/cosmic-text.md) | Retain the GPUI text renderer snapshot compatible with fontdb 0.24 and its selected bidi behavior. |
 | [derive_more](forks/derive_more.md) | Keep the macro facade aligned with the maintained implementation and case-conversion dependency. |
 | [derive_more-impl](forks/derive_more-impl.md) | Maintain convert_case 0.11 compatibility without changing the public derive behavior. |
 | [dst-decoder](forks/dst-decoder.md) | Supply DST decoding for SOTF SACD integration with retained fixture and lint fixes. |
-| [egui-baseview](forks/egui-baseview.md) | Supply the pinned egui-baseview revision required by nih-plug-egui without git dependencies. |
 | [fontconfig-parser](forks/fontconfig-parser.md) | Accept roxmltree 0.21 in the Linux font discovery dependency closure. |
 | [gpui](forks/gpui.md) | Own the patched GPUI framework, renderer, platform backends and Zed support sources in one self-contained group. |
 | [headers](forks/headers.md) | Keep the HTTP header dependency on the SHA-1 0.11 crypto family used by the maintained streaming sources. |
@@ -32,7 +31,6 @@ and existing `VENDORING.md` / `SOTF_FORK_PROVENANCE.json` records, which are pre
 | [metaheuristics-nature-rs](forks/metaheuristics-nature-rs.md) | Keep seeded optimization generators compatible with Rand 0.10 and Rand Distr 0.6. |
 | [nalgebra](forks/nalgebra.md) | Use the supported glam 0.33 conversion without retaining older conversion dependencies. |
 | [nih-plug](forks/nih-plug.md) | Preserve native plugin automation, transport, state return, tail bounds and auxiliary bus contracts. |
-| [nih-plug-egui](forks/nih-plug-egui.md) | Keep the optional existing NIH GUI adapter paired with the maintained NIH source. |
 | [nnnoiseless](forks/nnnoiseless.md) | Retain the RNNoise denoising implementation used by SOTF with fixed-size chunk and current dependency compatibility. |
 | [objc](forks/objc.md) | Keep the Apple Objective-C runtime bindings compatible with modern Rust and nil message dispatch. |
 | [oo7](forks/oo7.md) | Keep Linux keyring crypto dependencies compatible with the selected RustCrypto family. |

@@ -38,8 +38,8 @@ level by level:
   metaheuristics-nature-rs nalgebra nnnoiseless objc oo7 predicates rdsd2pcm
   rfd rubato rust-assert-no-alloc rusty-fork scap stacker tflitec vst3-sys
   wgpu xim-rs zed-font-kit
-- L1: derive_more egui-baseview nih-plug tract
-- L2: gpui nih-plug-egui
+- L1: derive_more nih-plug tract
+- L2: gpui
 
 ## How to release
 
