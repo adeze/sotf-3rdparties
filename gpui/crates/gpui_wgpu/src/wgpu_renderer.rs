@@ -100,11 +100,21 @@ struct InstanceUploadCache {
     entries: Vec<CachedInstanceUpload>,
     bytes: usize,
     next_index: usize,
+    /// Number of uploads recorded by the immediately preceding frame.
+    ///
+    /// A cache hit is only sound for an entry written by that frame: its
+    /// bytes are still in the GPU buffer because instance offsets within a
+    /// frame advance monotonically without overlap. An entry left over from
+    /// an older frame (beyond a shorter frame's upload count) may have had
+    /// its buffer region overwritten by unrelated batches since, so it must
+    /// never produce a hit.
+    previous_frame_uploads: usize,
     disabled_this_frame: bool,
 }
 
 impl InstanceUploadCache {
     fn begin_frame(&mut self) {
+        self.previous_frame_uploads = self.next_index;
         self.next_index = 0;
         self.disabled_this_frame = false;
     }
@@ -113,6 +123,7 @@ impl InstanceUploadCache {
         self.entries.clear();
         self.bytes = 0;
         self.next_index = 0;
+        self.previous_frame_uploads = 0;
         self.disabled_this_frame = false;
     }
 
@@ -124,7 +135,8 @@ impl InstanceUploadCache {
 
         let index = self.next_index;
         self.next_index += 1;
-        if let Some(entry) = self.entries.get(index)
+        if index < self.previous_frame_uploads
+            && let Some(entry) = self.entries.get(index)
             && entry.offset == offset
             && entry.bytes.as_ref() == data
         {
@@ -2379,6 +2391,36 @@ mod custom_draw_tests {
         cache.begin_frame();
         assert!(cache.needs_upload(16, &payload));
         assert!(cache.needs_upload(32, &[1, 2, 3, 5]));
+    }
+
+    #[test]
+    fn instance_upload_cache_rejects_stale_entries_from_older_frames() {
+        // Regression: entries are indexed by per-frame upload order. A short
+        // frame must not leave a later entry from an older frame eligible for
+        // a hit, because intervening frames reuse the same GPU buffer offsets
+        // for different payloads. A stale hit skips the upload and the batch
+        // then renders whatever bytes an unrelated frame left at that offset
+        // (observed as individually missing glyphs on iOS).
+        let mut cache = InstanceUploadCache::default();
+        let batch_a = [1_u8; 32];
+        let batch_b = [2_u8; 32];
+        let overwriting_batch = [9_u8; 128];
+
+        // Frame 1: two uploads; entries[1] now holds batch_b at offset 64.
+        cache.begin_frame();
+        assert!(cache.needs_upload(0, &batch_a));
+        assert!(cache.needs_upload(64, &batch_b));
+
+        // Frame 2: a single large upload at offset 0 overwrites the buffer
+        // region batch_b occupied, but never touches entries[1].
+        cache.begin_frame();
+        assert!(cache.needs_upload(0, &overwriting_batch));
+
+        // Frame 3: batch_b repeats at the same index and offset. The buffer
+        // no longer holds its bytes, so it must upload again.
+        cache.begin_frame();
+        assert!(cache.needs_upload(0, &batch_a));
+        assert!(cache.needs_upload(64, &batch_b));
     }
 
     #[test]
