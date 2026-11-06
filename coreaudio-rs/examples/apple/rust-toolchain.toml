@@ -1,4 +1,3 @@
 [toolchain]
-channel = "nightly"
-targets = ["aarch64-apple-ios-sim", "aarch64-apple-ios"]
-components = ["rust-src"]
+channel = "stable"
+targets = ["aarch64-apple-ios-sim", "aarch64-apple-ios", "aarch64-apple-tvos-sim", "aarch64-apple-tvos", "aarch64-apple-visionos", "aarch64-apple-visionos-sim"]
