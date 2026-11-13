@@ -32,12 +32,11 @@
 #![allow(clippy::redundant_static_lifetimes)]
 #![allow(clippy::single_match)]
 #![allow(clippy::too_many_arguments)]
+#![allow(clippy::unnecessary_lazy_evaluations)]
 #![allow(clippy::unnecessary_map_or)]
 #![allow(unexpected_cfgs)]
 
 extern crate self as gpui;
-#[doc(hidden)]
-pub static GPUI_MANIFEST_DIR: &'static str = env!("CARGO_MANIFEST_DIR");
 #[macro_use]
 mod action;
 mod app;
@@ -45,17 +44,33 @@ mod app;
 mod arena;
 mod asset_cache;
 mod assets;
+#[path = "fast/bounds_tree.rs"]
 mod bounds_tree;
 mod color;
 /// The default colors used by GPUI.
 pub mod colors;
 mod custom_draw;
+#[cfg(feature = "profiler")]
+mod debug_overlay;
 mod element;
 mod elements;
 mod executor;
+// The gpui-fast port (see crates/gpui/PATCHES.md). Ported files are kept
+// byte-close to gpui-fast for upstream sync, so lints its style trips are
+// allowed here rather than edited into the copies; the historic
+// dynamic-textures and window-composition parts are not ported, which
+// leaves a few helpers unused.
+#[allow(
+    dead_code,
+    clippy::assign_op_pattern,
+    clippy::empty_line_after_doc_comments,
+    clippy::large_enum_variant
+)]
+mod fast;
 mod platform_scheduler;
 pub(crate) use platform_scheduler::PlatformScheduler;
 mod geometry;
+mod gestures;
 mod global;
 mod input;
 mod inspector;
@@ -72,12 +87,19 @@ pub mod profiler;
     target_os = "windows",
     target_os = "linux",
     target_family = "wasm",
-    feature = "bench"
+    feature = "test-support",
+    feature = "bench-support"
 ))]
 #[expect(missing_docs)]
 pub mod queue;
+/// A seeded, mutable element tree for benchmarks and tests of GPUI rendering.
+#[cfg(any(test, feature = "bench-support"))]
+pub mod randomized_element_tree;
 mod scene;
+#[cfg(any(test, feature = "test-support", feature = "bench-support"))]
+mod seeds;
 mod shared_uri;
+mod spring;
 mod style;
 mod styled;
 mod subscription;
@@ -93,6 +115,8 @@ mod window;
 
 #[cfg(any(test, feature = "test-support"))]
 pub use proptest;
+#[cfg(any(test, feature = "test-support", feature = "bench-support"))]
+pub use seeds::calculate_seeds;
 
 #[cfg(doc)]
 pub mod _accessibility;
@@ -104,6 +128,7 @@ pub mod _ownership_and_data_flow;
 pub mod private {
     pub use anyhow;
     pub use inventory;
+    pub use rand;
     pub use schemars;
     pub use serde;
     pub use serde_json;
@@ -130,38 +155,89 @@ pub use custom_draw::{
     CustomDraw, CustomDrawId, lookup_custom_draw, register_custom_draw,
     set_wgpu_custom_draw_available, unregister_custom_draw, wgpu_custom_draw_available,
 };
+#[cfg(feature = "profiler")]
+pub use debug_overlay::*;
 pub use element::*;
 pub use elements::*;
 pub use executor::*;
 pub use geometry::*;
+pub use gestures::*;
 pub use global::*;
 pub use gpui_macros::{
     AppContext, IntoElement, Render, VisualContext, bench, property_test, register_action, test,
 };
+pub use spring::*;
 
 /// Defines a Criterion benchmark group for benchmarks annotated with [`gpui::bench`].
 ///
-/// This mirrors `criterion::criterion_group!` so GPUI benchmark files can keep the
-/// same shape as ordinary Criterion benchmarks.
+/// This mirrors `criterion::criterion_group!`, but the group measures with the
+/// `gpui::BenchMeasurement` configured by `BENCH_MEASUREMENT` (see
+/// `BenchMeasurement::from_env`). By default Criterion analyzes wall time
+/// while retired instructions, cycles, IPC, context switches, and the other
+/// counters this machine supports are printed per iteration in the GPUI bench
+/// report. `BENCH_MEASUREMENT=instructions` makes Criterion analyze
+/// process-wide instructions instead, `foreground-instructions` the benchmark
+/// thread's alone, and `wall-time` disables all counters. A
+/// `config = ...` expression may set any other Criterion option; its
+/// measurement is replaced. To measure with something else, call
+/// `criterion::criterion_group!` directly with
+/// `config = criterion::Criterion::default().with_measurement(gpui::BenchMeasurement::new(...))`.
 ///
 /// [`gpui::bench`]: crate::bench
 #[macro_export]
 macro_rules! bench_group {
-    ($($tokens:tt)*) => {
-        criterion::criterion_group!($($tokens)*);
+    (name = $name:ident; config = $config:expr; targets = $($target:path),+ $(,)?) => {
+        criterion::criterion_group! {
+            name = $name;
+            config = ($config).with_measurement($crate::BenchMeasurement::from_env_or_exit());
+            targets = $($target),+
+        }
+    };
+    ($name:ident, $($target:path),+ $(,)?) => {
+        $crate::bench_group! {
+            name = $name;
+            config = criterion::Criterion::default();
+            targets = $($target),+
+        }
     };
 }
 
 /// Defines the entry point for GPUI Criterion benchmark groups.
 ///
 /// This mirrors `criterion::criterion_main!` so GPUI benchmark files can keep the
-/// same shape as ordinary Criterion benchmarks.
+/// same shape as ordinary Criterion benchmarks. It also installs
+/// [`CountingAllocator`] as the binary's global allocator, so reports include
+/// heap allocations per iteration. It wraps the system allocator by default;
+/// `allocator = Path;` wraps another unit-struct allocator instead, e.g. to
+/// compare allocators, which pay the same small counting cost:
+///
+/// ```ignore
+/// gpui::bench_main!(allocator = mimalloc::MiMalloc; benches);
+/// ```
+///
+/// `allocator = none;` installs no global allocator, leaving Rust's default and
+/// dropping the allocation metrics from reports.
 #[macro_export]
 macro_rules! bench_main {
-    ($($tokens:tt)*) => {
-        criterion::criterion_main!($($tokens)*);
+    (allocator = none; $($groups:tt)*) => {
+        criterion::criterion_main!($($groups)*);
+    };
+    (allocator = $allocator:path; $($groups:tt)*) => {
+        #[global_allocator]
+        static GPUI_BENCH_ALLOCATOR: $crate::CountingAllocator<$allocator> =
+            $crate::CountingAllocator::new($allocator);
+
+        criterion::criterion_main!($($groups)*);
+    };
+    ($($groups:tt)*) => {
+        $crate::bench_main!(allocator = ::std::alloc::System; $($groups)*);
     };
 }
+pub use fast::layers::scene::{
+    LAYER_TILE_TEXTURE_BASE, LayerContent, LayerFrame, LayerKey, SceneLayers, TileCoord,
+    decode_layer_tile, layer_tile_id, layer_tile_texture_id, set_tile_layers_supported,
+};
+pub use fast::stats::LayoutStats;
 pub use gpui_shared_string::*;
 pub use gpui_util::arc_cow::ArcCow;
 pub use http_client;
@@ -193,6 +269,7 @@ pub use util::{FutureExt, Timeout};
 pub use view::*;
 pub use window::*;
 
+#[cfg(not(target_family = "wasm"))]
 pub use pollster::block_on;
 
 /// The context trait, allows the different contexts in GPUI to be used

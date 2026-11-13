@@ -224,14 +224,13 @@ where
                 diag[start] = eigvals[0].clone();
                 diag[start + 1] = eigvals[1].clone();
 
-                if let Some(ref mut q) = q_mat {
-                    if let Some((rot, _)) =
+                if let Some(ref mut q) = q_mat
+                    && let Some((rot, _)) =
                         GivensRotation::try_new(basis.x.clone(), basis.y.clone(), eps.clone())
                     {
                         let rot = GivensRotation::new_unchecked(rot.c(), T::from_real(rot.s()));
                         rot.rotate_rows(&mut q.fixed_columns_mut::<2>(start));
                     }
-                }
 
                 end -= 1;
             }

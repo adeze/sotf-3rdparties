@@ -1,9 +1,9 @@
 use crate::{
     ActiveTooltip, AnyView, App, Bounds, DispatchPhase, Element, ElementId, GlobalElementId,
     HighlightStyle, Hitbox, HitboxBehavior, InspectorElementId, IntoElement, LayoutId,
-    MouseDownEvent, MouseMoveEvent, MouseUpEvent, Pixels, Point, SharedString, Size, TextOverflow,
-    TextRun, TextStyle, TooltipId, TruncateFrom, WhiteSpace, Window, WrappedLine,
-    WrappedLineLayout, register_tooltip_mouse_handlers, set_tooltip_on_window,
+    MouseDownEvent, MouseMoveEvent, MouseUpEvent, Pixels, Point, SharedString, Size, TextRun,
+    TextStyle, TooltipId, Window, WrappedLine, WrappedLineLayout, register_tooltip_mouse_handlers,
+    set_tooltip_on_window,
 };
 use anyhow::Context as _;
 use gpui_util::ResultExt;
@@ -270,7 +270,7 @@ impl Element for &'static str {
         window: &mut Window,
         cx: &mut App,
     ) -> (LayoutId, Self::RequestLayoutState) {
-        let mut state = TextLayout::default();
+        let state = TextLayout::default();
         let layout_id = state.layout(SharedString::from(*self), None, window, cx);
         (layout_id, state)
     }
@@ -284,7 +284,7 @@ impl Element for &'static str {
         _window: &mut Window,
         _cx: &mut App,
     ) {
-        text_layout.prepaint(bounds, self)
+        crate::fast::text::prepaint_text(text_layout, bounds, self, _window, _cx)
     }
 
     fn paint(
@@ -344,7 +344,7 @@ impl Element for SharedString {
         window: &mut Window,
         cx: &mut App,
     ) -> (LayoutId, Self::RequestLayoutState) {
-        let mut state = TextLayout::default();
+        let state = TextLayout::default();
         let layout_id = state.layout(self.clone(), None, window, cx);
         (layout_id, state)
     }
@@ -358,7 +358,7 @@ impl Element for SharedString {
         _window: &mut Window,
         _cx: &mut App,
     ) {
-        text_layout.prepaint(bounds, self.as_ref())
+        crate::fast::text::prepaint_text(text_layout, bounds, self.as_ref(), _window, _cx)
     }
 
     fn paint(
@@ -416,7 +416,7 @@ impl StyledText {
     /// Set the styling attributes for the given text, as well as
     /// as any ranges of text that have had their style customized.
     pub fn with_default_highlights(
-        mut self,
+        self,
         default_style: &TextStyle,
         highlights: impl IntoIterator<Item = (Range<usize>, HighlightStyle)>,
     ) -> Self {
@@ -584,7 +584,7 @@ impl Element for StyledText {
         _window: &mut Window,
         _cx: &mut App,
     ) {
-        self.layout.prepaint(bounds, &self.text)
+        crate::fast::text::prepaint_text(&self.layout, bounds, &self.text, _window, _cx)
     }
 
     fn paint(
@@ -611,15 +611,23 @@ impl IntoElement for StyledText {
 
 /// The Layout for TextElement. This can be used to map indices to pixels and vice versa.
 #[derive(Default, Clone)]
-pub struct TextLayout(Rc<RefCell<Option<TextLayoutInner>>>);
+pub struct TextLayout(pub(crate) Rc<RefCell<Option<TextLayoutInner>>>);
 
-struct TextLayoutInner {
-    len: usize,
-    lines: SmallVec<[WrappedLine; 1]>,
-    line_height: Pixels,
-    wrap_width: Option<Pixels>,
-    size: Option<Size<Pixels>>,
-    bounds: Option<Bounds<Pixels>>,
+#[derive(Clone, Copy)]
+enum TextPaintPass {
+    All,
+    Background,
+    Foreground,
+}
+
+pub(crate) struct TextLayoutInner {
+    pub(crate) len: usize,
+    pub(crate) lines: SmallVec<[WrappedLine; 1]>,
+    pub(crate) line_height: Pixels,
+    pub(crate) wrap_width: Option<Pixels>,
+    pub(crate) truncate_width: Option<Pixels>,
+    pub(crate) size: Option<Size<Pixels>>,
+    pub(crate) bounds: Option<Bounds<Pixels>>,
 }
 
 impl TextLayout {
@@ -628,184 +636,79 @@ impl TextLayout {
         text: SharedString,
         runs: Option<Vec<TextRun>>,
         window: &mut Window,
-        _: &mut App,
+        fast_cx: &mut App,
     ) -> LayoutId {
-        let text_style = window.text_style();
-        let font_size = text_style.font_size.to_pixels(window.rem_size());
-        let line_height = window.pixel_snap(
-            text_style
-                .line_height
-                .to_pixels(font_size.into(), window.rem_size()),
-        );
-
-        let runs = if let Some(runs) = runs {
-            runs
-        } else {
-            vec![text_style.to_run(text.len())]
-        };
-        window.request_measured_layout(Default::default(), {
-            let element_state = self.clone();
-
-            move |known_dimensions, available_space, window, cx| {
-                let wrap_width = if text_style.white_space == WhiteSpace::Normal {
-                    known_dimensions.width.or(match available_space.width {
-                        crate::AvailableSpace::Definite(x) => Some(x),
-                        _ => None,
-                    })
-                } else {
-                    None
-                };
-
-                let (truncate_width, truncation_affix, truncate_from) =
-                    if let Some(text_overflow) = text_style.text_overflow.clone() {
-                        let width = known_dimensions.width.or(match available_space.width {
-                            crate::AvailableSpace::Definite(x) => match text_style.line_clamp {
-                                Some(max_lines) => Some(x * max_lines),
-                                None => Some(x),
-                            },
-                            _ => None,
-                        });
-
-                        match text_overflow {
-                            TextOverflow::Truncate(s) => (width, s, TruncateFrom::End),
-                            TextOverflow::TruncateStart(s) => (width, s, TruncateFrom::Start),
-                            TextOverflow::TruncateMiddle(s) => (width, s, TruncateFrom::Middle),
-                        }
-                    } else {
-                        (None, "".into(), TruncateFrom::End)
-                    };
-
-                // Only use cached layout if:
-                // 1. We have a cached size
-                // 2. wrap_width matches (or both are None)
-                // 3. truncate_width is None (if truncate_width is Some, we need to re-layout
-                //    because the previous layout may have been computed without truncation)
-                if let Some(text_layout) = element_state.0.borrow().as_ref()
-                    && let Some(size) = text_layout.size
-                    && (wrap_width.is_none() || wrap_width == text_layout.wrap_width)
-                    && truncate_width.is_none()
-                {
-                    return size;
-                }
-
-                let mut line_wrapper = cx.text_system().line_wrapper(text_style.font(), font_size);
-                let (text, runs) = if truncate_width.is_some() {
-                    if let Some(max_lines) = text_style.line_clamp
-                        && let Some(wrap_width) = wrap_width
-                    {
-                        line_wrapper.truncate_wrapped_line(
-                            text.clone(),
-                            wrap_width,
-                            max_lines,
-                            &truncation_affix,
-                            &runs,
-                            truncate_from,
-                        )
-                    } else {
-                        line_wrapper.truncate_line(
-                            text.clone(),
-                            truncate_width.unwrap_or(Pixels::MAX),
-                            &truncation_affix,
-                            &runs,
-                            truncate_from,
-                        )
-                    }
-                } else {
-                    (text.clone(), Cow::Borrowed(&*runs))
-                };
-                let len = text.len();
-
-                let Some(lines) = window
-                    .text_system()
-                    .shape_text(
-                        text,
-                        font_size,
-                        &runs,
-                        wrap_width,            // Wrap if we know the width.
-                        text_style.line_clamp, // Limit the number of lines if line_clamp is set.
-                    )
-                    .log_err()
-                else {
-                    element_state.0.borrow_mut().replace(TextLayoutInner {
-                        lines: Default::default(),
-                        len: 0,
-                        line_height,
-                        wrap_width,
-                        size: Some(Size::default()),
-                        bounds: None,
-                    });
-                    return Size::default();
-                };
-
-                let mut size: Size<Pixels> = Size::default();
-                for line in &lines {
-                    let line_size = line.size(line_height);
-                    size.height += line_size.height;
-                    size.width = size.width.max(line_size.width).ceil();
-                }
-
-                element_state.0.borrow_mut().replace(TextLayoutInner {
-                    lines,
-                    len,
-                    line_height,
-                    wrap_width,
-                    size: Some(size),
-                    bounds: None,
-                });
-
-                size
-            }
-        })
-    }
-
-    fn prepaint(&self, bounds: Bounds<Pixels>, text: &str) {
-        let mut element_state = self.0.borrow_mut();
-        let element_state = element_state
-            .as_mut()
-            .with_context(|| format!("measurement has not been performed on {text}"))
-            .unwrap();
-        element_state.bounds = Some(bounds);
+        crate::fast::text::layout_text(self, text, runs, window, fast_cx)
     }
 
     fn paint(&self, text: &str, window: &mut Window, cx: &mut App) {
+        if !crate::fast::text::paintable(self, text) {
+            return;
+        }
+        self.paint_lines(TextPaintPass::All, window, cx)
+            .with_context(|| format!("failed to paint {text}"))
+            .unwrap();
+    }
+
+    /// Paints the backgrounds of the text runs without the glyphs, so that callers can paint
+    /// content, such as highlights, between the backgrounds and the text. Follow it with
+    /// [`Self::paint_foreground`] to paint the glyphs.
+    pub fn paint_background(&self, window: &mut Window, cx: &mut App) -> anyhow::Result<()> {
+        self.paint_lines(TextPaintPass::Background, window, cx)
+    }
+
+    /// Paints the glyphs and decorations of the text without the run backgrounds.
+    pub fn paint_foreground(&self, window: &mut Window, cx: &mut App) -> anyhow::Result<()> {
+        self.paint_lines(TextPaintPass::Foreground, window, cx)
+    }
+
+    fn paint_lines(
+        &self,
+        pass: TextPaintPass,
+        window: &mut Window,
+        cx: &mut App,
+    ) -> anyhow::Result<()> {
         let element_state = self.0.borrow();
         let element_state = element_state
             .as_ref()
-            .with_context(|| format!("measurement has not been performed on {text}"))
-            .unwrap();
+            .context("measurement has not been performed")?;
         let bounds = element_state
             .bounds
-            .with_context(|| format!("prepaint has not been performed on {text}"))
-            .unwrap();
+            .context("prepaint has not been performed")?;
 
         let line_height = element_state.line_height;
         let mut line_origin = bounds.origin;
-        let text_style = window.text_style();
+        let text_style = crate::fast::text_style::text_paint_style(window);
         for line in &element_state.lines {
-            line.paint_background(
-                line_origin,
-                line_height,
-                text_style.text_align,
-                Some(bounds),
-                window,
-                cx,
-            )
-            .log_err();
-            line.paint(
-                line_origin,
-                line_height,
-                text_style.text_align,
-                Some(bounds),
-                window,
-                cx,
-            )
-            .log_err();
+            if matches!(pass, TextPaintPass::All | TextPaintPass::Background) {
+                line.paint_background(
+                    line_origin,
+                    line_height,
+                    text_style.text_align,
+                    Some(bounds),
+                    window,
+                    cx,
+                )
+                .log_err();
+            }
+            if matches!(pass, TextPaintPass::All | TextPaintPass::Foreground) {
+                line.paint(
+                    line_origin,
+                    line_height,
+                    text_style.text_align,
+                    Some(bounds),
+                    window,
+                    cx,
+                )
+                .log_err();
+            }
             line_origin.y += line.size(line_height).height;
         }
+        Ok(())
     }
 
     /// Get the byte index into the input of the pixel position.
-    pub fn index_for_position(&self, mut position: Point<Pixels>) -> Result<usize, usize> {
+    pub fn index_for_position(&self, position: Point<Pixels>) -> Result<usize, usize> {
         let element_state = self.0.borrow();
         let element_state = element_state
             .as_ref()
@@ -965,6 +868,7 @@ pub struct InteractiveText {
     tooltip_builder: Option<Rc<dyn Fn(usize, &mut Window, &mut App) -> Option<AnyView>>>,
     tooltip_id: Option<TooltipId>,
     clickable_ranges: Vec<Range<usize>>,
+    fast_clickable_hitboxes: crate::fast::interactive_text::ClickableHitboxes,
 }
 
 struct InteractiveTextClickEvent {
@@ -978,6 +882,7 @@ pub struct InteractiveTextState {
     mouse_down_index: Rc<Cell<Option<usize>>>,
     hovered_index: Rc<Cell<Option<usize>>>,
     active_tooltip: Rc<RefCell<Option<ActiveTooltip>>>,
+    long_press_tooltip_active: Rc<Cell<bool>>,
 }
 
 /// InteractiveTest is a wrapper around StyledText that adds mouse interactions.
@@ -992,6 +897,7 @@ impl InteractiveText {
             tooltip_builder: None,
             tooltip_id: None,
             clickable_ranges: Vec::new(),
+            fast_clickable_hitboxes: crate::fast::interactive_text::ClickableHitboxes::default(),
         }
     }
 
@@ -1085,6 +991,7 @@ impl Element for InteractiveText {
                             set_tooltip_on_window(&interactive_state.active_tooltip, window);
                     } else {
                         // If there is no longer a tooltip builder, remove the active tooltip.
+                        interactive_state.long_press_tooltip_active.set(false);
                         interactive_state.active_tooltip.take();
                     }
                 }
@@ -1092,6 +999,12 @@ impl Element for InteractiveText {
                 self.text
                     .prepaint(None, inspector_id, bounds, state, window, cx);
                 let hitbox = window.insert_hitbox(bounds, HitboxBehavior::Normal);
+                crate::fast::interactive_text::insert_clickable_hitboxes(
+                    &mut self.fast_clickable_hitboxes,
+                    self.text.layout(),
+                    &self.clickable_ranges,
+                    window,
+                );
                 (hitbox, interactive_state)
             },
         )
@@ -1112,17 +1025,12 @@ impl Element for InteractiveText {
         window.with_element_state::<InteractiveTextState, _>(
             global_id.unwrap(),
             |interactive_state, window| {
-                let mut interactive_state = interactive_state.unwrap_or_default();
+                let interactive_state = interactive_state.unwrap_or_default();
                 if let Some(click_listener) = self.click_listener.take() {
-                    let mouse_position = window.mouse_position();
-                    if let Ok(ix) = text_layout.index_for_position(mouse_position)
-                        && self
-                            .clickable_ranges
-                            .iter()
-                            .any(|range| range.contains(&ix))
-                    {
-                        window.set_cursor_style(crate::CursorStyle::PointingHand, hitbox)
-                    }
+                    crate::fast::interactive_text::set_clickable_cursor(
+                        &self.fast_clickable_hitboxes,
+                        window,
+                    );
 
                     let text_layout = text_layout.clone();
                     let mouse_down = interactive_state.mouse_down_index.clone();
@@ -1167,7 +1075,7 @@ impl Element for InteractiveText {
                 }
 
                 window.on_mouse_event({
-                    let mut hover_listener = self.hover_listener.take();
+                    let hover_listener = self.hover_listener.take();
                     let hitbox = hitbox.clone();
                     let text_layout = text_layout.clone();
                     let hovered_index = interactive_state.hovered_index.clone();
@@ -1180,7 +1088,11 @@ impl Element for InteractiveText {
                                 if let Some(hover_listener) = hover_listener.as_ref() {
                                     hover_listener(updated, event.clone(), window, cx);
                                 }
-                                cx.notify(current_view);
+                                crate::fast::interactive_text::notify_hovered_index(
+                                    hover_listener.is_some(),
+                                    current_view,
+                                    cx,
+                                );
                             }
                         }
                     }
@@ -1233,6 +1145,7 @@ impl Element for InteractiveText {
                         build_tooltip,
                         check_is_hovered,
                         check_is_hovered_during_prepaint,
+                        interactive_state.long_press_tooltip_active.clone(),
                         None,
                         window,
                     );

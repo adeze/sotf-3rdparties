@@ -113,6 +113,10 @@ fn merge(_ctx: &ParsingContext, pb: &NodeDef) -> TractResult<Box<dyn InferenceOp
 }
 
 #[derive(Debug, Clone, new, Hash)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct Merge {
     n: usize,
 }

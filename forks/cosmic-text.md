@@ -36,3 +36,7 @@ Replace this source only when a selected upstream release covers the retained be
 Owner: SOTF dependency maintainers. Inventory reviewed 2026-10-07;
 re-evaluate the upstream delta within 90 days and on every update.
 Follow [the collection update procedure](../README.md#updating-a-fork).
+
+## macOS release validation (2026-10-30)
+
+Strict all-target Clippy, default-feature cargo tests/doctests and nextest PASS (42 cases, zero skipped), cosmic-text-fixed.log. Equivalent Option fallback/formatting/iterator fixes and explicit Apple-font test expectations; benchmarks use std::hint::black_box. Shared test helper dead-code allowance reflects separate integration binaries, not production. Private issue sotf-3rdparties#14.

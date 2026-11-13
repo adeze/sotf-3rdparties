@@ -12,7 +12,7 @@ name = "nih_plug_derive"
 proc-macro = true
 
 [dependencies]
-syn = { version = "1.0", features = ["extra-traits"] }
+syn = { version = "3.0.9", features = ["extra-traits"] }
 quote = "1.0"
 proc-macro2 = "1.0"
 

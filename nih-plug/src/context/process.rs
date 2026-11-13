@@ -186,11 +186,9 @@ impl Transport {
             self.tempo,
         ) {
             (Some(pos_samples), _, _, _) => Some(pos_samples),
-            (_, Some(pos_seconds), _, _) => {
-                Some((pos_seconds * self.sample_rate as f64).round() as i64)
-            }
+            (_, Some(pos_seconds), _, _) => Some((pos_seconds * self.sample_rate).round() as i64),
             (_, _, Some(pos_beats), Some(tempo)) => {
-                Some((pos_beats / tempo * 60.0 * self.sample_rate as f64).round() as i64)
+                Some((pos_beats / tempo * 60.0 * self.sample_rate).round() as i64)
             }
             (_, _, _, _) => None,
         }
@@ -205,7 +203,7 @@ impl Transport {
             self.tempo,
         ) {
             (_, Some(pos_seconds), _, _) => Some(pos_seconds),
-            (Some(pos_samples), _, _, _) => Some(pos_samples as f64 / self.sample_rate as f64),
+            (Some(pos_samples), _, _, _) => Some(pos_samples as f64 / self.sample_rate),
             (_, _, Some(pos_beats), Some(tempo)) => Some(pos_beats / tempo * 60.0),
             (_, _, _, _) => None,
         }
@@ -223,7 +221,7 @@ impl Transport {
             (_, _, Some(pos_beats), _) => Some(pos_beats),
             (_, Some(pos_seconds), _, Some(tempo)) => Some(pos_seconds / 60.0 * tempo),
             (Some(pos_samples), _, _, Some(tempo)) => {
-                Some(pos_samples as f64 / self.sample_rate as f64 / 60.0 * tempo)
+                Some(pos_samples as f64 / self.sample_rate / 60.0 * tempo)
             }
             (_, _, _, _) => None,
         }
@@ -282,12 +280,12 @@ impl Transport {
         ) {
             (Some(loop_range_samples), _, _, _) => Some(loop_range_samples),
             (_, Some((start_seconds, end_seconds)), _, _) => Some((
-                ((start_seconds * self.sample_rate as f64).round() as i64),
-                ((end_seconds * self.sample_rate as f64).round() as i64),
+                ((start_seconds * self.sample_rate).round() as i64),
+                ((end_seconds * self.sample_rate).round() as i64),
             )),
             (_, _, Some((start_beats, end_beats)), Some(tempo)) => Some((
-                (start_beats / tempo * 60.0 * self.sample_rate as f64).round() as i64,
-                (end_beats / tempo * 60.0 * self.sample_rate as f64).round() as i64,
+                (start_beats / tempo * 60.0 * self.sample_rate).round() as i64,
+                (end_beats / tempo * 60.0 * self.sample_rate).round() as i64,
             )),
             (_, _, _, _) => None,
         }
@@ -305,8 +303,8 @@ impl Transport {
         ) {
             (_, Some(loop_range_seconds), _, _) => Some(loop_range_seconds),
             (Some((start_samples, end_samples)), _, _, _) => Some((
-                start_samples as f64 / self.sample_rate as f64,
-                end_samples as f64 / self.sample_rate as f64,
+                start_samples as f64 / self.sample_rate,
+                end_samples as f64 / self.sample_rate,
             )),
             (_, _, Some((start_beats, end_beats)), Some(tempo)) => {
                 Some((start_beats / tempo * 60.0, end_beats / tempo * 60.0))
@@ -330,8 +328,8 @@ impl Transport {
                 Some((start_seconds / 60.0 * tempo, end_seconds / 60.0 * tempo))
             }
             (Some((start_samples, end_samples)), _, _, Some(tempo)) => Some((
-                start_samples as f64 / self.sample_rate as f64 / 60.0 * tempo,
-                end_samples as f64 / self.sample_rate as f64 / 60.0 * tempo,
+                start_samples as f64 / self.sample_rate / 60.0 * tempo,
+                end_samples as f64 / self.sample_rate / 60.0 * tempo,
             )),
             (_, _, _, _) => None,
         }

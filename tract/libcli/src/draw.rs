@@ -103,8 +103,7 @@ impl DrawingState {
                     .count()
                     + must_clone as usize;
                 // println!("{}->{} (offset: {})", little, big, offset);
-                if moving.color.is_some() && offset != 0 {
-                    let color = moving.color.unwrap();
+                if let Some(color) = moving.color.filter(|_| offset != 0) {
                     for w in &self.wires[0..little] {
                         if let Some(c) = w.color {
                             p!("{}", c.paint(VERTICAL));
@@ -179,8 +178,8 @@ impl DrawingState {
         if display {
             self.latest_node_color = if !inputs.is_empty() {
                 let wire0 = &self.wires[passthrough_count];
-                if wire0.color.is_some() && !wire0.should_change_color {
-                    wire0.color.unwrap()
+                if let Some(color) = wire0.color.filter(|_| !wire0.should_change_color) {
+                    color
                 } else {
                     self.next_color()
                 }

@@ -273,3 +273,6 @@ cfg_aliases.workspace = true
 
 [package.metadata.release]
 tag-name = "{{crate_name}}-v{{version}}"
+
+[lints]
+workspace = true

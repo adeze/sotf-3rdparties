@@ -57,9 +57,10 @@ static A: AllocDisabler = AllocDisabler;
 Third, wrap code sections that may not allocate like this:
 
 ```rust
-assert_no_alloc(|| {
-	println!("This code can not allocate.");
-});
+use assert_no_alloc::assert_no_alloc;
+
+let answer = assert_no_alloc(|| 6 * 7);
+assert_eq!(answer, 42);
 ```
 
 Advanced use
@@ -68,12 +69,17 @@ Advanced use
 Values can be returned using:
 
 ```rust
+use assert_no_alloc::assert_no_alloc;
+
 let answer = assert_no_alloc(|| { 42 });
+assert_eq!(answer, 42);
 ```
 
 The effect of `assert_no_alloc` can be overridden using `permit_alloc`:
 
 ```rust
+use assert_no_alloc::{assert_no_alloc, permit_alloc};
+
 assert_no_alloc(|| {
 	permit_alloc(|| {
 		// Allocate some memory here. This will work.
@@ -87,9 +93,11 @@ context.
 Objects that deallocate upon `Drop` can be wrapped in `PermitDrop`:
 
 ```rust
+use assert_no_alloc::{permit_alloc, PermitDrop};
+
 let foo = PermitDrop::new(
     permit_alloc(||
-        Box::new(...)
+        Box::new(42u32)
     )
 );
 ```
@@ -138,6 +146,6 @@ Test suite
 
 The tests will fail to compile with the default features. Run them using:
 
-```
+```sh
 cargo test --features=warn_debug --tests
 ```

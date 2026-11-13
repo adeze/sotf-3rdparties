@@ -12,6 +12,11 @@ Keep the HTTP header dependency on the SHA-1 0.11 crypto family used by the main
 
 ## Retained changes
 
+Release maintenance (2026-10-30): base64 updated to 0.23.1; added
+CacheControl::default and Cookie::is_empty and simplified the entity-tag
+match guard for strict Clippy. macOS Clippy, tests/doctests and release
+nextest pass (115 cases).
+
 sha1 dependency updated from 0.10 to 0.11; compare Cargo.toml.orig and src/common/authorization.rs.
 Read [the existing detail record](../headers/Cargo.toml.orig) before updating.
 This inventory review does not claim a fresh upstream parity or security audit.

@@ -91,7 +91,7 @@ pub fn gen_release_drops<S: ::std::hash::BuildHasher>(
 fn gen_aggregate_drops<S: ::std::hash::BuildHasher>(
     aggr_map: &HashMap<Ident, Vec<Ident>, S>,
 ) -> HelperTokenStream {
-    let aggregate_drops = aggr_map.iter().map(|(aggr_field_ident, _)| {
+    let aggregate_drops = aggr_map.keys().map(|aggr_field_ident| {
         quote!(
             if !self.#aggr_field_ident.is_null() {
                 let mut aggr_interface_ptr = vst3_com::VstPtr::<dyn vst3_com::interfaces::iunknown::IUnknown>::new(self.#aggr_field_ident as *mut _);

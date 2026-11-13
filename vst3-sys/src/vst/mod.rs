@@ -33,7 +33,6 @@ pub use ivsteditcontroller::*;
 pub use ivstevents::*;
 pub use ivsthostapplication::*;
 pub use ivstmessage::*;
-pub use ivstmidicontroller::*;
 pub use ivstmidilearn::*;
 pub use ivstnoteexpression::*;
 pub use ivstparameterchanges::*;

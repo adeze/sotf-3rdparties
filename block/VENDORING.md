@@ -5,8 +5,10 @@
 - Project: https://github.com/SSheldon/rust-block
 - Base crate: `block` 0.1.6 from crates.io
 - License: MIT as declared by the upstream crate manifest.
-- Local status: active `[patch.crates-io]` dependency.
-- Last reviewed: 2026-07-12
+- Local status: consolidated `sotf-block` fork. Consumers requiring the upstream
+  package name use compatibility revision
+  `5a4634af0916b5f53effa5ef6340efd90af32285` of the collection.
+- Last reviewed: 2026-10-30
 
 ## Why Vendored
 
@@ -26,8 +28,14 @@ chain, so the release cannot leave this warning invisible.
 - Use explicit `extern "C"` ABI spellings for block invoke function pointers.
 - Add a local `[workspace]` table so the vendored crate can be checked directly
   without being treated as an undeclared member of the repository workspace.
-- Remove the packaged `objc_test_utils` dev-dependency entry because crates.io
-  excludes the referenced `test_utils` helper crate.
+- Restore the upstream `objc_test_utils` helper from rust-block revision
+  `642ea4a4a5853a21b55b05c34832a5f1bb1af61c` so native C block interop tests run.
+  Its four files are under `test_utils/`; the C source is unchanged. The helper
+  uses current `cc` instead of deprecated `gcc`, explicit Rust 2015 and C ABI,
+  and the collection package prefix `sotf-` (library name unchanged).
+- Document existing unsafe API contracts under Safety headings, spell out
+  existing function-pointer transmute types, and use field shorthand. No block
+  ABI, ownership behavior or callback semantics changed.
 - Make the upstream default Rust 2015 edition explicit so direct Cargo checks
   do not emit an edition-default warning.
 
@@ -49,3 +57,10 @@ chain, so the release cannot leave this warning invisible.
 Run the direct manifest check and dependent GPUI/toolkit check listed in the
 upgrade guidance. Review the delta with
 `git diff block-0.1.6 -- sotf-3rdparties/block` before updating the base.
+
+Release review on 2026-10-30 verified strict workspace Clippy, tests, and
+nextest, including six native block interop tests and two doctests with no
+skips. The restored helper is covered by the workspace run. Dependent GPUI
+validation also passed with the upstream-name compatibility revision and no
+future-incompatibility warning. See the aggregate release-progress.md entries
+and block-workspace-final.log for the recorded verification.

@@ -31,7 +31,7 @@ std = [
     "num-rational/std",
     "approx/std",
     "simba/std",
-    "glam033?/std",
+    "glam034?/std",
 ]
 sparse = []
 debug = ["approx/num-complex", "rand"]
@@ -40,7 +40,7 @@ io = ["pest", "pest_derive"]
 compare = ["matrixcompare-core"]
 libm = [
     "simba/libm",
-    "glam033?/libm",
+    "glam034?/libm",
 ]
 libm-force = ["simba/libm_force"]
 macros = ["nalgebra-macros"]
@@ -48,7 +48,7 @@ macros = ["nalgebra-macros"]
 # Conversion
 convert-mint = ["mint"]
 convert-bytemuck = ["bytemuck", "num-complex/bytemuck"]
-convert-glam033 = ["glam033"]
+convert-glam034 = ["glam034"]
 
 # Serialization
 ## To use serde in a #[no-std] environment, enable the
@@ -94,7 +94,7 @@ pest_derive = { version = "2", optional = true }
 bytemuck = { version = "1.5", optional = true }
 matrixcompare-core = { version = "0.1", optional = true }
 proptest = { version = "1", optional = true, default-features = false, features = ["std"] }
-glam033 = { package = "glam", version = "0.33", optional = true, default-features = false, features = ["f64", "i32", "u32"] }
+glam034 = { package = "glam", version = "0.34.1", optional = true, default-features = false, features = ["f64", "i32", "u32"] }
 rayon = { version = "1.6", optional = true }
 defmt = { version = "1.0.1", optional = true }
 encase = { version = "0.12", optional = true }

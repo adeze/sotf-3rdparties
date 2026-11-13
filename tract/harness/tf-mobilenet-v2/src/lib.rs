@@ -51,7 +51,6 @@ pub fn load_image<P: AsRef<path::Path>>(p: P) -> Tensor {
 #[cfg(test)]
 mod tests {
     extern crate dinghy_test;
-    use tract_tensorflow::prelude::*;
 
     use super::*;
 
@@ -63,12 +62,7 @@ mod tests {
     fn run<F, O>(runnable: SimplePlan<F, O, Graph<F, O>>) -> TractResult<()>
     where
         F: Fact + Hash + Clone + 'static,
-        O: std::fmt::Debug
-            + std::fmt::Display
-            + AsRef<dyn Op>
-            + AsMut<dyn Op>
-            + Clone
-            + 'static
+        O: std::fmt::Debug + std::fmt::Display + AsRef<dyn Op> + AsMut<dyn Op> + Clone + 'static,
     {
         let input = load_image(grace_hopper());
         let outputs = runnable.run(tvec![input.into()])?;

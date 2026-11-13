@@ -64,6 +64,10 @@ macro_rules! impl_comparable_proxy {
 
 /// A proxy for any integer-like value.
 #[derive(new)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct IntProxy {
     path: Path,
 }
@@ -105,6 +109,10 @@ impl_proxy!(TensorProxy);
 
 /// A proxy for a tensor datum_type.
 #[derive(new)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct TypeProxy {
     path: Path,
 }
@@ -140,6 +148,10 @@ impl Index<usize> for ShapeProxy {
 
 /// A proxy for a dimension of a shape.
 #[derive(new)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct DimProxy {
     path: Path,
 }

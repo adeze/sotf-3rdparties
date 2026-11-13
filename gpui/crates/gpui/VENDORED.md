@@ -1,11 +1,15 @@
 # Vendored: gpui
 
-- Upstream: https://github.com/zed-industries/zed/tree/v1.9.0/crates/gpui
-- Base ref: v1.9.0
+- Upstream: https://github.com/zed-industries/zed/tree/v1.25.2/crates/gpui
+- Base ref: v1.25.2
 - Import: scripts/import_gpui_upstream.py (history-free snapshot)
-- Excluded on import: examples/, benches/, deps on gpui_platform, gpui_web, reqwest_client, zlog, ztracing, ztracing_macro
+- Excluded on import: examples/, benches/, deps on gpui_platform, reqwest_client, zlog, ztracing, ztracing_macro
 
 ## Local patches
+
+- `src/window.rs` / `src/window/a11y.rs`: `accesskit::Tree::new` renamed to
+  `accesskit::TreeInfo::new` for accesskit 0.25 (issue #6 Phase B/C;
+  `Tree` is a deprecated alias there).
 
 - `src/scene.rs` / `src/window.rs` port upstream zed PR #60482 (merged
   2026-07-09): GPU-facing `Underline.wavy` / `PolychromeSprite.grayscale`
@@ -74,6 +78,7 @@ one inner attribute per default-level lint that fires on unmodified upstream cod
 - `#![allow(clippy::redundant_static_lifetimes)]` — `src/gpui.rs:9` (`GPUI_MANIFEST_DIR`)
 - `#![allow(clippy::single_match)]` — `src/platform/app_menu.rs:177`
 - `#![allow(clippy::too_many_arguments)]` — 7 sites, e.g. `src/element.rs:95`, `src/text_system/line.rs:334,580`
+- `#![allow(clippy::unnecessary_lazy_evaluations)]` — `src/elements/animation.rs:273` (added issue #6 Phase C)
 - `#![allow(clippy::unnecessary_map_or)]` — `src/app.rs:459`, `src/window.rs:4792,4844`, `src/platform/test/dispatcher.rs:29`
 - `#![allow(unexpected_cfgs)]` — `src/styled.rs:19` uses `not(rust_analyzer)`, a custom cfg
   set by editors/Zed's own build, not declared as a Cargo feature or check-cfg here.

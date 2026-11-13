@@ -9,9 +9,9 @@ use cosmic_text::{
     ShapeLine,
 };
 use gpui::{
-    Bounds, DevicePixels, FontFeatures, FontId, FontRun, GlyphId, LineLayout, Pixels,
-    RenderGlyphParams, SUBPIXEL_VARIANTS_X, SUBPIXEL_VARIANTS_Y, ShapedGlyph, ShapedRun, Size,
-    point, size,
+    Bounds, DevicePixels, FallbackFontClass, FontFeatures, FontId, FontRun, GlyphId, LineLayout,
+    MissingGlyph, Pixels, RenderGlyphParams, SUBPIXEL_VARIANTS_X, SUBPIXEL_VARIANTS_Y, ShapedGlyph,
+    ShapedRun, Size, point, size,
 };
 use smallvec::SmallVec;
 use std::{borrow::Cow, path::Path};
@@ -19,6 +19,7 @@ use swash::{
     scale::{Render, ScaleContext, Source, StrikeWith},
     zeno::{Format, Vector},
 };
+use unicode_segmentation::UnicodeSegmentation;
 
 pub(super) struct CosmicTextSystemState {
     pub(super) font_system: FontSystem,
@@ -35,6 +36,80 @@ pub(super) struct CosmicTextSystemState {
 impl CosmicTextSystemState {
     pub(super) fn loaded_font(&self, font_id: FontId) -> &LoadedFont {
         &self.loaded_fonts[font_id.0]
+    }
+
+    pub(super) fn missing_glyphs(
+        &self,
+        text: &str,
+        font_runs: &[FontRun],
+        missing_text_indices: impl IntoIterator<Item = usize>,
+    ) -> Vec<MissingGlyph> {
+        let mut missing_text_indices = missing_text_indices.into_iter().peekable();
+        if missing_text_indices.peek().is_none() {
+            return Vec::new();
+        }
+        let mut missing_text_indices = missing_text_indices.collect::<Vec<_>>();
+        missing_text_indices.sort_unstable();
+        missing_text_indices.dedup();
+
+        let mut font_run_index = 0;
+        let mut font_run_end = font_runs.first().map_or(0, |font_run| font_run.len);
+        let mut missing_glyphs = Vec::new();
+        let mut missing_index = 0;
+        for (grapheme_start, grapheme) in text.grapheme_indices(true) {
+            let grapheme_end = grapheme_start + grapheme.len();
+            while missing_text_indices
+                .get(missing_index)
+                .is_some_and(|text_index| *text_index < grapheme_start)
+            {
+                missing_index += 1;
+            }
+            let Some(&text_index) = missing_text_indices.get(missing_index) else {
+                break;
+            };
+            if text_index >= grapheme_end {
+                continue;
+            }
+
+            while font_run_end <= text_index && font_run_index + 1 < font_runs.len() {
+                font_run_index += 1;
+                let Some(font_run) = font_runs.get(font_run_index) else {
+                    break;
+                };
+                font_run_end += font_run.len;
+            }
+            let font_class = self.fallback_font_class(
+                font_runs
+                    .get(font_run_index)
+                    .or_else(|| font_runs.last())
+                    .map(|font_run| font_run.font_id),
+            );
+            missing_glyphs.push(MissingGlyph::new(grapheme.into(), font_class));
+            while missing_text_indices
+                .get(missing_index)
+                .is_some_and(|text_index| *text_index < grapheme_end)
+            {
+                missing_index += 1;
+            }
+        }
+        missing_glyphs
+    }
+
+    fn fallback_font_class(&self, font_id: Option<FontId>) -> FallbackFontClass {
+        let Some(font_id) = font_id else {
+            return FallbackFontClass::Proportional;
+        };
+        let loaded_font = self.loaded_font(font_id);
+        let is_monospace = self
+            .font_system
+            .db()
+            .face(loaded_font.font.id())
+            .is_some_and(|face| face.monospaced);
+        if is_monospace {
+            FallbackFontClass::Monospace
+        } else {
+            FallbackFontClass::Proportional
+        }
     }
 
     #[profiling::function]

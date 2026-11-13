@@ -50,7 +50,12 @@ softbuffer = "0.3.4"
 members = ["examples/render_femtovg"]
 
 [lints.clippy]
-missing-safety-doc = "allow"
+missing_safety_doc = "allow"
+
+[lints.rust]
+# objc 0.2 macros expand this obsolete cfg in the consuming crate. Recognize
+# its spelling without enabling it or disabling other unexpected-cfg checks.
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(feature, values("cargo-clippy"))'] }
 
 [[example]]
 name = "open_window"

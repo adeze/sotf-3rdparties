@@ -3,6 +3,10 @@ use tract_ndarray::*;
 use tract_num_traits::{AsPrimitive, One, Zero};
 
 #[derive(Debug, Clone, new, Default)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct ConstantLike {
     value: f32,
 }
@@ -64,6 +68,10 @@ impl TypedOp for ConstantLike {
 }
 
 #[derive(Debug, Clone, new, Default, Hash)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct EyeLike {
     dt: Option<DatumType>,
     k: isize,

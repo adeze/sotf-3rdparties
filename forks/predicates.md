@@ -8,11 +8,19 @@ License evidence status: preserved.
 
 ## Why retained
 
-Consolidate float-cmp dependencies while preserving the modern f64 comparison behavior used by tests.
+Preserve the modern f64 comparison behavior and diagnostics used by tests.
+The original fork consolidated float-cmp at 0.9; the release dependency refresh
+restores 0.10.0 while retaining the comparison helpers.
 
 ## Retained changes
 
-Private modernf64 helpers retained from float-cmp 0.10; optional dependency uses 0.9; local unpublished version.
+Release maintenance (2026-10-30): restored the nonempty and empty file
+fixtures referenced by the file-content doctest and included them in
+Cargo packaging. macOS Clippy, all 48 doctests, and release nextest passed before
+the float-cmp dependency refresh; those executable gates must be rerun.
+
+Private modernf64 helpers retained from float-cmp 0.10; optional dependency now
+uses 0.10.0; local unpublished version. Offline all-feature resolution passes.
 Read [the existing detail record](../predicates/SOTF_FORK_PROVENANCE.json) before updating.
 This inventory review does not claim a fresh upstream parity or security audit.
 

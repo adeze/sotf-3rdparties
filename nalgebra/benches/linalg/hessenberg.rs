@@ -1,14 +1,12 @@
 use na::{DMatrix, Hessenberg, Matrix4};
 
-#[path = "../common/macros.rs"]
-mod macros;
 
 // Without unpack.
 fn hessenberg_decompose_4x4(bh: &mut criterion::Criterion) {
     bh.bench_function("hessenberg_decompose_4x4", |bh| {
         bh.iter_batched(
-            || Matrix4::<f64>::new_random(),
-            |m| Hessenberg::new(m),
+            Matrix4::<f64>::new_random,
+            Hessenberg::new,
             criterion::BatchSize::SmallInput,
         )
     });
@@ -18,7 +16,7 @@ fn hessenberg_decompose_100x100(bh: &mut criterion::Criterion) {
     bh.bench_function("hessenberg_decompose_100x100", |bh| {
         bh.iter_batched(
             || DMatrix::<f64>::new_random(100, 100),
-            |m| Hessenberg::new(m),
+            Hessenberg::new,
             criterion::BatchSize::SmallInput,
         )
     });
@@ -28,7 +26,7 @@ fn hessenberg_decompose_200x200(bh: &mut criterion::Criterion) {
     bh.bench_function("hessenberg_decompose_200x200", |bh| {
         bh.iter_batched(
             || DMatrix::<f64>::new_random(200, 200),
-            |m| Hessenberg::new(m),
+            Hessenberg::new,
             criterion::BatchSize::SmallInput,
         )
     });

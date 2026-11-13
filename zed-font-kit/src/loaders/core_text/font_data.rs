@@ -12,7 +12,7 @@ impl Deref for FontData {
     fn deref(&self) -> &[u8] {
         match *self {
             FontData::Unavailable => panic!("Font data unavailable!"),
-            FontData::Memory(ref data) => &***data,
+            FontData::Memory(ref data) => data,
         }
     }
 }

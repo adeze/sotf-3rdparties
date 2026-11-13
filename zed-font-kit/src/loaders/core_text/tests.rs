@@ -7,7 +7,7 @@ mod test {
     #[cfg(feature = "source")]
     use crate::source::SystemSource;
 
-    static TEST_FONT_POSTSCRIPT_NAME: &'static str = "ArialMT";
+    static TEST_FONT_POSTSCRIPT_NAME: &str = "ArialMT";
 
     #[cfg(feature = "source")]
     #[test]

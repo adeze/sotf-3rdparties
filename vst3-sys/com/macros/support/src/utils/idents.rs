@@ -1,5 +1,5 @@
 use quote::format_ident;
-use syn::{AttributeArgs, Ident, Meta, NestedMeta};
+use syn::{punctuated::Punctuated, Ident, Meta, Token};
 
 use std::collections::HashMap;
 
@@ -23,11 +23,11 @@ pub fn set_aggregate_fn_ident(base: &Ident) -> Ident {
     format_ident!("set_aggregate_{}", super::camel_to_snake(&base.to_string()))
 }
 
-pub fn base_interface_idents(attr_args: &AttributeArgs) -> Vec<Ident> {
+pub fn base_interface_idents(attr_args: &[Meta]) -> Vec<Ident> {
     let mut base_interface_idents = Vec::new();
 
     for attr_arg in attr_args {
-        if let NestedMeta::Meta(Meta::List(ref attr)) = attr_arg {
+        if let Meta::List(attr) = attr_arg {
             if attr
                 .path
                 .segments
@@ -39,8 +39,11 @@ pub fn base_interface_idents(attr_args: &AttributeArgs) -> Vec<Ident> {
                 continue;
             }
 
-            for item in &attr.nested {
-                if let NestedMeta::Meta(Meta::Path(p)) = item {
+            let nested = attr
+                .parse_args_with(Punctuated::<Meta, Token![,]>::parse_terminated)
+                .expect("Invalid interface list syntax");
+            for item in &nested {
+                if let Meta::Path(p) = item {
                     assert_eq!(
                         p.segments.len(),
                         1,
@@ -78,11 +81,11 @@ pub fn base_interface_idents(attr_args: &AttributeArgs) -> Vec<Ident> {
 /// Parse the arguments in helper attribute aggr. E.g. #[aggr(ICat, IAnimal)]
 /// Returns a HashMap mapping each struct field ident to idents of the base
 /// interfaces exposed by aggregate.
-pub fn get_aggr_map(attr_args: &AttributeArgs) -> HashMap<Ident, Vec<Ident>> {
+pub fn get_aggr_map(attr_args: &[Meta]) -> HashMap<Ident, Vec<Ident>> {
     let mut aggr_map = HashMap::new();
 
     for attr_arg in attr_args {
-        if let NestedMeta::Meta(Meta::List(ref attr)) = attr_arg {
+        if let Meta::List(attr) = attr_arg {
             if attr
                 .path
                 .segments
@@ -96,13 +99,16 @@ pub fn get_aggr_map(attr_args: &AttributeArgs) -> HashMap<Ident, Vec<Ident>> {
 
             let mut aggr_interfaces_idents = Vec::new();
 
+            let nested = attr
+                .parse_args_with(Punctuated::<Meta, Token![,]>::parse_terminated)
+                .expect("Invalid aggregate interface list syntax");
             assert!(
-                !attr.nested.is_empty(),
+                !nested.is_empty(),
                 "Need to expose at least one interface from aggregated COM object."
             );
 
-            for item in &attr.nested {
-                if let NestedMeta::Meta(Meta::Path(p)) = item {
+            for item in &nested {
+                if let Meta::Path(p) = item {
                     assert_eq!(
                         p.segments.len(),
                         1,

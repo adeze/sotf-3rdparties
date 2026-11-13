@@ -43,8 +43,8 @@ fn upper_lower_triangular() {
         31.0, 32.0, 33.0, 43.0,
         41.0, 42.0, 43.0, 44.0);
 
-    let mut computed_symm_um = m.clone();
-    let mut computed_symm_lm = m.clone();
+    let mut computed_symm_um = m;
+    let mut computed_symm_lm = m;
 
     computed_symm_um.fill_lower_triangle_with_upper_triangle();
     computed_symm_lm.fill_upper_triangle_with_lower_triangle();

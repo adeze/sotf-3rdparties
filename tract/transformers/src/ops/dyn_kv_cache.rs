@@ -1,8 +1,8 @@
 use tract_nnef::internal::*;
 use tract_nnef::prelude::tract_itertools::Itertools;
+use tract_nnef::tract_core::ops::OpStateFreeze;
 use tract_nnef::tract_core::ops::array::TypedConcat;
 use tract_nnef::tract_core::ops::source::TypedSource;
-use tract_nnef::tract_core::ops::OpStateFreeze;
 
 use crate::rule_ensure;
 
@@ -354,7 +354,7 @@ mod tests {
 
         for shape in input_shapes {
             let len = shape.iter().product::<usize>();
-            let input = Tensor::from_shape(&shape, &(0..len).map(|f| f.as_()).collect::<Vec<F>>())?;
+            let input = Tensor::from_shape(shape, &(0..len).map(|f| f.as_()).collect::<Vec<F>>())?;
             inputs.push(input.clone().into_tvalue());
             state.eval(&mut session_state, &op, tvec!(input.clone().into()))?[0]
                 .clone()

@@ -2,8 +2,8 @@ use std::str;
 
 use crate::model::ParsingContext;
 use crate::pb::NodeProto;
-use tract_core::ops::cnn::deconv::adjustments;
 use tract_core::ops::cnn::KernelFormat;
+use tract_core::ops::cnn::deconv::adjustments;
 use tract_hir::ops::cnn::PaddingSpec;
 use tract_hir::ops::nn::DataFormat;
 use tract_hir::{internal::*, ops::cnn::PoolSpec};
@@ -33,6 +33,10 @@ pub fn conv_transpose(
 }
 
 #[derive(Debug, Clone, new, Default, Hash)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct ConvTranspose {
     padding_spec: PaddingSpec,
     strides: Option<TVec<usize>>,

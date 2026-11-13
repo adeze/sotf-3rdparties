@@ -1,14 +1,12 @@
 use na::{DMatrix, DVector, Matrix4, QR};
 
-#[path = "../common/macros.rs"]
-mod macros;
 
 // Without unpack.
 fn qr_decompose_100x100(bh: &mut criterion::Criterion) {
     bh.bench_function("qr_decompose_100x100", |bh| {
         bh.iter_batched(
             || DMatrix::<f64>::new_random(100, 100),
-            |m| QR::new(m),
+            QR::new,
             criterion::BatchSize::SmallInput,
         )
     });
@@ -18,7 +16,7 @@ fn qr_decompose_100x500(bh: &mut criterion::Criterion) {
     bh.bench_function("qr_decompose_100x500", |bh| {
         bh.iter_batched(
             || DMatrix::<f64>::new_random(100, 500),
-            |m| QR::new(m),
+            QR::new,
             criterion::BatchSize::SmallInput,
         )
     });
@@ -27,8 +25,8 @@ fn qr_decompose_100x500(bh: &mut criterion::Criterion) {
 fn qr_decompose_4x4(bh: &mut criterion::Criterion) {
     bh.bench_function("qr_decompose_4x4", |bh| {
         bh.iter_batched(
-            || Matrix4::<f64>::new_random(),
-            |m| QR::new(m),
+            Matrix4::<f64>::new_random,
+            QR::new,
             criterion::BatchSize::SmallInput,
         )
     });
@@ -38,7 +36,7 @@ fn qr_decompose_500x100(bh: &mut criterion::Criterion) {
     bh.bench_function("qr_decompose_500x100", |bh| {
         bh.iter_batched(
             || DMatrix::<f64>::new_random(500, 100),
-            |m| QR::new(m),
+            QR::new,
             criterion::BatchSize::SmallInput,
         )
     });

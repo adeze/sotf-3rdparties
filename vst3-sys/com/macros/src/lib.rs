@@ -6,7 +6,7 @@ extern crate proc_macro;
 use proc_macro::TokenStream;
 use proc_macro2::Span;
 use quote::quote;
-use syn::{AttributeArgs, Ident, ItemStruct, Meta, NestedMeta};
+use syn::{punctuated::Punctuated, Ident, ItemStruct, Meta, Token};
 
 // All the Macro exports declared here. Delegates to respective crate for expansion.
 #[proc_macro_attribute]
@@ -23,17 +23,18 @@ pub fn derive_vtable(input: TokenStream) -> TokenStream {
 #[proc_macro_attribute]
 pub fn co_class(attr: TokenStream, item: TokenStream) -> TokenStream {
     let input = syn::parse_macro_input!(item as ItemStruct);
-    let attr_args = syn::parse_macro_input!(attr as AttributeArgs);
+    let attr_args =
+        syn::parse_macro_input!(attr with Punctuated::<Meta, Token![,]>::parse_terminated);
+    let attr_args: Vec<Meta> = attr_args.into_iter().collect();
     if is_aggregatable(&attr_args) {
         expand_aggr_co_class(&input, &attr_args)
     } else {
         expand_co_class(&input, &attr_args)
     }
 }
-#[allow(clippy::ptr_arg)]
-fn is_aggregatable(attr_args: &AttributeArgs) -> bool {
+fn is_aggregatable(attr_args: &[Meta]) -> bool {
     attr_args.iter().any(|arg| match arg {
-        NestedMeta::Meta(Meta::Path(ref path)) => {
+        Meta::Path(path) => {
             let segments = &path.segments;
             segments.len() == 1
                 && segments.first().expect("Invalid attribute syntax").ident == "aggregatable"

@@ -844,7 +844,7 @@ pub mod tests {
 
                     let mut incremental = new_resampler();
                     let delay = incremental.output_delay();
-                    let mut streamed = vec![Vec::new(), Vec::new()];
+                    let mut streamed = [Vec::new(), Vec::new()];
                     let mut start = 0;
                     for _ in 0..256 {
                         if start == input_len {
@@ -894,10 +894,10 @@ pub mod tests {
                     }
                     assert!(streamed[0].len() >= delay + expected_len);
 
-                    for channel in 0..2 {
+                    for (channel, samples) in streamed.iter().enumerate() {
                         for frame in 0..expected_len {
                             let actual = output.read_sample(channel, frame).unwrap();
-                            let expected = streamed[channel][delay + frame];
+                            let expected = samples[delay + frame];
                             assert!(
                                 (actual - expected).abs() < 1e-12,
                                 "fixed={fixed:?} ratio={ratio} input_len={input_len} channel={channel} frame={frame} actual={actual} expected={expected}"
@@ -953,7 +953,7 @@ pub mod tests {
 
                 let mut incremental = new_resampler();
                 let delay = incremental.output_delay();
-                let mut streamed = vec![Vec::new(), Vec::new()];
+                let mut streamed = [Vec::new(), Vec::new()];
                 let mut start = 0;
                 for _ in 0..256 {
                     if start == input_len {
@@ -1000,10 +1000,10 @@ pub mod tests {
                     }
                 }
                 assert!(streamed[0].len() >= delay + expected_len);
-                for channel in 0..2 {
+                for (channel, samples) in streamed.iter().enumerate() {
                     for frame in 0..expected_len {
                         let actual = output.read_sample(channel, frame).unwrap();
-                        let expected = streamed[channel][delay + frame];
+                        let expected = samples[delay + frame];
                         assert!(
                             (actual - expected).abs() < 1e-12,
                             "FFT {source_rate}->{target_rate} len={input_len} channel={channel} frame={frame} actual={actual} expected={expected}"

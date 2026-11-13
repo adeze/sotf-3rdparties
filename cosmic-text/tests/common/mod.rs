@@ -1,3 +1,5 @@
+#![allow(dead_code, reason = "Shared test helpers are used by different integration test binaries")]
+
 use std::path::PathBuf;
 
 use cosmic_text::{

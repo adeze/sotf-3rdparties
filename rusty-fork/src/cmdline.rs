@@ -73,7 +73,7 @@ pub(crate) fn env_var_for_flag(flag: &str) -> String {
 }
 
 fn look_up_flag_from_env(flag: &str) -> Option<FlagType> {
-    env::var(&env_var_for_flag(flag)).ok().map(
+    env::var(env_var_for_flag(flag)).ok().map(
         |value| match &*value {
             "pass" => FlagType::Pass(false),
             "pass-arg" => FlagType::Pass(true),

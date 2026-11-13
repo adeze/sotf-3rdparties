@@ -592,6 +592,8 @@ pub trait QueueWriteBufferInterface: CommonTraits {
 }
 
 pub trait BufferMappedRangeInterface: CommonTraits {
+    // SOTF local (sotf-3rdparties#6): unused by the web backend dispatch.
+    #[cfg_attr(target_family = "wasm", allow(dead_code))]
     fn len(&self) -> usize;
 
     /// # Safety

@@ -27,7 +27,7 @@ gpui.workspace = true
 [target.'cfg(target_os = "windows")'.dependencies]
 anyhow.workspace = true
 collections.workspace = true
-etagere = "0.2"
+etagere = "0.3"
 futures.workspace = true
 image.workspace = true
 itertools.workspace = true
@@ -35,11 +35,13 @@ log.workspace = true
 parking_lot.workspace = true
 rand.workspace = true
 raw-window-handle = "0.6"
+scheduler.workspace = true
 smallvec.workspace = true
 util.workspace = true
 uuid.workspace = true
 windows.workspace = true
 windows-core.workspace = true
+# Held with the windows 0.62 line; see gpui/Cargo.toml windows-core note.
 windows-numerics = "0.3"
 windows-registry = "0.6"
 

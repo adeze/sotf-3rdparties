@@ -12,7 +12,11 @@ Keep Vello and GPUI on one Zed WGPU 29 dependency family including its EGL fix.
 
 ## Retained changes
 
-Exact Zed fork snapshot; all workspace support crates retained. No new SOTF source patch during import.
+Zed fork snapshot with all workspace support crates retained. Release QA
+corrects package selectors in xtask, dependency tests, and the CTS launcher
+for the SOTF package names. Ray-tracing expected failures are limited to the
+reported Apple M3 adapter; the stale Metal subgroup expected failure is
+removed after native M4 validation. No backend rendering implementation changes.
 Read [the existing detail record](../wgpu/Cargo.toml) before updating.
 This inventory review does not claim a fresh upstream parity or security audit.
 

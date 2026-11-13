@@ -12,7 +12,7 @@ use objc2_core_foundation::{
     kCFUserNotificationCautionAlertLevel, kCFUserNotificationDefaultResponse,
     kCFUserNotificationNoteAlertLevel, kCFUserNotificationOtherResponse,
     kCFUserNotificationStopAlertLevel, CFOptionFlags, CFRetained, CFString, CFTimeInterval,
-    CFUserNotificationDisplayAlert, CFURL,
+    CFUserNotification, CFURL,
 };
 
 use std::{mem::MaybeUninit, thread};
@@ -91,7 +91,7 @@ impl UserAlert {
             .map(|value| CFString::from_str(&value[..]));
         let mut response_flags = MaybeUninit::<CFOptionFlags>::uninit();
         let is_cancel = unsafe {
-            CFUserNotificationDisplayAlert(
+            CFUserNotification::display_alert(
                 self.timeout,
                 self.flags,
                 self.icon_url.as_deref(),

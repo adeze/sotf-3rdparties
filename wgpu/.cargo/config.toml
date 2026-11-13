@@ -1,2 +1,2 @@
 [alias]
-xtask = "run -p wgpu-xtask --"
+xtask = "run -p sotf-wgpu-xtask --"

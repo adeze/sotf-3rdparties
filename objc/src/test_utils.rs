@@ -13,7 +13,7 @@ pub struct CustomObject {
 impl CustomObject {
     fn new(class: &Class) -> Self {
         let obj = unsafe { runtime::class_createInstance(class, 0) };
-        CustomObject { obj: obj }
+        CustomObject { obj }
     }
 }
 
@@ -54,7 +54,7 @@ unsafe impl Encode for CustomStruct {
         for _ in 0..4 {
             code.push_str(u64::encode().as_str());
         }
-        code.push_str("}");
+        code.push('}');
         unsafe { Encoding::from_str(&code) }
     }
 }

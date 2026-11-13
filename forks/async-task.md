@@ -36,3 +36,7 @@ Replace this source only when a selected upstream release covers the retained be
 Owner: SOTF dependency maintainers. Inventory reviewed 2026-10-07;
 re-evaluate the upstream delta within 90 days and on every update.
 Follow [the collection update procedure](../README.md#updating-a-fork).
+
+## 2026-10-30 release validation
+
+Release validation uses nightly for upstream unstable benchmark harnesses: strict all-target Clippy, all-target tests, doctests and nextest pass on macOS. Stable all-target Clippy cannot compile the upstream benchmark feature(test).

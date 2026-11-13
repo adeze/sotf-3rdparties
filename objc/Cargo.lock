@@ -3,16 +3,26 @@
 version = 4
 
 [[package]]
-name = "gcc"
-version = "0.3.55"
+name = "cc"
+version = "1.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8f5f3913fa0bfe7ee1fd8248b6b9f42a5af4b9d65ec2dd2c3c26132b950ecfc2"
+checksum = "4ff2a8126fff0f8c839080d619675a585e61720bb12d2baceae45769fd66f155"
+dependencies = [
+ "find-msvc-tools",
+ "shlex",
+]
+
+[[package]]
+name = "find-msvc-tools"
+version = "0.1.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1c66915cc5391097de7a2b0b972e8505aa33c0df401fd3a6811dbdb32881ba48"
 
 [[package]]
 name = "libc"
-version = "0.2.57"
+version = "0.2.191"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a844cabbd5a77e60403a58af576f0a1baa83c3dd2670be63e615bd24fc58b82d"
+checksum = "65cd87c9a6d60536580b316ad985726104730a5151c99845f2490428ef91240a"
 
 [[package]]
 name = "malloc_buf"
@@ -25,12 +35,18 @@ dependencies = [
 
 [[package]]
 name = "objc_exception"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "098cd29a2fa3c230d3463ae069cecccc3fdfd64c0d2496ab5b96f82dab6a00dc"
+checksum = "ad970fb455818ad6cba4c122ad012fae53ae8b4795f86378bce65e4f6bab2ca4"
 dependencies = [
- "gcc",
+ "cc",
 ]
+
+[[package]]
+name = "shlex"
+version = "2.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f8fadd59c855ef2080decdef8ff161eb6661b86933c9d82e5ba29dc602a55aba"
 
 [[package]]
 name = "sotf-objc"
@@ -39,3 +55,215 @@ dependencies = [
  "malloc_buf",
  "objc_exception",
 ]
+
+[[patch.unused]]
+name = "math-dsp"
+version = "0.5.37"
+
+[[patch.unused]]
+name = "gpui-android"
+version = "0.11.0"
+
+[[patch.unused]]
+name = "gpui-au"
+version = "0.11.0"
+
+[[patch.unused]]
+name = "gpui-audio-kit"
+version = "0.11.0"
+
+[[patch.unused]]
+name = "gpui-builder"
+version = "0.11.0"
+
+[[patch.unused]]
+name = "gpui-component-lab"
+version = "0.11.0"
+
+[[patch.unused]]
+name = "gpui-d3rs"
+version = "0.11.0"
+
+[[patch.unused]]
+name = "gpui-design"
+version = "0.11.0"
+
+[[patch.unused]]
+name = "gpui-design-tools"
+version = "0.11.0"
+
+[[patch.unused]]
+name = "gpui-ios"
+version = "0.11.0"
+
+[[patch.unused]]
+name = "gpui-keybinding"
+version = "0.11.0"
+
+[[patch.unused]]
+name = "gpui-layout-expr"
+version = "0.11.0"
+
+[[patch.unused]]
+name = "gpui-miniapp"
+version = "0.11.0"
+
+[[patch.unused]]
+name = "gpui-pretext"
+version = "0.11.0"
+
+[[patch.unused]]
+name = "gpui-profiler"
+version = "0.11.0"
+
+[[patch.unused]]
+name = "gpui-px"
+version = "0.11.0"
+
+[[patch.unused]]
+name = "gpui-themes"
+version = "0.11.0"
+
+[[patch.unused]]
+name = "gpui-ui-kit"
+version = "0.11.0"
+
+[[patch.unused]]
+name = "gpui-ui-kit-macros"
+version = "0.11.0"
+
+[[patch.unused]]
+name = "sotf-assert_no_alloc"
+version = "1.1.2"
+
+[[patch.unused]]
+name = "sotf-coreaudio-rs"
+version = "0.14.2"
+
+[[patch.unused]]
+name = "sotf-dst-decoder"
+version = "0.1.2"
+
+[[patch.unused]]
+name = "sotf-gpui-toolkit-gpui"
+version = "0.2.4"
+
+[[patch.unused]]
+name = "sotf-gpui-toolkit-gpui-linux"
+version = "0.1.0"
+
+[[patch.unused]]
+name = "sotf-gpui-toolkit-gpui-macos"
+version = "0.1.2"
+
+[[patch.unused]]
+name = "sotf-gpui-toolkit-gpui-web"
+version = "0.1.1"
+
+[[patch.unused]]
+name = "sotf-gpui-toolkit-gpui-wgpu"
+version = "0.1.3"
+
+[[patch.unused]]
+name = "sotf-gpui-toolkit-gpui-windows"
+version = "0.1.2"
+
+[[patch.unused]]
+name = "sotf-librespot-core"
+version = "0.8.0"
+
+[[patch.unused]]
+name = "sotf-librespot-metadata"
+version = "0.8.0"
+
+[[patch.unused]]
+name = "sotf-librespot-playback"
+version = "0.8.0"
+
+[[patch.unused]]
+name = "sotf-librespot-protocol"
+version = "0.8.0"
+
+[[patch.unused]]
+name = "sotf-metaheuristics-nature"
+version = "10.1.0"
+
+[[patch.unused]]
+name = "sotf-nalgebra"
+version = "0.35.0"
+
+[[patch.unused]]
+name = "sotf-nih_plug"
+version = "0.0.0"
+
+[[patch.unused]]
+name = "sotf-nnnoiseless"
+version = "0.1.1"
+
+[[patch.unused]]
+name = "sotf-predicates"
+version = "3.1.5"
+
+[[patch.unused]]
+name = "sotf-rdsd2pcm"
+version = "0.4.0"
+
+[[patch.unused]]
+name = "sotf-rfd"
+version = "0.17.2"
+
+[[patch.unused]]
+name = "sotf-rubato"
+version = "5.0.0"
+
+[[patch.unused]]
+name = "sotf-tract-onnx"
+version = "0.22.4"
+
+[[patch.unused]]
+name = "sotf-vello"
+version = "0.10.0"
+
+[[patch.unused]]
+name = "sotf-vst3-com"
+version = "0.1.0"
+
+[[patch.unused]]
+name = "sotf-vst3-sys"
+version = "0.1.0"
+
+[[patch.unused]]
+name = "sotf-wgpu"
+version = "29.0.3"
+
+[[patch.unused]]
+name = "sotf-zed-font-kit"
+version = "0.14.1-zed"
+
+[[patch.unused]]
+name = "math-delaunay"
+version = "0.5.4"
+
+[[patch.unused]]
+name = "symphonia-codec-dsd"
+version = "0.2.0"
+
+[[patch.unused]]
+name = "symphonia-codec-dst"
+version = "0.2.0"
+
+[[patch.unused]]
+name = "symphonia-codec-wavpack"
+version = "0.1.1"
+
+[[patch.unused]]
+name = "symphonia-format-sacd"
+version = "0.1.2"
+
+[[patch.unused]]
+name = "symphonia-iamf-core"
+version = "0.1.0"
+
+[[patch.unused]]
+name = "sofa-reader"
+version = "0.2.2"

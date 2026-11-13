@@ -4,6 +4,10 @@ use crate::internal::*;
 use super::RmDims;
 
 #[derive(Debug, Clone, new, Default, Hash)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct Squeeze {
     axes: Option<Vec<isize>>,
 }

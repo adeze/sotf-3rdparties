@@ -156,7 +156,7 @@ impl Capturer {
         self.engine.get_output_frame_size()
     }
 
-    pub fn raw(&self) -> RawCapturer {
+    pub fn raw(&self) -> RawCapturer<'_> {
         RawCapturer { capturer: self }
     }
 

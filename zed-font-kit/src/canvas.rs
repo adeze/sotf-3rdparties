@@ -20,14 +20,12 @@ use crate::utils;
 lazy_static! {
     static ref BITMAP_1BPP_TO_8BPP_LUT: [[u8; 8]; 256] = {
         let mut lut = [[0; 8]; 256];
-        for byte in 0..0x100 {
-            let mut value = [0; 8];
-            for bit in 0..8 {
+        for (byte, value) in lut.iter_mut().enumerate() {
+            for (bit, pixel) in value.iter_mut().enumerate() {
                 if (byte & (0x80 >> bit)) != 0 {
-                    value[bit] = 0xff;
+                    *pixel = 0xff;
                 }
             }
-            lut[byte] = value
         }
         lut
     };

@@ -5,7 +5,7 @@ use na::dimension::Dim;
 use na::{DefaultAllocator, OVector, RealField, Unit, Vector2, Vector3};
 
 /// Reflects a vector wrt. the hyperplane with normal `plane_normal`.
-fn reflect_wrt_hyperplane_with_dimensional_genericity<T: RealField, D: Dim>(
+fn reflect_wrt_hyperplane_with_dimensional_genericity<T, D>(
     plane_normal: &Unit<OVector<T, D>>,
     vector: &OVector<T, D>,
 ) -> OVector<T, D>

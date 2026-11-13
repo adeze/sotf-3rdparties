@@ -136,7 +136,7 @@ impl<T: RealField, D1: Dim, S1: Storage<T, D1>> Vector<T, D1, S1> {
 
         for i in 0..vec {
             for j in 0..ker {
-                let val = if i + j < 1 || i + j >= vec + 1 {
+                let val = if i + j < 1 || i + j > vec {
                     zero::<T>()
                 } else {
                     self[i + j - 1].clone()

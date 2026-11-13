@@ -4,12 +4,14 @@ use crate::model::ParsingContext;
 use crate::tfpb::tensorflow::NodeDef;
 
 #[derive(Debug, Clone, new, Hash)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct Transpose {
     t: DatumType,
     t_perm: DatumType,
 }
-
-
 
 pub fn transpose(_ctx: &ParsingContext, pb: &NodeDef) -> TractResult<Box<dyn InferenceOp>> {
     let t = pb.get_attr_datum_type("T")?;
@@ -31,7 +33,6 @@ impl Expansion for Transpose {
     fn name(&self) -> StaticName {
         "Transpose".into()
     }
-
 
     fn rules<'r, 'p: 'r, 's: 'r>(
         &'s self,

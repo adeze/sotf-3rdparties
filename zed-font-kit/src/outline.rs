@@ -12,7 +12,6 @@
 
 use pathfinder_geometry::line_segment::LineSegment2F;
 use pathfinder_geometry::vector::Vector2F;
-use std::mem;
 
 /// Receives Bézier path rendering commands.
 pub trait OutlineSink {
@@ -178,7 +177,7 @@ impl OutlineBuilder {
     pub fn take_outline(&mut self) -> Outline {
         assert!(self.current_contour.positions.is_empty());
         self.current_contour = Contour::new();
-        mem::replace(&mut self.outline, Outline::new())
+        std::mem::take(&mut self.outline)
     }
 }
 
@@ -212,6 +211,6 @@ impl OutlineSink for OutlineBuilder {
     fn close(&mut self) {
         self.outline
             .contours
-            .push(mem::replace(&mut self.current_contour, Contour::new()));
+            .push(std::mem::take(&mut self.current_contour));
     }
 }

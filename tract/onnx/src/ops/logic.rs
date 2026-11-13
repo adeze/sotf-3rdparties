@@ -56,6 +56,10 @@ pub fn _if(
 }
 
 #[derive(Debug, Clone, new)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct If {
     pub then_body: InferenceModel,
     then_input_mapping: Vec<usize>,
@@ -157,7 +161,12 @@ impl InferenceOp for If {
     fn nboutputs(&self) -> TractResult<usize> {
         let then_outputs = self.then_body.outputs.len();
         let else_outputs = self.else_body.outputs.len();
-        ensure!(then_outputs == else_outputs, "If Operators expect the `then_branch` {} and `else_branch` {} to produce the same number of outputs", then_outputs, else_outputs);
+        ensure!(
+            then_outputs == else_outputs,
+            "If Operators expect the `then_branch` {} and `else_branch` {} to produce the same number of outputs",
+            then_outputs,
+            else_outputs
+        );
         Ok(then_outputs)
     }
 

@@ -2468,7 +2468,7 @@ impl<P: ClapPlugin> Wrapper<P> {
                             && has_main_output
                         {
                             let audio_output = &*process.audio_outputs;
-                            let ptrs = NonNull::new(audio_output.data32 as *mut *mut f32).unwrap();
+                            let ptrs = NonNull::new(audio_output.data32).unwrap();
                             let num_channels = audio_output.channel_count as usize;
 
                             *buffer_source.main_output_channel_pointers =
@@ -2481,7 +2481,7 @@ impl<P: ClapPlugin> Wrapper<P> {
                             && has_main_input
                         {
                             let audio_input = &*process.audio_inputs;
-                            let ptrs = NonNull::new(audio_input.data32 as *mut *mut f32).unwrap();
+                            let ptrs = NonNull::new(audio_input.data32).unwrap();
                             let num_channels = audio_input.channel_count as usize;
 
                             *buffer_source.main_input_channel_pointers =
@@ -2500,7 +2500,7 @@ impl<P: ClapPlugin> Wrapper<P> {
                                 }
 
                                 let audio_input = &*process.audio_inputs.add(aux_input_idx);
-                                match NonNull::new(audio_input.data32 as *mut *mut f32) {
+                                match NonNull::new(audio_input.data32) {
                                     Some(ptrs) => {
                                         let num_channels = audio_input.channel_count as usize;
 
@@ -2524,7 +2524,7 @@ impl<P: ClapPlugin> Wrapper<P> {
                                 }
 
                                 let audio_output = &*process.audio_outputs.add(aux_output_idx);
-                                match NonNull::new(audio_output.data32 as *mut *mut f32) {
+                                match NonNull::new(audio_output.data32) {
                                     Some(ptrs) => {
                                         let num_channels = audio_output.channel_count as usize;
 
@@ -2595,9 +2595,7 @@ impl<P: ClapPlugin> Wrapper<P> {
                             && (context.flags & CLAP_TRANSPORT_HAS_TEMPO != 0)
                         {
                             transport.pos_beats = Some(
-                                beats
-                                    + (block_start as f64 / sample_rate as f64 / 60.0
-                                        * context.tempo),
+                                beats + (block_start as f64 / sample_rate / 60.0 * context.tempo),
                             );
                         } else {
                             transport.pos_beats = Some(beats);
@@ -2610,7 +2608,7 @@ impl<P: ClapPlugin> Wrapper<P> {
                         // required when converting the musical beat position.
                         if P::SAMPLE_ACCURATE_AUTOMATION && block_start > 0 {
                             transport.pos_seconds =
-                                Some(seconds + (block_start as f64 / sample_rate as f64));
+                                Some(seconds + (block_start as f64 / sample_rate));
                         } else {
                             transport.pos_seconds = Some(seconds);
                         }

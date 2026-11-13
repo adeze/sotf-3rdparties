@@ -2,12 +2,12 @@ use super::vptr;
 use proc_macro2::{Ident, TokenStream as HelperTokenStream};
 use quote::{format_ident, quote};
 use std::iter::FromIterator;
-use syn::{FnArg, ItemTrait, TraitItem, TraitItemMethod, Type, TypeParamBound};
+use syn::{FnArg, ItemTrait, TraitItem, TraitItemFn, Type, TypeParamBound};
 
 /// Generate an VTable for an interface trait
 ///
 /// * `interface` is a trait representing a COM interface. This trait must either be
-/// IUnknown and have no super traits or some other trait that has a parent trait
+///   IUnknown and have no super traits or some other trait that has a parent trait
 pub fn generate(interface: &ItemTrait) -> HelperTokenStream {
     let interface_ident = &interface.ident;
     let vtable_ident = ident(&interface_ident.to_string());
@@ -68,7 +68,7 @@ fn gen_vtable_methods(interface: &ItemTrait) -> HelperTokenStream {
     let mut methods: Vec<HelperTokenStream> = Vec::new();
     for trait_item in &interface.items {
         match trait_item {
-            TraitItem::Method(m) => methods.push(gen_vtable_method(&interface.ident, m)),
+            TraitItem::Fn(m) => methods.push(gen_vtable_method(&interface.ident, m)),
             _ => panic!("Interface traits currently only support methods"),
         };
     }
@@ -78,9 +78,9 @@ fn gen_vtable_methods(interface: &ItemTrait) -> HelperTokenStream {
     )
 }
 
-fn gen_vtable_method(interface_ident: &Ident, method: &TraitItemMethod) -> HelperTokenStream {
+fn gen_vtable_method(interface_ident: &Ident, method: &TraitItemFn) -> HelperTokenStream {
     assert!(
-        method.sig.unsafety.is_some(),
+        matches!(method.sig.safety, syn::Safety::Unsafe(_)),
         "COM Interface methods must be declared unsafe"
     );
     let method_ident = format_ident!(
@@ -96,7 +96,7 @@ fn gen_vtable_method(interface_ident: &Ident, method: &TraitItemMethod) -> Helpe
 
 fn gen_vtable_function_signature(
     interface_ident: &Ident,
-    method: &TraitItemMethod,
+    method: &TraitItemFn,
 ) -> HelperTokenStream {
     let params = gen_raw_params(interface_ident, method);
     let return_type = &method.sig.output;
@@ -106,7 +106,7 @@ fn gen_vtable_function_signature(
     )
 }
 
-fn gen_raw_params(interface_ident: &Ident, method: &TraitItemMethod) -> HelperTokenStream {
+fn gen_raw_params(interface_ident: &Ident, method: &TraitItemFn) -> HelperTokenStream {
     let mut params = Vec::new();
     let vptr_ident = vptr::ident(&interface_ident.to_string());
 
@@ -114,11 +114,11 @@ fn gen_raw_params(interface_ident: &Ident, method: &TraitItemMethod) -> HelperTo
         match param {
             FnArg::Receiver(s) => {
                 assert!(
-                    s.reference.is_some(),
+                    matches!(s.kind, syn::ReceiverKind::Reference(..)),
                     "COM interface methods cannot take ownership of self"
                 );
                 assert!(
-                    s.mutability.is_none(),
+                    matches!(s.kind, syn::ReceiverKind::Reference(_, _, None)),
                     "COM interface methods cannot take mutable reference to self"
                 );
                 params.push(quote!(
@@ -126,7 +126,7 @@ fn gen_raw_params(interface_ident: &Ident, method: &TraitItemMethod) -> HelperTo
                 ));
             }
             FnArg::Typed(t) => {
-                params.push(gen_raw_type(&*t.ty));
+                params.push(gen_raw_type(&t.ty));
             }
         }
     }
@@ -137,7 +137,7 @@ fn gen_raw_params(interface_ident: &Ident, method: &TraitItemMethod) -> HelperTo
 fn gen_raw_type(t: &Type) -> HelperTokenStream {
     match t {
         Type::Array(_n) => panic!("Array type unhandled!"),
-        Type::BareFn(_n) => panic!("BareFn type unhandled!"),
+        Type::FnPtr(_n) => panic!("BareFn type unhandled!"),
         Type::Group(_n) => panic!("Group type unhandled!"),
         Type::ImplTrait(_n) => panic!("ImplTrait type unhandled!"),
         Type::Infer(_n) => panic!("Infer type unhandled!"),
@@ -152,5 +152,40 @@ fn gen_raw_type(t: &Type) -> HelperTokenStream {
         Type::Tuple(_n) => panic!("Tuple type unhandled!"),
         Type::Verbatim(_n) => panic!("Verbatim type unhandled!"),
         _ => panic!("Rest unhandled!"),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::generate;
+
+    fn generate_interface(method: &str) {
+        let interface = syn::parse_str(&format!("trait IExample: IUnknown {{ {method} }}"))
+            .expect("valid trait syntax");
+        let generated = generate(&interface);
+        syn::parse2::<syn::ItemStruct>(generated).expect("valid vtable syntax");
+    }
+
+    #[test]
+    fn immutable_receiver_generates_vtable() {
+        generate_interface("unsafe fn read(&self, value: *const u8) -> i32;");
+    }
+
+    #[test]
+    #[should_panic(expected = "cannot take mutable reference to self")]
+    fn mutable_receiver_is_rejected() {
+        generate_interface("unsafe fn read(&mut self);");
+    }
+
+    #[test]
+    #[should_panic(expected = "cannot take ownership of self")]
+    fn owned_receiver_is_rejected() {
+        generate_interface("unsafe fn read(self);");
+    }
+
+    #[test]
+    #[should_panic(expected = "must be declared unsafe")]
+    fn safe_method_is_rejected() {
+        generate_interface("fn read(&self);");
     }
 }

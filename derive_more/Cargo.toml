@@ -119,7 +119,6 @@ std = []
 sum = ["derive_more-impl/sum"]
 testing-helpers = [
     "derive_more-impl/testing-helpers",
-    "dep:rustc_version",
 ]
 try_from = ["derive_more-impl/try_from"]
 try_into = ["derive_more-impl/try_into"]
@@ -318,10 +317,6 @@ version = "1.1"
 [dev-dependencies.trybuild]
 version = "1.0.56"
 
-[build-dependencies.rustc_version]
-version = "0.4"
-optional = true
-
 [lints.rust.unexpected_cfgs]
 level = "warn"
 priority = 0
@@ -340,3 +335,7 @@ change = "Private built-in case conversion uses convert_case 0.11; Rust source u
 
 [package.metadata.release]
 tag-name = "{{crate_name}}-v{{version}}"
+
+# Explicitly no lint inheritance (cargo::missing_lints_inheritance):
+# this crate's workspace defines no [workspace.lints].
+[lints]

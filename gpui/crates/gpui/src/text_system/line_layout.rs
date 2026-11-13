@@ -6,7 +6,10 @@ use std::{
     borrow::Borrow,
     hash::{Hash, Hasher},
     ops::Range,
-    sync::Arc,
+    sync::{
+        Arc,
+        atomic::{AtomicUsize, Ordering},
+    },
 };
 
 use super::LineWrapper;
@@ -125,7 +128,69 @@ impl LineLayout {
         None
     }
 
-    fn compute_wrap_boundaries(
+    /// Split this layout at a byte index, returning `(prefix, suffix)`.
+    ///
+    /// - `prefix` contains glyphs for bytes `[0, byte_index)` with original positions.
+    ///   Its width equals the x-advance up to the split point.
+    /// - `suffix` contains glyphs for bytes `[byte_index, len)` with positions
+    ///   shifted left so the first glyph starts at x=0, and byte indices rebased to 0.
+    /// - `font_size`, `ascent`, and `descent` are copied to both halves.
+    pub fn split_at(&self, byte_index: usize) -> (LineLayout, LineLayout) {
+        let x_offset = self.x_for_index(byte_index);
+
+        // Partition glyph runs. A single run may contribute glyphs to both halves.
+        let mut left_runs = Vec::new();
+        let mut right_runs = Vec::new();
+
+        for run in &self.runs {
+            let split_pos = run.glyphs.partition_point(|g| g.index < byte_index);
+
+            if split_pos > 0 {
+                left_runs.push(ShapedRun {
+                    font_id: run.font_id,
+                    glyphs: run.glyphs[..split_pos].to_vec(),
+                });
+            }
+
+            if split_pos < run.glyphs.len() {
+                let right_glyphs = run.glyphs[split_pos..]
+                    .iter()
+                    .map(|g| ShapedGlyph {
+                        id: g.id,
+                        position: point(g.position.x - x_offset, g.position.y),
+                        index: g.index - byte_index,
+                        is_emoji: g.is_emoji,
+                    })
+                    .collect();
+                right_runs.push(ShapedRun {
+                    font_id: run.font_id,
+                    glyphs: right_glyphs,
+                });
+            }
+        }
+
+        let left = LineLayout {
+            font_size: self.font_size,
+            width: x_offset,
+            ascent: self.ascent,
+            descent: self.descent,
+            runs: left_runs,
+            len: byte_index,
+        };
+
+        let right = LineLayout {
+            font_size: self.font_size,
+            width: self.width - x_offset,
+            ascent: self.ascent,
+            descent: self.descent,
+            runs: right_runs,
+            len: self.len - byte_index,
+        };
+
+        (left, right)
+    }
+
+    pub(crate) fn compute_wrap_boundaries(
         &self,
         text: &str,
         wrap_width: Pixels,
@@ -351,10 +416,11 @@ impl WrappedLineLayout {
                     .unwrapped_layout
                     .closest_index_for_x(position_in_unwrapped_line.x))
             } else {
-                Ok(self
-                    .unwrapped_layout
+                // The shaper can place a trailing zero-width wrap boundary glyph slightly past
+                // the line's width, so the row can extend past where `index_for_x` has glyphs.
+                self.unwrapped_layout
                     .index_for_x(position_in_unwrapped_line.x)
-                    .unwrap())
+                    .ok_or(wrapped_line_end_index)
             }
         }
     }
@@ -393,15 +459,20 @@ impl WrappedLineLayout {
 pub(crate) struct LineLayoutCache {
     previous_frame: Mutex<FrameCache>,
     current_frame: RwLock<FrameCache>,
-    platform_text_system: Arc<dyn PlatformTextSystem>,
+    pub(crate) platform_text_system: Arc<dyn PlatformTextSystem>,
+    pub(crate) shaping: crate::fast::text::LineShaping,
+    /// Advances when [`TextSystem::add_fonts`] successfully changes the font database.
+    font_generation: Arc<AtomicUsize>,
+    /// Records the generation represented by both frame caches.
+    cached_font_generation: AtomicUsize,
 }
 
 #[derive(Default)]
-struct FrameCache {
-    lines: FxHashMap<Arc<CacheKey>, Arc<LineLayout>>,
-    wrapped_lines: FxHashMap<Arc<CacheKey>, Arc<WrappedLineLayout>>,
-    used_lines: Vec<Arc<CacheKey>>,
-    used_wrapped_lines: Vec<Arc<CacheKey>>,
+pub(crate) struct FrameCache {
+    pub(crate) lines: FxHashMap<Arc<CacheKey>, Arc<LineLayout>>,
+    pub(crate) wrapped_lines: FxHashMap<Arc<CacheKey>, Arc<WrappedLineLayout>>,
+    pub(crate) used_lines: Vec<Arc<CacheKey>>,
+    pub(crate) used_wrapped_lines: Vec<Arc<CacheKey>>,
 
     // Content-addressable caches keyed by caller-provided text hash + layout params.
     // These allow cache hits without materializing a contiguous `SharedString`.
@@ -409,32 +480,61 @@ struct FrameCache {
     // IMPORTANT: To support allocation-free lookups, we store these maps using a key type
     // (`HashedCacheKeyRef`) that can be computed without building a contiguous `&str`/`SharedString`.
     // On miss, we allocate once and store under an owned `HashedCacheKey`.
-    lines_by_hash: FxHashMap<Arc<HashedCacheKey>, Arc<LineLayout>>,
-    wrapped_lines_by_hash: FxHashMap<Arc<HashedCacheKey>, Arc<WrappedLineLayout>>,
-    used_lines_by_hash: Vec<Arc<HashedCacheKey>>,
-    used_wrapped_lines_by_hash: Vec<Arc<HashedCacheKey>>,
+    pub(crate) lines_by_hash: FxHashMap<Arc<HashedCacheKey>, Arc<LineLayout>>,
+    pub(crate) wrapped_lines_by_hash: FxHashMap<Arc<HashedCacheKey>, Arc<WrappedLineLayout>>,
+    pub(crate) used_lines_by_hash: Vec<Arc<HashedCacheKey>>,
+    pub(crate) used_wrapped_lines_by_hash: Vec<Arc<HashedCacheKey>>,
 }
 
-#[derive(Clone, Default)]
+#[derive(Clone, Default, PartialEq)]
 pub(crate) struct LineLayoutIndex {
-    lines_index: usize,
-    wrapped_lines_index: usize,
-    lines_by_hash_index: usize,
-    wrapped_lines_by_hash_index: usize,
+    pub(crate) font_generation: usize,
+    pub(crate) lines_index: usize,
+    pub(crate) wrapped_lines_index: usize,
+    pub(crate) lines_by_hash_index: usize,
+    pub(crate) wrapped_lines_by_hash_index: usize,
+}
+
+impl LineLayoutIndex {
+    /// This index, taken from a range that started at `from`, as it falls in
+    /// a copy of that range starting at `to`. Ported from gpui-fast's
+    /// `fast/text.rs`, extended with this fork's by-hash indexes.
+    pub(crate) fn shifted(&self, from: &Self, to: &Self) -> Self {
+        LineLayoutIndex {
+            font_generation: to.font_generation,
+            lines_index: self.lines_index - from.lines_index + to.lines_index,
+            wrapped_lines_index: self.wrapped_lines_index - from.wrapped_lines_index
+                + to.wrapped_lines_index,
+            lines_by_hash_index: self.lines_by_hash_index - from.lines_by_hash_index
+                + to.lines_by_hash_index,
+            wrapped_lines_by_hash_index: self.wrapped_lines_by_hash_index
+                - from.wrapped_lines_by_hash_index
+                + to.wrapped_lines_by_hash_index,
+        }
+    }
 }
 
 impl LineLayoutCache {
-    pub fn new(platform_text_system: Arc<dyn PlatformTextSystem>) -> Self {
+    pub fn new(
+        platform_text_system: Arc<dyn PlatformTextSystem>,
+        font_generation: Arc<AtomicUsize>,
+    ) -> Self {
+        let cached_font_generation = font_generation.load(Ordering::Acquire);
         Self {
             previous_frame: Mutex::default(),
             current_frame: RwLock::default(),
             platform_text_system,
+            font_generation,
+            cached_font_generation: AtomicUsize::new(cached_font_generation),
+            shaping: crate::fast::text::LineShaping::default(),
         }
     }
 
     pub fn layout_index(&self) -> LineLayoutIndex {
+        let font_generation = self.clear_if_font_generation_changed();
         let frame = self.current_frame.read();
         LineLayoutIndex {
+            font_generation,
             lines_index: frame.used_lines.len(),
             wrapped_lines_index: frame.used_wrapped_lines.len(),
             lines_by_hash_index: frame.used_lines_by_hash.len(),
@@ -443,8 +543,14 @@ impl LineLayoutCache {
     }
 
     pub fn reuse_layouts(&self, range: Range<LineLayoutIndex>) {
-        let mut previous_frame = &mut *self.previous_frame.lock();
+        let font_generation = self.clear_if_font_generation_changed();
+        if range.start.font_generation != font_generation
+            || range.end.font_generation != font_generation
+        {
+            return;
+        }
         let mut current_frame = &mut *self.current_frame.write();
+        let mut previous_frame = &mut *self.previous_frame.lock();
 
         for key in &previous_frame.used_lines[range.start.lines_index..range.end.lines_index] {
             if let Some((key, line)) = previous_frame.lines.remove_entry(key) {
@@ -482,6 +588,10 @@ impl LineLayoutCache {
     }
 
     pub fn truncate_layouts(&self, index: LineLayoutIndex) {
+        let font_generation = self.clear_if_font_generation_changed();
+        if index.font_generation != font_generation {
+            return;
+        }
         let mut current_frame = &mut *self.current_frame.write();
         current_frame.used_lines.truncate(index.lines_index);
         current_frame
@@ -496,18 +606,10 @@ impl LineLayoutCache {
     }
 
     pub fn finish_frame(&self) {
-        let mut prev_frame = self.previous_frame.lock();
+        let _font_generation = self.clear_if_font_generation_changed();
         let mut curr_frame = self.current_frame.write();
-        std::mem::swap(&mut *prev_frame, &mut *curr_frame);
-        curr_frame.lines.clear();
-        curr_frame.wrapped_lines.clear();
-        curr_frame.used_lines.clear();
-        curr_frame.used_wrapped_lines.clear();
-
-        curr_frame.lines_by_hash.clear();
-        curr_frame.wrapped_lines_by_hash.clear();
-        curr_frame.used_lines_by_hash.clear();
-        curr_frame.used_wrapped_lines_by_hash.clear();
+        let mut prev_frame = self.previous_frame.lock();
+        crate::fast::text::carry_over_line_layouts(&mut prev_frame, &mut curr_frame);
     }
 
     pub fn layout_wrapped_line<Text>(
@@ -522,6 +624,7 @@ impl LineLayoutCache {
         Text: AsRef<str>,
         SharedString: From<Text>,
     {
+        let _font_generation = self.clear_if_font_generation_changed();
         let key = &CacheKeyRef {
             text: text.as_ref(),
             font_size,
@@ -586,6 +689,7 @@ impl LineLayoutCache {
         Text: AsRef<str>,
         SharedString: From<Text>,
     {
+        let _font_generation = self.clear_if_font_generation_changed();
         let key = &CacheKeyRef {
             text: text.as_ref(),
             font_size,
@@ -606,9 +710,7 @@ impl LineLayoutCache {
             layout
         } else {
             let text = SharedString::from(text);
-            let mut layout = self
-                .platform_text_system
-                .layout_line(&text, font_size, runs);
+            let mut layout = Arc::new(crate::fast::text::shape_line(self, &text, font_size, runs));
 
             if let Some(force_width) = force_width {
                 apply_force_width_to_layout(Arc::make_mut(&mut layout), force_width);
@@ -643,6 +745,7 @@ impl LineLayoutCache {
         runs: &[FontRun],
         force_width: Option<Pixels>,
     ) -> Option<Arc<LineLayout>> {
+        let _font_generation = self.clear_if_font_generation_changed();
         let key_ref = HashedCacheKeyRef {
             text_hash,
             text_len,
@@ -700,6 +803,7 @@ impl LineLayoutCache {
         force_width: Option<Pixels>,
         materialize_text: impl FnOnce() -> SharedString,
     ) -> Arc<LineLayout> {
+        let _font_generation = self.clear_if_font_generation_changed();
         let key_ref = HashedCacheKeyRef {
             text_hash,
             text_len,
@@ -754,9 +858,7 @@ impl LineLayoutCache {
         }
 
         let text = materialize_text();
-        let mut layout = self
-            .platform_text_system
-            .layout_line(&text, font_size, runs);
+        let mut layout = Arc::new(crate::fast::text::shape_line(self, &text, font_size, runs));
 
         if let Some(force_width) = force_width {
             apply_force_width_to_layout(Arc::make_mut(&mut layout), force_width);
@@ -775,6 +877,24 @@ impl LineLayoutCache {
             .insert(key.clone(), layout.clone());
         current_frame.used_lines_by_hash.push(key);
         layout
+    }
+
+    fn clear_if_font_generation_changed(&self) -> usize {
+        let font_generation = self.font_generation.load(Ordering::Acquire);
+        if self.cached_font_generation.load(Ordering::Acquire) == font_generation {
+            return font_generation;
+        }
+
+        let mut current_frame = self.current_frame.write();
+        if self.cached_font_generation.load(Ordering::Acquire) == font_generation {
+            return font_generation;
+        }
+
+        *current_frame = FrameCache::default();
+        *self.previous_frame.lock() = FrameCache::default();
+        self.cached_font_generation
+            .store(font_generation, Ordering::Release);
+        font_generation
     }
 }
 
@@ -821,7 +941,7 @@ trait AsCacheKeyRef {
 }
 
 #[derive(Clone, Debug, Eq)]
-struct CacheKey {
+pub(crate) struct CacheKey {
     text: SharedString,
     font_size: Pixels,
     runs: SmallVec<[FontRun; 1]>,
@@ -839,7 +959,7 @@ struct CacheKeyRef<'a> {
 }
 
 #[derive(Clone, Debug)]
-struct HashedCacheKey {
+pub(crate) struct HashedCacheKey {
     text_hash: u64,
     text_len: usize,
     font_size: Pixels,

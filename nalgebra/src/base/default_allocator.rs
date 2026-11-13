@@ -70,7 +70,7 @@ impl<const R: usize, const C: usize> Allocator<Const<R>, Const<C>> for DefaultAl
 
         // Safety: conversion to a slice is OK because the Buffer is known to be contiguous.
         let res_slice = unsafe { res.as_mut_slice_unchecked() };
-        for (res, e) in res_slice.iter_mut().zip(iter.into_iter()) {
+        for (res, e) in res_slice.iter_mut().zip(iter) {
             *res = MaybeUninit::new(e);
             count += 1;
         }

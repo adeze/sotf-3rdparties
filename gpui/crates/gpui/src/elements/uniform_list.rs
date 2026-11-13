@@ -148,6 +148,7 @@ impl UniformListScrollHandle {
     /// If the item is out of view, it scrolls the minimum amount to bring it into view according
     /// to the strategy.
     pub fn scroll_to_item(&self, ix: usize, strategy: ScrollStrategy) {
+        crate::fast::dependencies::scroll_handle_changed(&self.0.borrow().base_handle);
         self.0.borrow_mut().deferred_scroll_to_item = Some(DeferredScrollToItem {
             item_index: ix,
             strategy,
@@ -161,6 +162,7 @@ impl UniformListScrollHandle {
     /// This uses strict scrolling: the item will always be scrolled to match the strategy position,
     /// even if it's already visible. Use this when you need precise positioning.
     pub fn scroll_to_item_strict(&self, ix: usize, strategy: ScrollStrategy) {
+        crate::fast::dependencies::scroll_handle_changed(&self.0.borrow().base_handle);
         self.0.borrow_mut().deferred_scroll_to_item = Some(DeferredScrollToItem {
             item_index: ix,
             strategy,
@@ -180,6 +182,7 @@ impl UniformListScrollHandle {
     /// - `ScrollStrategy::Center`: Shrinks from top, centers item in the reduced viewport
     /// - `ScrollStrategy::Bottom`: Shrinks from bottom, positions item at the new bottom
     pub fn scroll_to_item_with_offset(&self, ix: usize, strategy: ScrollStrategy, offset: usize) {
+        crate::fast::dependencies::scroll_handle_changed(&self.0.borrow().base_handle);
         self.0.borrow_mut().deferred_scroll_to_item = Some(DeferredScrollToItem {
             item_index: ix,
             strategy,
@@ -204,6 +207,7 @@ impl UniformListScrollHandle {
         strategy: ScrollStrategy,
         offset: usize,
     ) {
+        crate::fast::dependencies::scroll_handle_changed(&self.0.borrow().base_handle);
         self.0.borrow_mut().deferred_scroll_to_item = Some(DeferredScrollToItem {
             item_index: ix,
             strategy,
@@ -356,7 +360,10 @@ impl Element for UniformList {
             ListHorizontalSizingBehavior::Unconstrained
         );
 
-        let longest_item_size = self.measure_item(None, window, cx);
+        let longest_item_size =
+            crate::fast::layers::lists::measure_item(window, cx, global_id, |window, cx| {
+                self.measure_item(None, window, cx)
+            });
         let content_width = if can_scroll_horizontally {
             padded_bounds.size.width.max(longest_item_size.width)
         } else {
@@ -470,14 +477,30 @@ impl Element for UniformList {
                         scroll_offset = *updated_scroll_offset
                     }
 
+                    let scroll_offset =
+                        crate::fast::layers::lists::snap_item_offset(window, scroll_offset);
+                    let scroll_top = -scroll_offset.y.to_f64();
+                    let item_height_f64 = item_height.to_f64();
                     let first_visible_element_ix =
-                        (-(scroll_offset.y + padding.top) / item_height).floor() as usize;
-                    let last_visible_element_ix = ((-scroll_offset.y + padded_bounds.size.height)
-                        / item_height)
+                        ((scroll_top - padding.top.to_f64()) / item_height_f64).floor() as usize;
+                    let last_visible_element_ix = ((scroll_top
+                        + padded_bounds.size.height.to_f64())
+                        / item_height_f64)
                         .ceil() as usize;
 
                     let visible_range = first_visible_element_ix
                         ..cmp::min(last_visible_element_ix, self.item_count);
+                    let fast_rows = crate::fast::layers::lists::begin_uniform_list(
+                        window,
+                        cx,
+                        global_id,
+                        padded_bounds,
+                        scroll_offset,
+                        item_height,
+                        self.item_count,
+                        &visible_range,
+                        y_flipped,
+                    );
 
                     let items = if y_flipped {
                         let flipped_range = self.item_count.saturating_sub(visible_range.end)
@@ -486,15 +509,21 @@ impl Element for UniformList {
                         items.reverse();
                         items
                     } else {
-                        (self.render_items)(visible_range.clone(), window, cx)
+                        crate::fast::layers::lists::render_rows(
+                            &fast_rows,
+                            visible_range.clone(),
+                            |range| (self.render_items)(range, window, cx),
+                        )
                     };
 
+                    let fast_indices =
+                        crate::fast::layers::lists::row_indices(&fast_rows, visible_range.clone());
                     let content_mask = ContentMask { bounds };
                     window.with_content_mask(Some(content_mask), |window| {
-                        for (mut item, ix) in items.into_iter().zip(visible_range.clone()) {
+                        for (mut item, ix) in items.into_iter().zip(fast_indices) {
+                            let item_top = item_height_f64 * ix as f64 - scroll_top;
                             let item_origin = padded_bounds.origin
-                                + scroll_offset
-                                + point(Pixels::ZERO, item_height * ix);
+                                + point(scroll_offset.x, Pixels::from(item_top));
 
                             let available_width = if can_scroll_horizontally {
                                 padded_bounds.size.width + scroll_offset.x.abs()
@@ -505,10 +534,22 @@ impl Element for UniformList {
                                 AvailableSpace::Definite(available_width),
                                 AvailableSpace::Definite(item_height),
                             );
-                            item.layout_as_root(available_space, window, cx);
-                            item.prepaint_at(item_origin, window, cx);
+                            crate::fast::layout_key::layout_as_list_item(
+                                &mut item,
+                                ix,
+                                available_space,
+                                window,
+                                cx,
+                            );
+                            crate::fast::layers::lists::prepaint_row(
+                                window,
+                                cx,
+                                ix,
+                                |window, cx| item.prepaint_at(item_origin, window, cx),
+                            );
                             frame_state.items.push(item);
                         }
+                        crate::fast::layers::lists::end_rows(window, cx, fast_rows);
 
                         let bounds =
                             Bounds::new(padded_bounds.origin + scroll_offset, padded_bounds.size);
@@ -556,9 +597,13 @@ impl Element for UniformList {
             window,
             cx,
             |_, window, cx| {
+                crate::fast::layers::lists::begin_paint_rows(window, cx, global_id);
                 for item in &mut request_layout.items {
-                    item.paint(window, cx);
+                    crate::fast::layers::lists::paint_row(window, cx, None, |window, cx| {
+                        item.paint(window, cx)
+                    });
                 }
+                crate::fast::layers::lists::end_paint_rows(window, cx, global_id);
                 for decoration in &mut request_layout.decorations {
                     decoration.paint(window, cx);
                 }
@@ -671,7 +716,7 @@ impl UniformList {
             return Size::default();
         };
         let available_space = size(
-            list_width.map_or(AvailableSpace::MinContent, |width| {
+            list_width.map_or(AvailableSpace::MaxContent, |width| {
                 AvailableSpace::Definite(width)
             }),
             AvailableSpace::MinContent,
@@ -861,5 +906,73 @@ mod test {
                 assert_eq!(view.visible_range, ix..ix + 10);
             })
         }
+    }
+
+    #[gpui::test]
+    fn test_item_positions_far_down_long_list(cx: &mut TestAppContext) {
+        use crate::{
+            Bounds, Context, Pixels, UniformListScrollHandle, Window, canvas, point, prelude::*,
+            px, uniform_list,
+        };
+        use std::{cell::RefCell, ops::Range, rc::Rc};
+
+        struct TestView {
+            scroll_handle: UniformListScrollHandle,
+            item_bounds: Rc<RefCell<Vec<(usize, Bounds<Pixels>)>>>,
+        }
+
+        impl Render for TestView {
+            fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+                let item_bounds = self.item_bounds.clone();
+                uniform_list(
+                    "entries",
+                    10_000_000,
+                    cx.processor(move |_, range: Range<usize>, _window, _cx| {
+                        range
+                            .map(|ix| {
+                                let item_bounds = item_bounds.clone();
+                                canvas(
+                                    move |bounds, _, _| item_bounds.borrow_mut().push((ix, bounds)),
+                                    |_, _, _, _| {},
+                                )
+                                .w_full()
+                                .h(px(24.0))
+                            })
+                            .collect()
+                    }),
+                )
+                .track_scroll(&self.scroll_handle)
+                .h(px(200.0))
+            }
+        }
+
+        let item_bounds = Rc::new(RefCell::new(Vec::new()));
+        let (view, cx) = cx.add_window_view(|_, _| TestView {
+            scroll_handle: UniformListScrollHandle::new(),
+            item_bounds: item_bounds.clone(),
+        });
+
+        // Past 2^27px, f32 can only represent multiples of 16px. This offset is 16px into item
+        // 9_000_002, and the items must still be laid out 24px apart from that point.
+        item_bounds.borrow_mut().clear();
+        view.update(cx, |view, cx| {
+            view.scroll_handle
+                .0
+                .borrow()
+                .base_handle
+                .set_offset(point(px(0.0), px(-216_000_064.0)));
+            cx.notify();
+        });
+        cx.run_until_parked();
+
+        let item_tops = item_bounds
+            .borrow()
+            .iter()
+            .map(|(ix, bounds)| (*ix, bounds.origin.y))
+            .collect::<Vec<_>>();
+        let expected_tops = (9_000_002..9_000_011)
+            .map(|ix| (ix, px(-16.0 + 24.0 * (ix - 9_000_002) as f32)))
+            .collect::<Vec<_>>();
+        assert_eq!(item_tops, expected_tops);
     }
 }

@@ -68,7 +68,7 @@ fn stack_dyn<T: Scalar + Zero>(blocks: DMatrix<Option<DMatrix<T>>>) -> DMatrix<T
                 let (block_nrows, block_ncols) = input_ij.shape();
                 output
                     .view_mut((row_offset, col_offset), (block_nrows, block_ncols))
-                    .copy_from(&input_ij);
+                    .copy_from(input_ij);
             }
             row_offset += row_counts[i];
         }
@@ -246,6 +246,7 @@ fn stack_edge_cases() {
 }
 
 #[rustfmt::skip]
+#[expect(clippy::redundant_closure_call, reason = "Exercise an inline closure expression in the stack macro")]
 #[test]
 fn stack_many_tests() {
     // s prefix means static, d prefix means dynamic
@@ -308,9 +309,9 @@ fn stack_many_tests() {
     let s_2x2_v: SMatrixView<_, 2, 2> = s_2x2.as_view();
     let s_2x3_v: SMatrixView<_, 2, 3> = s_2x3.as_view();
     let d_2x2_v: DMatrixView<_> = d_2x2.as_view();
-    let mut s_2x2_vm = s_2x2.clone();
+    let mut s_2x2_vm = s_2x2;
     let s_2x2_vm: SMatrixViewMut<_, 2, 2> = s_2x2_vm.as_view_mut();
-    let mut s_2x3_vm = s_2x3.clone();
+    let mut s_2x3_vm = s_2x3;
     let s_2x3_vm: SMatrixViewMut<_, 2, 3> = s_2x3_vm.as_view_mut();
     verify_stack!(SMatrix<_, 4, 7>; [ s_2x2_vm, &s_2x3_vm,  d_2x2_v;
                                       &d_2x2_v,   s_2x3_v, &s_2x2_v]);

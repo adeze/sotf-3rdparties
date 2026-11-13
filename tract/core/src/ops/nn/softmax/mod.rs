@@ -34,6 +34,10 @@ pub enum SoftmaxExp {
 }
 
 #[derive(Debug, Clone, new, Hash, Default)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct Softmax {
     pub axes: TVec<usize>,
     pub quant_output_dt: Option<DatumType>,
@@ -522,15 +526,15 @@ mod test {
                 self.data.iter().map(|it| (*it as f32 - in_zero_point as f32) * in_scale).collect();
             let mut in_float_array = Array1::from_vec(in_float);
             softmax_inner(in_float_array.view_mut(), SoftmaxKind::default());
-            let rescaled_output = in_float_array
+
+            in_float_array
                 .iter()
                 .map(|it| {
                     ((*it / out_scale).round() as i32 + out_zero_point)
                         .max(u8::MIN as i32)
                         .min(u8::MAX as i32) as u8
                 })
-                .collect();
-            rescaled_output
+                .collect()
         }
 
         fn quantized(&self) -> Vec<u8> {
@@ -668,7 +672,7 @@ mod test {
         prob.check()?;
         Ok(())
     }
-    
+
     #[test]
     fn test_inner_softmax_1() -> Result<()> {
         let in_qp = ZpScale { zero_point: 0, scale: 0.03125 };

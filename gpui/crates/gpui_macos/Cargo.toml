@@ -2,12 +2,25 @@
 name = "sotf-gpui-toolkit-gpui-macos"
 version = "0.1.2"
 edition = "2024"
-description.workspace = true
 license = "Apache-2.0"
-repository.workspace = true
-readme.workspace = true
-keywords.workspace = true
-categories.workspace = true
+
+[package.description]
+workspace = true
+
+[package.repository]
+workspace = true
+
+[package.readme]
+workspace = true
+
+[package.keywords]
+workspace = true
+
+[package.categories]
+workspace = true
+
+[package.metadata.release]
+tag-name = "{{crate_name}}-v{{version}}"
 
 [lib]
 name = "gpui_macos"
@@ -15,60 +28,125 @@ path = "src/gpui_macos.rs"
 
 [features]
 default = ["gpui/default"]
-test-support = ["gpui/test-support"]
-runtime_shaders = []
-font-kit = ["dep:font-kit"]
-screen-capture = ["gpui/screen-capture"]
+bench-support = ["gpui/bench-support", "gpui_apple/bench-support"]
+test-support = ["gpui/test-support", "gpui_apple/test-support"]
+runtime_shaders = ["gpui_apple/runtime_shaders"]
+font-kit = ["gpui_apple/font-kit"]
+screen-capture = ["gpui/screen-capture", "dep:objc2-core-graphics", "dep:objc2-core-media", "dep:objc2-screen-capture-kit"]
 
-[dependencies]
-gpui = { workspace = true, default-features = false }
+[dependencies.gpui]
+workspace = true
+default-features = false
 
 [target.'cfg(target_os = "macos")'.dependencies]
-accesskit = "0.24.0"
-accesskit_macos = "0.26.0"
+accesskit_macos = "0.27"
 anyhow = "1.0.86"
-async-task = "4.7"
-block = "0.1"
-cocoa = "=0.26.0"
-collections = { workspace = true }
+block2 = "0.6"
+cocoa = "0.27"
 core-foundation = "=0.10.1"
 core-foundation-sys = "0.8.6"
-core-graphics = "0.24"
-core-text = "21"
-core-video = { version = "0.5.2", features = ["metal"] }
+core-graphics = "0.25"
 ctor = "1.0.6"
-derive_more = { package = "sotf-derive_more", path = "../../../derive_more", version = "2.1.1", features = ["add", "add_assign", "deref", "deref_mut", "display", "from_str", "mul", "mul_assign", "not"] }
 dispatch2 = "0.3.1"
-etagere = "0.2"
-font-kit = { package = "sotf-zed-font-kit", version = "0.14.1-zed", path = "../../../zed-font-kit", optional = true }
 foreign-types = "0.5"
 futures = "0.3.32"
-gpui_util = { workspace = true }
-image = { version = "0.25.1", default-features = false, features = ["bmp", "gif", "ico", "jpeg", "png", "pnm", "tiff", "webp"] }
 itertools = "0.15.0"
-libc = "0.2"
-log = { version = "0.4.16", features = ["kv_unstable_serde", "serde"] }
-mach2 = "0.5"
-media = { workspace = true }
-metal = "0.33"
 objc = "0.2"
 objc2 = "0.6"
-objc2-app-kit = { version = "0.3.2", default-features = false, features = ["NSButton", "NSControl", "NSGraphics", "NSResponder", "NSView", "NSWindow", "objc2-core-foundation"] }
-objc2-foundation = { version = "=0.3.2", default-features = false, features = ["NSArray", "NSAttributedString", "NSBundle", "NSCoder", "NSData", "NSDate", "NSDictionary", "NSEnumerator", "NSError", "NSGeometry", "NSNotification", "NSNull", "NSObjCRuntime", "NSObject", "NSProcessInfo", "NSRange", "NSRunLoop", "NSString", "NSURL", "NSUndoManager", "NSValue", "objc2-core-foundation", "std"] }
-parking_lot = "0.12.1"
-pathfinder_geometry = "0.5"
+parking_lot = "0.13"
 raw-window-handle = "0.6"
-semver = { version = "1.0", features = ["serde"] }
-smallvec = { version = "1.6", features = ["union", "const_new"] }
-strum = { version = "0.28.0", features = ["derive"] }
-uuid = { version = "1.1.2", features = ["v4", "v5", "v7", "serde"] }
 
-[target.'cfg(target_os = "macos")'.dev-dependencies]
-gpui = { workspace = true, default-features = false, features = ["test-support"] }
+[target.'cfg(target_os = "macos")'.dependencies.accesskit]
+version = "0.25"
+features = ["enumn"]
 
-[target.'cfg(target_os = "macos")'.build-dependencies]
-cbindgen = { version = "0.28.0", default-features = false }
-gpui = { workspace = true, default-features = false }
+[target.'cfg(target_os = "macos")'.dependencies.collections]
+workspace = true
 
-[package.metadata.release]
-tag-name = "{{crate_name}}-v{{version}}"
+[target.'cfg(target_os = "macos")'.dependencies.gpui_apple]
+workspace = true
+
+[target.'cfg(target_os = "macos")'.dependencies.gpui_util]
+workspace = true
+
+[target.'cfg(target_os = "macos")'.dependencies.image]
+version = "0.25.1"
+default-features = false
+features = ["bmp", "gif", "ico", "jpeg", "png", "pnm", "tiff", "webp"]
+
+[target.'cfg(target_os = "macos")'.dependencies.log]
+version = "0.4.16"
+features = ["kv_unstable_serde", "serde"]
+
+[target.'cfg(target_os = "macos")'.dependencies.objc2-app-kit]
+version = "0.3.2"
+default-features = false
+features = ["NSAlert", "NSApplication", "NSButton", "NSControl", "NSDraggingItem", "NSGraphics", "NSImage", "NSOpenPanel", "NSPanel", "NSPasteboard", "NSResponder", "NSSavePanel", "NSScreen", "NSTrackingArea", "NSView", "NSWindow", "NSWorkspace", "block2", "objc2-core-foundation"]
+
+[target.'cfg(target_os = "macos")'.dependencies.objc2-core-graphics]
+version = "=0.3.2"
+default-features = false
+features = ["CGDirectDisplay"]
+optional = true
+
+[target.'cfg(target_os = "macos")'.dependencies.objc2-core-media]
+version = "=0.3.2"
+default-features = false
+features = ["CMSampleBuffer", "objc2-core-video"]
+optional = true
+
+[target.'cfg(target_os = "macos")'.dependencies.objc2-core-video]
+version = "=0.3.2"
+default-features = false
+features = ["CVHostTime"]
+
+[target.'cfg(target_os = "macos")'.dependencies.objc2-foundation]
+version = "=0.3.2"
+default-features = false
+features = ["NSArray", "NSAttributedString", "NSBundle", "NSCoder", "NSData", "NSDate", "NSDictionary", "NSEnumerator", "NSError", "NSGeometry", "NSNotification", "NSNull", "NSObjCRuntime", "NSObject", "NSProcessInfo", "NSRange", "NSRunLoop", "NSSet", "NSString", "NSURL", "NSUndoManager", "NSValue", "objc2-core-foundation", "std"]
+
+[target.'cfg(target_os = "macos")'.dependencies.objc2-screen-capture-kit]
+version = "=0.3.2"
+default-features = false
+features = ["block2", "dispatch2", "objc2-core-graphics", "objc2-core-media", "SCShareableContent", "SCStream", "std"]
+optional = true
+
+[target.'cfg(target_os = "macos")'.dependencies.objc2-user-notifications]
+version = "0.3"
+default-features = false
+features = ["std", "block2", "UNNotification", "UNNotificationAction", "UNNotificationCategory", "UNNotificationContent", "UNNotificationRequest", "UNNotificationResponse", "UNNotificationTrigger", "UNUserNotificationCenter"]
+
+[target.'cfg(target_os = "macos")'.dependencies.scheduler]
+workspace = true
+
+[target.'cfg(target_os = "macos")'.dependencies.semver]
+version = "1.0"
+features = ["serde"]
+
+[target.'cfg(target_os = "macos")'.dependencies.smallvec]
+version = "1.6"
+features = ["union", "const_new"]
+
+[target.'cfg(target_os = "macos")'.dependencies.strum]
+version = "0.28.0"
+features = ["derive"]
+
+[target.'cfg(target_os = "macos")'.dependencies.uuid]
+version = "1.1.2"
+features = ["v4", "v5", "v7", "serde"]
+
+[target.'cfg(target_os = "macos")'.dev-dependencies.gpui]
+workspace = true
+default-features = false
+features = ["test-support"]
+
+[target.'cfg(target_os = "macos")'.dev-dependencies.gpui_apple]
+workspace = true
+features = ["test-support"]
+
+# objc 0.2's msg_send!/sel! macros use `cfg_attr(feature = "cargo-clippy")`;
+# without declaring that feature value, every expansion in this crate warns
+# unexpected_cfgs. (This crate intentionally does not inherit
+# [workspace.lints]; see the pedantic-group note in member manifests.)
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ["cfg(feature, values(\"cargo-clippy\"))"] }

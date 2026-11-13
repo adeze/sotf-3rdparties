@@ -1,0 +1,12 @@
+error: argument never used
+ --> tests/compile_fail/display/missing_placeholder.rs:2:22
+  |
+2 | #[display("Stuff()", bar)]
+  |           ---------  ^^^ argument never used
+  |           |
+  |           formatting specifier missing
+  |
+help: format specifiers use curly braces, consider adding a format specifier
+  |
+2 | #[display("Stuff(){}", bar)]
+  |                   ++

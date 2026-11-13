@@ -36,3 +36,11 @@ Replace this source only when a selected upstream release covers the retained be
 Owner: SOTF dependency maintainers. Inventory reviewed 2026-10-07;
 re-evaluate the upstream delta within 90 days and on every update.
 Follow [the collection update procedure](../README.md#updating-a-fork).
+
+## 2026-10-30 release validation
+
+Restored the omitted upstream C interop test helper with provenance recorded in
+[VENDORING.md](../block/VENDORING.md). Added Safety headings and explicit types
+for existing function-pointer casts. Strict workspace all-target Clippy, tests,
+doctests and nextest pass on macOS, including the helper. No ABI or block
+ownership behavior changed.

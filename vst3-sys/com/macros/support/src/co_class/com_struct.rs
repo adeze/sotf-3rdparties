@@ -51,7 +51,7 @@ pub fn gen_ref_count_field() -> HelperTokenStream {
 pub fn gen_aggregate_fields<S: ::std::hash::BuildHasher>(
     aggr_map: &HashMap<Ident, Vec<Ident>, S>,
 ) -> HelperTokenStream {
-    let aggregates = aggr_map.iter().map(|(aggr_field_ident, _)| {
+    let aggregates = aggr_map.keys().map(|aggr_field_ident| {
         quote!(
             #aggr_field_ident: *mut *const <dyn vst3_com::interfaces::iunknown::IUnknown as vst3_com::ComInterface>::VTable
         )

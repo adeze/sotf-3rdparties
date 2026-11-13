@@ -17,7 +17,11 @@ pub fn block_lstm(_ctx: &ParsingContext, node: &NodeDef) -> TractResult<Box<dyn 
 }
 
 #[derive(Clone, Debug, new)]
-#[allow(dead_code)]
+#[allow(
+    dead_code,
+    clippy::redundant_field_names,
+    reason = "retain parsed LSTM fields; derive-new emits explicit constructor field names"
+)]
 pub struct BlockLSTM {
     forget_bias: f32,
     cell_clip: f32,
@@ -165,11 +169,11 @@ impl Expansion for BlockLSTM {
         }
 
         let Some(seqlen) = &model.outlet_fact(inputs[0])?.konst else {
-                bail!("Non constant seq_len is not supported");
-            };
+            bail!("Non constant seq_len is not supported");
+        };
         let Some(seqlen) = seqlen.as_uniform() else {
-                bail!("Non uniform seq_len is not supported");
-            };
+            bail!("Non uniform seq_len is not supported");
+        };
         let seqlen = seqlen.cast_to::<TDim>()?;
         if seqlen.to_scalar::<TDim>()? != &model.outlet_fact(inputs[1])?.shape[0] {
             bail!("seq_len only supported for trivial noop case");

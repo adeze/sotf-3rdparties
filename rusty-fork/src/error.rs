@@ -36,7 +36,7 @@ quick_error! {
                      \tdrop - Don't pass the flag to the child process.\n\
                      \tdrop-arg - Don't pass the flag or its following \
                      argument to the child process.",
-                    flag, cmdline::env_var_for_flag(&flag))
+                    flag, cmdline::env_var_for_flag(flag))
         }
         /// A flag was encountered when examining the current process's
         /// argument list which is known but cannot be handled in any sensible
@@ -70,7 +70,7 @@ mod tests {
     #[test]
     #[allow(deprecated)]
     fn spawn_error_preserves_source_and_legacy_cause() {
-        let error: Error = io::Error::new(io::ErrorKind::Other, "spawn-probe").into();
+        let error: Error = io::Error::other("spawn-probe").into();
         assert_eq!(error.to_string(), "Spawn failed: spawn-probe");
         assert!(StdError::source(&error)
             .unwrap()

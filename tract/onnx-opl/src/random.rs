@@ -1,9 +1,9 @@
-use rand::distr::uniform::SampleUniform;
-use rand::distr::Distribution;
-use rand::rngs::SmallRng;
 use rand::SeedableRng;
-use rand_distr::num_traits::Float;
+use rand::distr::Distribution;
+use rand::distr::uniform::SampleUniform;
+use rand::rngs::SmallRng;
 use rand_distr::StandardNormal;
+use rand_distr::num_traits::Float;
 use tract_nnef::internal::*;
 use tract_nnef::ser::{array, tdims};
 use tract_nnef::tract_core::trivial_op_state_freeeze;
@@ -167,8 +167,7 @@ fn sample_uniform<T: Datum + SampleUniform + Copy>(
     low: &Tensor,
     high: &Tensor,
 ) -> TractResult<()> {
-    let dist =
-        rand::distr::Uniform::new(low.cast_to_scalar::<T>()?, high.cast_to_scalar::<T>()?)?;
+    let dist = rand::distr::Uniform::new(low.cast_to_scalar::<T>()?, high.cast_to_scalar::<T>()?)?;
     t.as_slice_mut::<T>()?.iter_mut().zip(dist.sample_iter(r)).for_each(|(v, r)| *v = r);
     Ok(())
 }
@@ -205,12 +204,16 @@ mod rand_compat_tests {
         assert!(samples.iter().all(|&sample| (-2.0..3.0).contains(&sample)));
         assert!(samples.iter().any(|&sample| sample < 0.0));
         assert!(samples.iter().any(|&sample| sample > 1.0));
-        let observed_mean = samples.iter().map(|&sample| sample as f64).sum::<f64>()
+        let observed_mean =
+            samples.iter().map(|&sample| sample as f64).sum::<f64>() / samples.len() as f64;
+        let observed_variance = samples
+            .iter()
+            .map(|&sample| {
+                let residual = sample as f64 - observed_mean;
+                residual * residual
+            })
+            .sum::<f64>()
             / samples.len() as f64;
-        let observed_variance = samples.iter().map(|&sample| {
-            let residual = sample as f64 - observed_mean;
-            residual * residual
-        }).sum::<f64>() / samples.len() as f64;
         assert!((observed_mean - 0.5).abs() < 0.1);
         assert!((observed_variance - 25.0 / 12.0).abs() < 0.15);
         Ok(())
@@ -219,11 +222,8 @@ mod rand_compat_tests {
     #[test]
     fn seeded_random_operator_advances_and_replays_after_state_reset() -> TractResult<()> {
         let op = Random {
-            fact: f32::fact(&[64]),
-            dist: Dist::Uniform {
-                low: rctensor0(-1.0_f32),
-                high: rctensor0(1.0_f32),
-            },
+            fact: f32::fact([64]),
+            dist: Dist::Uniform { low: rctensor0(-1.0_f32), high: rctensor0(1.0_f32) },
             seed: Some(37),
         };
         let mut session = SessionState::default();
@@ -249,12 +249,16 @@ mod rand_compat_tests {
         sample_normal::<f32>(&mut replay, &mut SmallRng::seed_from_u64(29), &mean, &deviation)?;
         let samples = first.as_slice::<f32>()?;
         assert_eq!(samples, replay.as_slice::<f32>()?);
-        let observed_mean = samples.iter().map(|&sample| sample as f64).sum::<f64>()
+        let observed_mean =
+            samples.iter().map(|&sample| sample as f64).sum::<f64>() / samples.len() as f64;
+        let observed_variance = samples
+            .iter()
+            .map(|&sample| {
+                let residual = sample as f64 - observed_mean;
+                residual * residual
+            })
+            .sum::<f64>()
             / samples.len() as f64;
-        let observed_variance = samples.iter().map(|&sample| {
-            let residual = sample as f64 - observed_mean;
-            residual * residual
-        }).sum::<f64>() / samples.len() as f64;
         assert!((observed_mean - 1.25).abs() < 0.05);
         assert!((observed_variance - 0.25).abs() < 0.04);
         Ok(())

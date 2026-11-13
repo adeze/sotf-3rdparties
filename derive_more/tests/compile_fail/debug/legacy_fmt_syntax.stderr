@@ -1,0 +1,11 @@
+error: legacy syntax, remove `fmt =` and use `"Stuff({}): {}", bar` instead
+ --> tests/compile_fail/debug/legacy_fmt_syntax.rs:3:13
+  |
+3 |     #[debug(fmt = "Stuff({}): {}", "bar")]
+  |             ^^^
+
+error: legacy syntax, remove `fmt =` and use `"Stuff({}): {}", _0` instead
+ --> tests/compile_fail/debug/legacy_fmt_syntax.rs:8:9
+  |
+8 | #[debug(fmt = "Stuff({}): {}", _0)]
+  |         ^^^

@@ -4,6 +4,10 @@ use ndarray::prelude::*;
 use crate::ops::cnn::pools::{ConcretePoolGeometry, PoolGeometry, PoolSpec};
 
 #[derive(Debug, Clone, new, Hash)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct MaxPool {
     pub pool_spec: PoolSpec,
     pub with_index_outputs: Option<DatumType>,
@@ -84,6 +88,10 @@ impl MaxPool {
 }
 
 #[derive(Debug, Clone, new, Hash)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct OptMaxPool {
     pub pool_spec: PoolSpec,
     pub with_index_outputs: Option<DatumType>,

@@ -6,11 +6,13 @@ use tract_core::ops::cast::wire_cast;
 
 /// Concat: high level concat op
 #[derive(Debug, Clone, new, Hash)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct Concat {
     axis: i64,
 }
-
-
 
 impl Concat {
     fn resolve_axis(&self, rank: i64) -> TractResult<usize> {

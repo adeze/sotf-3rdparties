@@ -52,18 +52,19 @@ pub fn pad_11(
 }
 
 #[derive(Debug, Clone, new, Hash)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct Pad11 {
     mode: array::PadMode,
     constant_input: Option<usize>,
 }
 
-
-
 impl Expansion for Pad11 {
     fn name(&self) -> StaticName {
         "Pad".into()
     }
-
 
     fn rules<'r, 'p: 'r, 's: 'r>(
         &'s self,

@@ -5,7 +5,7 @@ use vst3_sys::utils::SharedVstPtr;
 
 use flexi_logger::{opt_format, Logger};
 use std::cell::RefCell;
-use std::intrinsics::write_bytes;
+use std::ptr::write_bytes;
 use std::mem;
 use vst3_com::sys::GUID;
 use vst3_com::{VstPtr, IID};
@@ -97,15 +97,21 @@ impl AGainProcessor {
         Box::into_raw(Self::new()) as *mut c_void
     }
 
+    /// Configure processing from the host's setup record.
+    ///
+    /// # Safety
+    ///
+    /// `new_setup` must point to an initialized, aligned `ProcessSetup` that
+    /// remains readable for this call.
     pub unsafe fn setup_processing_ae(&self, new_setup: *const ProcessSetup) -> tresult {
         if self.can_process_sample_size((*new_setup).symbolic_sample_size) != kResultTrue {
             return kResultFalse;
         }
-        self.process_setup.borrow_mut().0 = (*new_setup).clone();
+        self.process_setup.borrow_mut().0 = *new_setup;
         kResultOk
     }
 
-    pub unsafe fn add_audio_input(&self, name: &str, arr: SpeakerArrangement) {
+    pub fn add_audio_input(&self, name: &str, arr: SpeakerArrangement) {
         let new_bus = AudioBus {
             name: String::from(name),
             bus_type: 0,
@@ -422,17 +428,16 @@ impl IAudioProcessor for AGainProcessor {
                                 info!("Gain value: {}", self.gain.borrow().0);
                             }
                         }
-                        1 => {
+                        1
                             if param_queue.get_point(
                                 num_points - 1,
                                 &mut sample_offset as *mut _,
                                 &mut value as *mut _,
                             ) == kResultTrue
-                            {
+                            => {
                                 self.bypass.borrow_mut().0 = value > 0.5;
                                 info!("Bypass value: {}", self.bypass.borrow().0);
                             }
-                        }
                         _ => (),
                     }
                 }
@@ -706,7 +711,7 @@ impl IPluginBase for AGainController {
             name: [0; 128],
             program_list_id: -1,
         };
-        wstrcpy("Unit1", unit_info.name.as_mut_ptr() as *mut i16);
+        wstrcpy("Unit1", unit_info.name.as_mut_ptr());
         self.units.borrow_mut().0.push(unit_info);
 
         let mut gain_parameter = ParameterInfo {
@@ -1021,7 +1026,7 @@ pub unsafe extern "system" fn GetPluginFactory() -> *mut c_void {
                 .directory(path)
                 .format(opt_format)
                 .start();
-            if let Ok(_) = init {
+            if init.is_ok() {
                 info!("Started logger...");
             }
         }

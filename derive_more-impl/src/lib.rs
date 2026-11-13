@@ -8,6 +8,11 @@
 use proc_macro::TokenStream;
 use syn::parse::Error as ParseError;
 
+// SOTF local: helpers here are shared by derives behind cargo features;
+// which ones are dead depends on the consumer's enabled feature set, so a
+// gpui-workspace build (subset of features) would otherwise report ~21
+// dead-code warnings in this vendored upstream module (issue #6 Phase C).
+#[allow(dead_code, unused_mut)]
 mod utils;
 
 #[cfg(feature = "as_ref")]

@@ -14,7 +14,7 @@
 //!
 //! ## Synopsis
 //!
-//!     # extern crate font_kit;
+//!     # extern crate zed_font_kit as font_kit;
 //!     # extern crate pathfinder_geometry;
 //!     #
 //!     use font_kit::canvas::{Canvas, Format, RasterizationOptions};

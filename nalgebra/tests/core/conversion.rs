@@ -1,4 +1,4 @@
-#![cfg(all(feature = "proptest-support"))]
+#![cfg(feature = "proptest-support")]
 use na::{
     self, Affine3, Isometry3, Matrix2, Matrix2x3, Matrix2x4, Matrix2x5, Matrix2x6, Matrix3,
     Matrix3x2, Matrix3x4, Matrix3x5, Matrix3x6, Matrix4, Matrix4x2, Matrix4x3, Matrix4x5,

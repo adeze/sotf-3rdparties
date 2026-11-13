@@ -177,14 +177,14 @@ impl<'a> Interpreter<'a> {
     /// Returns error if [`Interpreter::allocate_tensors()`] was not called before calling this
     /// or given index is not a valid input tensor index in
     /// [0, [`Interpreter::input_tensor_count()`]).
-    pub fn input(&self, index: usize) -> Result<Tensor> {
+    pub fn input(&self, index: usize) -> Result<Tensor<'_>> {
         let max_index = self.input_tensor_count() - 1;
         if index > max_index {
             return Err(Error::new(ErrorKind::InvalidTensorIndex(index, max_index)));
         }
         unsafe {
             let tensor_ptr = TfLiteInterpreterGetInputTensor(self.interpreter_ptr, index as i32);
-            Tensor::from_raw(tensor_ptr as *mut TfLiteTensor).map_err(|error| {
+            Tensor::from_raw(tensor_ptr).map_err(|error| {
                 if error.kind() == ErrorKind::ReadTensorError {
                     Error::new(ErrorKind::AllocateTensorsRequired)
                 } else {
@@ -206,7 +206,7 @@ impl<'a> Interpreter<'a> {
     /// [0, [`Interpreter::output_tensor_count()`]). And, it may return error
     /// unless the output tensor has been both sized and allocated. In general,
     /// best practice is to call this *after* calling [`Interpreter::invoke()`].
-    pub fn output(&self, index: usize) -> Result<Tensor> {
+    pub fn output(&self, index: usize) -> Result<Tensor<'_>> {
         let max_index = self.output_tensor_count() - 1;
         if index > max_index {
             return Err(Error::new(ErrorKind::InvalidTensorIndex(index, max_index)));
@@ -227,8 +227,8 @@ impl<'a> Interpreter<'a> {
     /// specified [`Shape`][tensor::Shape].
     ///
     /// - Note: After resizing an input tensor, the client **must** explicitly call
-    /// [`Interpreter::allocate_tensors()`] before attempting to access the resized tensor data
-    /// or invoking the interpreter to perform inference.
+    ///   [`Interpreter::allocate_tensors()`] before attempting to access the resized tensor data
+    ///   or invoking the interpreter to perform inference.
     ///
     /// # Arguments
     ///
@@ -270,7 +270,7 @@ impl<'a> Interpreter<'a> {
     /// their [`Shape`][tensor::Shape]s.
     ///
     /// - Note: This is a relatively expensive operation and should only be called
-    /// after creating the interpreter and resizing any input tensors.
+    ///   after creating the interpreter and resizing any input tensors.
     ///
     /// # Error
     ///
@@ -335,9 +335,8 @@ impl<'a> Interpreter<'a> {
     /// input tensor or the given index is not a valid input tensor index in
     /// [0, [`Interpreter::input_tensor_count()`]) or TensorFlow Lite C fails internally.
     pub fn copy<T>(&self, data: &[T], index: usize) -> Result<()> {
-        let element_size = std::mem::size_of::<T>();
         let d = unsafe {
-            std::slice::from_raw_parts(data.as_ptr() as *const u8, data.len() * element_size)
+            std::slice::from_raw_parts(data.as_ptr() as *const u8, std::mem::size_of_val(data))
         };
         self.copy_bytes(d, index)
     }

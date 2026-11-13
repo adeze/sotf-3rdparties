@@ -109,7 +109,6 @@ macro_rules! slice_deprecation_note {
     }
 }
 
-pub(crate) use slice_deprecation_note;
 
 #[cfg(feature = "rand-no-std")]
 extern crate rand_package as rand;

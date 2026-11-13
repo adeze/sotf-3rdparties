@@ -10,23 +10,23 @@ checksum = "320119579fcad9c21884f5c4861d16174d0e06250625266f50fe6898340abefa"
 
 [[package]]
 name = "arrayvec"
-version = "0.7.6"
+version = "0.7.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7c02d123df017efcdfbd739ef81735b36c5ba83ec3c59c80a9d7ecc718f92e50"
+checksum = "d3fb67a6e08acf24fdeccbac2cb6ac4305825bd1f117462e0e6f2f193345ad56"
 
 [[package]]
 name = "bitflags"
-version = "2.10.0"
+version = "2.13.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "812e12b5285cc515a9c72a5c1d3b6d46a19dac5acfef5265968c166106e31dd3"
+checksum = "3ded4057c258ba199e2d26386d3af3780957ecaee6c4ef4041c6b4b8b97c0b06"
 
 [[package]]
 name = "bitstream-io"
-version = "4.9.0"
+version = "4.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "60d4bd9d1db2c6bdf285e223a7fa369d5ce98ec767dec949c6ca62863ce61757"
+checksum = "7eff00be299a18769011411c9def0d827e8f2d7bf0c3dbf53633147a8867fd1f"
 dependencies = [
- "core2",
+ "no_std_io2",
 ]
 
 [[package]]
@@ -37,9 +37,9 @@ checksum = "1fd0f2584146f6f2ef48085050886acf353beff7305ebd1ae69500e27c67f64b"
 
 [[package]]
 name = "cfg-if"
-version = "1.0.4"
+version = "1.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9330f8b2ff13f34540b44e946ef35111825727b38d33286ef986142615121801"
+checksum = "4e7648175b45a9a48536d676f68d918270699102aa8dab5496df06904c914600"
 
 [[package]]
 name = "chacha20"
@@ -53,15 +53,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "core2"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b49ba7ef1ad6107f8824dbe97de947cbaac53c44e7f9756a1fba0d37c1eec505"
-dependencies = [
- "memchr",
-]
-
-[[package]]
 name = "cpufeatures"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -72,9 +63,9 @@ dependencies = [
 
 [[package]]
 name = "crc32fast"
-version = "1.5.0"
+version = "1.5.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9481c1c90cbf2ac953f07c8d4a58aa3945c425b7185c9154d67a65e4230da511"
+checksum = "2b929dd2a135771f40afabd1073f85eed59c800b7c61901e5c254270497dad64"
 dependencies = [
  "cfg-if",
 ]
@@ -111,9 +102,9 @@ dependencies = [
 
 [[package]]
 name = "flac-codec"
-version = "1.2.0"
+version = "1.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4dba37ade3b9791d1a219ccb29826d06261538c523f38b5c5aadb44646b1d6a0"
+checksum = "59c7588004ca8c0d0c6fce15a02c0bdca964d94a83a73e45680a6874d551d405"
 dependencies = [
  "arrayvec",
  "bitstream-io",
@@ -122,12 +113,13 @@ dependencies = [
 
 [[package]]
 name = "flate2"
-version = "1.1.5"
+version = "1.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bfe33edd8e85a12a67454e37f8c75e730830d83e313556ab9ebf9ee7fbeb3bfb"
+checksum = "626d4928326b646e70f65ed36fc7cf9f206bdb68a0019ee7c6b4709da4e084c4"
 dependencies = [
  "crc32fast",
  "miniz_oxide",
+ "zlib-rs",
 ]
 
 [[package]]
@@ -144,9 +136,9 @@ dependencies = [
 
 [[package]]
 name = "id3"
-version = "1.16.3"
+version = "1.17.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aadb14a5ba1a0d58ecd4a29bfc9b8f1d119eee24aa01a62c1ec93eb9630a1d86"
+checksum = "33cf1819f31542d9f81db9caa644f91bcf8a375f6de0ce649e4596778b955ab7"
 dependencies = [
  "bitflags",
  "byteorder",
@@ -155,36 +147,45 @@ dependencies = [
 
 [[package]]
 name = "libc"
-version = "0.2.177"
+version = "0.2.191"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2874a2af47a2325c2001a6e6fad9b16a53b802102b528163885171cf92b15976"
+checksum = "65cd87c9a6d60536580b316ad985726104730a5151c99845f2490428ef91240a"
 
 [[package]]
 name = "log"
-version = "0.4.28"
+version = "0.4.35"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "34080505efa8e45a4b816c349525ebe327ceaa8559756f0356cba97ef3bf7432"
+checksum = "5d15f86d12da44cd8d4ec3c73984537eb7f4cadcb9776a575a0a8a05ca11005c"
 
 [[package]]
 name = "md5"
-version = "0.8.0"
+version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ae960838283323069879657ca3de837e9f7bbb4c7bf6ea7f1b290d5e9476d2e0"
+checksum = "7ebb8d8732c6a6df3d8f032a82911cfc747e00efb95cc46e8d0acd5b5b88570c"
 
 [[package]]
 name = "memchr"
-version = "2.7.6"
+version = "2.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f52b00d39961fc5b2736ea853c9cc86238e165017a493d1d5c8eac6bdc4cc273"
+checksum = "cf8baf1c55e62ffcace7a9f06f4bd9cd3f0c4beb022d3b367256b91b87513d98"
 
 [[package]]
 name = "miniz_oxide"
-version = "0.8.9"
+version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1fa76a2c86f704bdb222d66965fb3d63269ce38518b83cb0575fca855ebb6316"
+checksum = "b63fbc4a50860e98e7b2aa7804ded1db5cbc3aff9193adaff57a6931bf7c4b4c"
 dependencies = [
  "adler2",
  "simd-adler32",
+]
+
+[[package]]
+name = "no_std_io2"
+version = "0.9.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "418abd1b6d34fbf6cae440dc874771b0525a604428704c76e48b29a5e67b8003"
+dependencies = [
+ "memchr",
 ]
 
 [[package]]
@@ -218,9 +219,9 @@ checksum = "a1c52ae966a8693b8d564a1dee9f2139907c9e375ee9544276bf61b5d97841ce"
 
 [[package]]
 name = "simd-adler32"
-version = "0.3.7"
+version = "0.3.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d66dc143e6b11c1eddc06d5c423cfc97062865baf299914ab64caa38182078fe"
+checksum = "3a219298ac11a56ea9a6d2120044824d6f01aeb034955e7af7bc16858527deea"
 
 [[package]]
 name = "sotf-dsd-reader"
@@ -242,3 +243,221 @@ dependencies = [
  "rand",
  "sotf-dsd-reader",
 ]
+
+[[package]]
+name = "zlib-rs"
+version = "0.6.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b268e58e7c693d7c271f93ffc4ba3b380412554231c85bf61ca7af91042a4112"
+
+[[patch.unused]]
+name = "math-dsp"
+version = "0.5.37"
+
+[[patch.unused]]
+name = "gpui-android"
+version = "0.11.0"
+
+[[patch.unused]]
+name = "gpui-au"
+version = "0.11.0"
+
+[[patch.unused]]
+name = "gpui-audio-kit"
+version = "0.11.0"
+
+[[patch.unused]]
+name = "gpui-builder"
+version = "0.11.0"
+
+[[patch.unused]]
+name = "gpui-component-lab"
+version = "0.11.0"
+
+[[patch.unused]]
+name = "gpui-d3rs"
+version = "0.11.0"
+
+[[patch.unused]]
+name = "gpui-design"
+version = "0.11.0"
+
+[[patch.unused]]
+name = "gpui-design-tools"
+version = "0.11.0"
+
+[[patch.unused]]
+name = "gpui-ios"
+version = "0.11.0"
+
+[[patch.unused]]
+name = "gpui-keybinding"
+version = "0.11.0"
+
+[[patch.unused]]
+name = "gpui-layout-expr"
+version = "0.11.0"
+
+[[patch.unused]]
+name = "gpui-miniapp"
+version = "0.11.0"
+
+[[patch.unused]]
+name = "gpui-pretext"
+version = "0.11.0"
+
+[[patch.unused]]
+name = "gpui-profiler"
+version = "0.11.0"
+
+[[patch.unused]]
+name = "gpui-px"
+version = "0.11.0"
+
+[[patch.unused]]
+name = "gpui-themes"
+version = "0.11.0"
+
+[[patch.unused]]
+name = "gpui-ui-kit"
+version = "0.11.0"
+
+[[patch.unused]]
+name = "gpui-ui-kit-macros"
+version = "0.11.0"
+
+[[patch.unused]]
+name = "sotf-assert_no_alloc"
+version = "1.1.2"
+
+[[patch.unused]]
+name = "sotf-coreaudio-rs"
+version = "0.14.2"
+
+[[patch.unused]]
+name = "sotf-dst-decoder"
+version = "0.1.2"
+
+[[patch.unused]]
+name = "sotf-gpui-toolkit-gpui"
+version = "0.2.4"
+
+[[patch.unused]]
+name = "sotf-gpui-toolkit-gpui-linux"
+version = "0.1.0"
+
+[[patch.unused]]
+name = "sotf-gpui-toolkit-gpui-macos"
+version = "0.1.2"
+
+[[patch.unused]]
+name = "sotf-gpui-toolkit-gpui-web"
+version = "0.1.1"
+
+[[patch.unused]]
+name = "sotf-gpui-toolkit-gpui-wgpu"
+version = "0.1.3"
+
+[[patch.unused]]
+name = "sotf-gpui-toolkit-gpui-windows"
+version = "0.1.2"
+
+[[patch.unused]]
+name = "sotf-librespot-core"
+version = "0.8.0"
+
+[[patch.unused]]
+name = "sotf-librespot-metadata"
+version = "0.8.0"
+
+[[patch.unused]]
+name = "sotf-librespot-playback"
+version = "0.8.0"
+
+[[patch.unused]]
+name = "sotf-librespot-protocol"
+version = "0.8.0"
+
+[[patch.unused]]
+name = "sotf-metaheuristics-nature"
+version = "10.1.0"
+
+[[patch.unused]]
+name = "sotf-nalgebra"
+version = "0.35.0"
+
+[[patch.unused]]
+name = "sotf-nih_plug"
+version = "0.0.0"
+
+[[patch.unused]]
+name = "sotf-nnnoiseless"
+version = "0.1.1"
+
+[[patch.unused]]
+name = "sotf-objc"
+version = "0.2.7"
+
+[[patch.unused]]
+name = "sotf-predicates"
+version = "3.1.5"
+
+[[patch.unused]]
+name = "sotf-rfd"
+version = "0.17.2"
+
+[[patch.unused]]
+name = "sotf-rubato"
+version = "5.0.0"
+
+[[patch.unused]]
+name = "sotf-tract-onnx"
+version = "0.22.4"
+
+[[patch.unused]]
+name = "sotf-vello"
+version = "0.10.0"
+
+[[patch.unused]]
+name = "sotf-vst3-com"
+version = "0.1.0"
+
+[[patch.unused]]
+name = "sotf-vst3-sys"
+version = "0.1.0"
+
+[[patch.unused]]
+name = "sotf-wgpu"
+version = "29.0.3"
+
+[[patch.unused]]
+name = "sotf-zed-font-kit"
+version = "0.14.1-zed"
+
+[[patch.unused]]
+name = "math-delaunay"
+version = "0.5.4"
+
+[[patch.unused]]
+name = "symphonia-codec-dsd"
+version = "0.2.0"
+
+[[patch.unused]]
+name = "symphonia-codec-dst"
+version = "0.2.0"
+
+[[patch.unused]]
+name = "symphonia-codec-wavpack"
+version = "0.1.1"
+
+[[patch.unused]]
+name = "symphonia-format-sacd"
+version = "0.1.2"
+
+[[patch.unused]]
+name = "symphonia-iamf-core"
+version = "0.1.0"
+
+[[patch.unused]]
+name = "sofa-reader"
+version = "0.2.2"

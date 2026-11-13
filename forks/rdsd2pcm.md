@@ -12,6 +12,10 @@ Provide DSD-to-PCM conversion without forcing file conversion dependencies into 
 
 ## Retained changes
 
+Release maintenance (2026-10-30): imported Rand 0.10's RngExt for random
+sample methods. macOS default-feature strict Clippy, tests and release
+nextest pass (six cases); dither distributions are unchanged.
+
 file-io feature split, rand API/dependency and lint maintenance; nested dsd-reader retained.
 Read [the existing detail record](../rdsd2pcm/README.md) before updating.
 This inventory review does not claim a fresh upstream parity or security audit.

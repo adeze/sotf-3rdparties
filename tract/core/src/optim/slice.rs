@@ -110,7 +110,7 @@ fn op_slices_to_slice_op(
                     wire = patch.wire_node(
                         format!(
                             "{}.split-{}-over-{}.{}..{}.slice",
-                            &node.name, input_ix, input_axis, start, end
+                            node.name, input_ix, input_axis, start, end
                         ),
                         Slice { axis: input_axis, start: start.to_dim(), end: end.to_dim() },
                         &[wire],
@@ -125,7 +125,7 @@ fn op_slices_to_slice_op(
                 &mut patch,
                 model,
                 node,
-                &format!("{}.split-over-{}.{}..{}", &node.name, axis, start, end),
+                &format!("{}.split-over-{}.{}..{}", node.name, axis, start, end),
                 &wires,
                 axis,
                 start,
@@ -203,11 +203,7 @@ fn should_slice_output(
     boundaries.push(end);
     boundaries.sort();
     boundaries.dedup();
-    if boundaries.len() == 2 {
-        Ok(None)
-    } else {
-        Ok(Some(boundaries))
-    }
+    if boundaries.len() == 2 { Ok(None) } else { Ok(Some(boundaries)) }
 }
 
 pub fn rewire_sliced_outputs(

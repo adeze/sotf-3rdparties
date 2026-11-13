@@ -10,11 +10,13 @@ pub fn dropout(
 }
 
 #[derive(Debug, Clone, new, Default, Hash)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct Dropout {
     output_mask: bool,
 }
-
-
 
 impl Op for Dropout {
     fn name(&self) -> StaticName {

@@ -49,6 +49,11 @@ pub struct Super {
 
 /// Types that may be sent Objective-C messages.
 /// For example: objects, classes, and blocks.
+///
+/// # Safety
+///
+/// A pointer to an implementor must be a valid Objective-C message receiver
+/// with the runtime layout expected by `Object`.
 pub unsafe trait Message {
     /**
     Sends a message to self with the given selector and arguments.
@@ -59,6 +64,12 @@ pub unsafe trait Message {
 
     If the selector is known at compile-time, it is recommended to use the
     `msg_send!` macro rather than this method.
+
+    # Safety
+
+    The selector, argument types and return type must match the receiver's
+    method ABI. The caller must uphold the method's ownership, lifetime and
+    threading requirements, including Rust reference validity.
     */
     #[cfg(not(feature = "verify_message"))]
     unsafe fn send_message<A, R>(&self, sel: Sel, args: A) -> Result<R, MessageError>
@@ -70,6 +81,13 @@ pub unsafe trait Message {
         send_message(self, sel, args)
     }
 
+    /// Sends a message after checking its argument and return encodings.
+    ///
+    /// # Safety
+    ///
+    /// The caller must uphold the method's ownership, lifetime and threading
+    /// requirements. Encoding checks do not establish Rust reference validity
+    /// or the method's other semantic preconditions.
     #[cfg(feature = "verify_message")]
     unsafe fn send_message<A, R>(&self, sel: Sel, args: A) -> Result<R, MessageError>
     where
@@ -125,6 +143,12 @@ pub trait MessageArguments: Sized {
     /// This method is the primitive used when sending messages and should not
     /// be called directly; instead, use the `msg_send!` macro or, in cases
     /// with a dynamic selector, the `Message::send_message` method.
+    ///
+    /// # Safety
+    ///
+    /// `imp` must be callable with `obj`, `sel`, these argument types and `R`
+    /// under the C ABI. The receiver and arguments must remain valid for the
+    /// call, and all requirements of the method implementation must hold.
     unsafe fn invoke<R>(imp: Imp, obj: *mut Object, sel: Sel, args: Self) -> R
     where
         R: Any;
@@ -253,6 +277,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::Message;
+    #[cfg(not(feature = "verify_message"))]
     use runtime::Object;
     use test_utils;
 

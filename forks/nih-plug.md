@@ -23,6 +23,17 @@ Original path: `sotf-daw/crates/3rdparties/nih-plug`. Retained source repository
 
 ## Validation and removal
 
+macOS release validation (2026-10-30): workspace strict all-target Clippy,
+serial cargo tests/doctests, and 106 process-isolated nextest cases pass.
+Run cargo tests with `-- --test-threads=1`: the existing no-heap admission
+probe uses process-wide allocation counters. Repairs cover compiler lints,
+state-test comparisons, feature gating for the macOS event loop, and rejection
+of malformed host state without debug-build panics. The intentional allocating
+admission probe remains allocating. Private issue:
+http://192.168.1.32:3001/pierre/sotf-3rdparties/issues/17.
+Evidence: aggregate `tmp/release-qa/nih-plug-state-fixed.log`.
+Local fork changes are not yet adopted by consumer Git dependencies.
+
 From the aggregate `all_of_sotf` directory:
 
 ```sh

@@ -36,3 +36,7 @@ Replace this source only when a selected upstream release covers the retained be
 Owner: SOTF dependency maintainers. Inventory reviewed 2026-10-07;
 re-evaluate the upstream delta within 90 days and on every update.
 Follow [the collection update procedure](../README.md#updating-a-fork).
+
+## macOS release validation (2026-10-30)
+
+Strict all-target Clippy, tests/doctests and nextest pass (three cases, zero skipped); registry block future-compatibility warning remains. Equivalent From conversion, explicit borrowed lifetimes, and direct typed pointer cast replace linted forms. Evidence: aggregate tmp/release-qa/scap-fixed.log; private thirdparties#15. No screen capture started.

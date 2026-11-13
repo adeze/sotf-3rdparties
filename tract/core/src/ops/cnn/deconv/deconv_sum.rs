@@ -20,6 +20,10 @@ DeconvSum      (N) (G) O   H'  W'
 // f32, ndarray::indices in order
 
 #[derive(Clone, Debug, new, Hash)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct DeconvSum {
     pub pool_spec: PoolSpec,
     pub kernel_format: KernelFormat,

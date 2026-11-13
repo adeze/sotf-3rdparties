@@ -12,17 +12,18 @@ pub fn one_hot(
 }
 
 #[derive(Debug, PartialEq, Clone, new, Hash)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 struct OneHot {
     axis: i64,
 }
-
-
 
 impl Expansion for OneHot {
     fn name(&self) -> StaticName {
         "OneHot".into()
     }
-
 
     fn wire(
         &self,

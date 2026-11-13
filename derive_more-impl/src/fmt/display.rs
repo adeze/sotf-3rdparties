@@ -382,10 +382,10 @@ impl Expansion<'_> {
     fn shared_attr_info(&self) -> (bool, bool) {
         let shared_attr_contains_variant = self
             .shared_attr
-            .map_or(true, |attr| attr.contains_arg("_variant"));
+            .is_none_or(|attr| attr.contains_arg("_variant"));
         // If `shared_attr` is a transparent call to `_variant`, then we consider it being absent.
         let has_shared_attr = self.shared_attr.is_some_and(|attr| {
-            attr.transparent_call().map_or(true, |(_, called_trait)| {
+            attr.transparent_call().is_none_or(|(_, called_trait)| {
                 &called_trait != self.trait_ident || !shared_attr_contains_variant
             })
         });

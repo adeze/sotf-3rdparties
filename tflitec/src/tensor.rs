@@ -219,10 +219,10 @@ impl<'a> Tensor<'a> {
     /// # Panics
     ///
     /// * If number of bytes in buffer of the [`Tensor`] is not integer
-    /// multiple of byte count of a single `T` (see [`std::mem::size_of`])
+    ///   multiple of byte count of a single `T` (see [`std::mem::size_of`])
     pub fn data<T>(&self) -> &[T] {
         let element_size = std::mem::size_of::<T>();
-        if self.data.data_length % element_size != 0 {
+        if !self.data.data_length.is_multiple_of(element_size) {
             panic!(
                 "data length {} should be divisible by size of type {}",
                 self.data.data_length, element_size
@@ -247,8 +247,7 @@ impl<'a> Tensor<'a> {
     /// Returns error if byte count of the data does not match the buffer size of the
     /// input tensor or TensorFlow Lite C fails internally.
     pub fn set_data<T>(&self, data: &[T]) -> Result<()> {
-        let element_size = std::mem::size_of::<T>();
-        let input_byte_count = element_size * data.len();
+        let input_byte_count = std::mem::size_of_val(data);
         if self.data.data_length != input_byte_count {
             return Err(Error::new(ErrorKind::InvalidTensorDataCount(
                 data.len(),

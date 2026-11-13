@@ -2,7 +2,7 @@ use na::{Orthographic3, Perspective3, Point3};
 
 #[test]
 fn perspective_inverse() {
-    let proj = Perspective3::new(800.0 / 600.0, 3.14 / 2.0, 1.0, 1000.0);
+    let proj = Perspective3::new(800.0 / 600.0, std::f64::consts::FRAC_PI_2, 1.0, 1000.0);
     let inv = proj.inverse();
 
     let id = inv * proj.into_inner();
@@ -43,7 +43,7 @@ mod proptest_tests {
     proptest! {
         #[test]
         fn perspective_project_unproject(pt in point3()) {
-            let proj = Perspective3::new(800.0 / 600.0, 3.14 / 2.0, 1.0, 1000.0);
+            let proj = Perspective3::new(800.0 / 600.0, std::f64::consts::FRAC_PI_2, 1.0, 1000.0);
 
             let projected   = proj.project_point(&pt);
             let unprojected = proj.unproject_point(&projected);

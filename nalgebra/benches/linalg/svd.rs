@@ -3,7 +3,7 @@ use na::{DMatrix, SMatrix, SVD};
 fn svd_decompose_2x2_f32(bh: &mut criterion::Criterion) {
     bh.bench_function("svd_decompose_2x2", |bh| {
         bh.iter_batched(
-            || SMatrix::<f32, 2, 2>::new_random(),
+            SMatrix::<f32, 2, 2>::new_random,
             |m| SVD::new_unordered(m, true, true),
             criterion::BatchSize::SmallInput,
         )
@@ -13,7 +13,7 @@ fn svd_decompose_2x2_f32(bh: &mut criterion::Criterion) {
 fn svd_decompose_3x3_f32(bh: &mut criterion::Criterion) {
     bh.bench_function("svd_decompose_3x3", |bh| {
         bh.iter_batched(
-            || SMatrix::<f32, 3, 3>::new_random(),
+            SMatrix::<f32, 3, 3>::new_random,
             |m| SVD::new_unordered(m, true, true),
             criterion::BatchSize::SmallInput,
         )
@@ -23,7 +23,7 @@ fn svd_decompose_3x3_f32(bh: &mut criterion::Criterion) {
 fn svd_decompose_4x4(bh: &mut criterion::Criterion) {
     bh.bench_function("svd_decompose_4x4", |bh| {
         bh.iter_batched(
-            || SMatrix::<f64, 4, 4>::new_random(),
+            SMatrix::<f64, 4, 4>::new_random,
             |m| SVD::new_unordered(m, true, true),
             criterion::BatchSize::SmallInput,
         )
@@ -63,7 +63,7 @@ fn svd_decompose_200x200(bh: &mut criterion::Criterion) {
 fn rank_4x4(bh: &mut criterion::Criterion) {
     bh.bench_function("rank_4x4", |bh| {
         bh.iter_batched_ref(
-            || SMatrix::<f64, 4, 4>::new_random(),
+            SMatrix::<f64, 4, 4>::new_random,
             |m| m.rank(1.0e-10),
             criterion::BatchSize::SmallInput,
         )
@@ -103,7 +103,7 @@ fn rank_200x200(bh: &mut criterion::Criterion) {
 fn singular_values_4x4(bh: &mut criterion::Criterion) {
     bh.bench_function("singular_values_4x4", |bh| {
         bh.iter_batched_ref(
-            || SMatrix::<f64, 4, 4>::new_random(),
+            SMatrix::<f64, 4, 4>::new_random,
             |m| m.singular_values(),
             criterion::BatchSize::SmallInput,
         )
@@ -143,7 +143,7 @@ fn singular_values_200x200(bh: &mut criterion::Criterion) {
 fn pseudo_inverse_4x4(bh: &mut criterion::Criterion) {
     bh.bench_function("pseudo_inverse_4x4", |bh| {
         bh.iter_batched(
-            || SMatrix::<f64, 4, 4>::new_random(),
+            SMatrix::<f64, 4, 4>::new_random,
             |m| m.pseudo_inverse(1.0e-10),
             criterion::BatchSize::SmallInput,
         )

@@ -377,15 +377,15 @@ fn simple_add() {
 
     let expected = Matrix2x3::new(11.0, 22.0, 33.0, 44.0, 55.0, 66.0);
 
-    assert_eq!(expected, &a + &b);
-    assert_eq!(expected, &a + b);
-    assert_eq!(expected, a + &b);
+    assert_eq!(expected, a + b);
+    assert_eq!(expected, a + b);
+    assert_eq!(expected, a + b);
     assert_eq!(expected, a + b);
 
     // Sum of a static matrix with a dynamic one.
-    assert_eq!(expected, &a + &c);
     assert_eq!(expected, a + &c);
-    assert_eq!(expected, &c + &a);
+    assert_eq!(expected, a + &c);
+    assert_eq!(expected, &c + a);
     assert_eq!(expected, &c + a);
 }
 
@@ -399,9 +399,9 @@ fn simple_sum() {
 
     assert_eq!(M::zero(), Vec::<M>::new().iter().sum());
     assert_eq!(M::zero(), Vec::<M>::new().into_iter().sum());
-    assert_eq!(a + b, vec![a, b].iter().sum());
+    assert_eq!(a + b, [a, b].iter().sum());
     assert_eq!(a + b, vec![a, b].into_iter().sum());
-    assert_eq!(a + b + c, vec![a, b, c].iter().sum());
+    assert_eq!(a + b + c, [a, b, c].iter().sum());
     assert_eq!(a + b + c, vec![a, b, c].into_iter().sum());
 }
 
@@ -427,9 +427,9 @@ fn simple_mul() {
 
     let expected = Matrix2x4::new(380.0, 440.0, 500.0, 560.0, 830.0, 980.0, 1130.0, 1280.0);
 
-    assert_eq!(expected, &a * &b);
-    assert_eq!(expected, a * &b);
-    assert_eq!(expected, &a * b);
+    assert_eq!(expected, a * b);
+    assert_eq!(expected, a * b);
+    assert_eq!(expected, a * b);
     assert_eq!(expected, a * b);
 }
 
@@ -445,9 +445,9 @@ fn simple_product() {
 
     assert_eq!(M::one(), Vec::<M>::new().iter().product());
     assert_eq!(M::one(), Vec::<M>::new().into_iter().product());
-    assert_eq!(a * b, vec![a, b].iter().product());
+    assert_eq!(a * b, [a, b].iter().product());
     assert_eq!(a * b, vec![a, b].into_iter().product());
-    assert_eq!(a * b * c, vec![a, b, c].iter().product());
+    assert_eq!(a * b * c, [a, b, c].iter().product());
     assert_eq!(a * b * c, vec![a, b, c].into_iter().product());
 }
 
@@ -1221,7 +1221,7 @@ fn column_iteration_mut() {
 
     // statically sized matrix
     let mut smat: nalgebra::SMatrix<f64, 2, 2> = nalgebra::matrix![1.0, 2.0; 3.0, 4.0];
-    let mut cloned = smat.clone();
+    let mut cloned = smat;
     let mut col_iter = smat.column_iter_mut();
     assert_eq!(col_iter.next(), Some(cloned.column_mut(0)));
     assert_eq!(col_iter.next(), Some(cloned.column_mut(1)));
@@ -1268,7 +1268,7 @@ fn test_inversion_failure_leaves_matrix4_unchanged() {
     let mut mat = na::Matrix4::new(
         1.0, 2.0, 3.0, 4.0, 2.0, 4.0, 6.0, 8.0, 3.0, 6.0, 9.0, 12.0, 4.0, 8.0, 12.0, 16.0,
     );
-    let expected = mat.clone();
+    let expected = mat;
     assert!(!mat.try_inverse_mut());
     assert_eq!(mat, expected);
 }

@@ -45,7 +45,7 @@ impl MultiSource {
     pub fn all_fonts(&self) -> Result<Vec<Handle>, SelectionError> {
         let mut handles = vec![];
         for subsource in &self.subsources {
-            handles.extend(subsource.all_fonts()?.into_iter())
+            handles.extend(subsource.all_fonts()?)
         }
         Ok(handles)
     }
@@ -54,7 +54,7 @@ impl MultiSource {
     pub fn all_families(&self) -> Result<Vec<String>, SelectionError> {
         let mut families = vec![];
         for subsource in &self.subsources {
-            families.extend(subsource.all_families()?.into_iter())
+            families.extend(subsource.all_families()?)
         }
         Ok(families)
     }

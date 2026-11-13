@@ -6,6 +6,10 @@ use crate::internal::*;
 // TODO tricky to re-express in "core" because of the multiple hot point... do
 // we need one more reduce ?
 #[derive(Debug, Clone, new, Default, Hash)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct LayerHardmax {
     axis: isize,
     coerce_to_2d: bool,
@@ -78,6 +82,10 @@ impl Expansion for LayerHardmax {
 }
 
 #[derive(Debug, Clone, new, Default, Hash)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct LayerLogSoftmax {
     pub axis: isize,
     pub coerce_to_2d: bool,
@@ -110,6 +118,10 @@ impl Expansion for LayerLogSoftmax {
 }
 
 #[derive(Debug, Clone, new, Default, Hash)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct LayerSoftmax {
     axis: isize,
     coerce_to_2d: bool,

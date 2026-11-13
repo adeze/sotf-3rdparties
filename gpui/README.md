@@ -1,50 +1,43 @@
 # GPUI framework and support sources
 
-This self-contained workspace owns the thirteen GPUI/Zed vendor crates formerly
-in `gpui-toolkit/crates/3rdparties`, plus six support crates from the exact selected
-compatibility fork. SOTF-owned toolkit UI components, themes, builders and apps
-remain in the sibling `gpui-toolkit` repository.
+This workspace owns the GPUI vendor and support crates listed below. SOTF-owned toolkit UI components, themes, builders and apps remain in the sibling `gpui-toolkit` repository.
 
-## Why these sources are retained
+## Current source and packages
 
-The GPUI closure carries embedded application lifetime, Apple platform fixes,
-renderer/custom draw behavior, line wrapping, runtime compatibility and other
-recorded patches. Each crate's existing record below gives the upstream base,
-retained changes and verification requirements; consult it before updating.
-The previous toolkit inventory is preserved in `PREVIOUS_VENDOR_NOTES.md` as
-historical evidence, not the current dependency-resolution specification.
+<!-- current-gpui-provenance:start -->
+Current upstream ref: `v1.25.2`. Support source revision: `d25fa01ccd788d812f236810b71af4feff6b2e38`.
 
-| Source / patch record | Local package |
-| --- | --- |
-| [gpui](crates/gpui/VENDORED.md) | `gpui-toolkit-gpui` 0.2.3 |
-| [gpui_linux](crates/gpui_linux/VENDORED.md) | `gpui-toolkit-gpui-linux` 0.1.0 |
-| [gpui_macos](crates/gpui_macos/VENDORED.md) | `gpui-toolkit-gpui-macos` 0.1.2 |
-| [gpui_macros](crates/gpui_macros/VENDORED.md) | `gpui-toolkit-gpui-macros` 0.1.0 |
-| [gpui_web](crates/gpui_web/VENDORED.md) | `gpui-toolkit-gpui-web` 0.1.1 |
-| [gpui_wgpu](crates/gpui_wgpu/VENDORING.md) | `gpui-toolkit-gpui-wgpu` 0.1.2 |
-| [gpui_windows](crates/gpui_windows/VENDORING.md) | `gpui-toolkit-gpui-windows` 0.1.2 |
-| [http_client](crates/http_client/VENDORED.md) | `gpui-toolkit-http-client` 0.1.0 |
-| [perf](crates/perf/VENDORED.md) | `gpui-toolkit-perf` 0.1.0 |
-| [scheduler](crates/scheduler/VENDORED.md) | `gpui-toolkit-scheduler` 0.1.0 |
-| [sum_tree](crates/sum_tree/VENDORED.md) | `gpui-toolkit-sum-tree` 0.1.0 |
-| [util](crates/util/VENDORED.md) | `gpui-toolkit-util` 0.1.1 |
-| [util_macros](crates/util_macros/VENDORED.md) | `gpui-toolkit-util-macros` 0.1.0 |
+| Crate | Local package | Version |
+| --- | --- | --- |
+| `gpui` | `sotf-gpui-toolkit-gpui` | `0.2.3` |
+| `gpui_apple` | `sotf-gpui-toolkit-gpui-apple` | `0.1.0` |
+| `gpui_linux` | `sotf-gpui-toolkit-gpui-linux` | `0.1.0` |
+| `gpui_macos` | `sotf-gpui-toolkit-gpui-macos` | `0.1.2` |
+| `gpui_macros` | `sotf-gpui-toolkit-gpui-macros` | `0.1.0` |
+| `gpui_web` | `sotf-gpui-toolkit-gpui-web` | `0.1.1` |
+| `gpui_wgpu` | `sotf-gpui-toolkit-gpui-wgpu` | `0.1.3` |
+| `gpui_windows` | `sotf-gpui-toolkit-gpui-windows` | `0.1.2` |
+| `http_client` | `sotf-gpui-toolkit-http-client` | `0.1.0` |
+| `perf` | `sotf-gpui-toolkit-perf` | `0.1.0` |
+| `scheduler` | `sotf-gpui-toolkit-scheduler` | `0.1.0` |
+| `sum_tree` | `sotf-gpui-toolkit-sum-tree` | `0.1.0` |
+| `util` | `sotf-gpui-toolkit-util` | `0.1.1` |
+| `util_macros` | `sotf-gpui-toolkit-util-macros` | `0.1.0` |
+| `gpui_util` | `sotf-gpui_util` | `0.1.0` |
+| `refineable` | `sotf-refineable` | `0.1.0` |
+| `gpui_shared_string` | `sotf-gpui_shared_string` | `0.1.0` |
+| `collections` | `sotf-collections` | `0.1.0` |
+| `path` | `sotf-gpui-toolkit-path` | `0.1.0` |
+| `bench_metrics` | `sotf-gpui-toolkit-bench-metrics` | `0.1.0` |
+| `refineable/derive_refineable` | `sotf-derive_refineable` | `0.1.0` |
+<!-- current-gpui-provenance:end -->
 
-## Pinned Zed support
-
-`collections`, `gpui_util`, `gpui_shared_string`, `media`, `refineable`, and
-`refineable/derive_refineable` were imported from `pierreaubert/zed` at
-`3a0ea890ddf8e6247e38c795a960eb18f5182113`. Their Rust source is unchanged.
-Each `UPSTREAM_CARGO.toml` preserves the original inherited manifest; the active
-manifest makes those inherited values explicit and rebases local paths. No editor
-or unrelated Zed application crates were imported. Original root license files
-and README are preserved as `UPSTREAM_ZED_*`; review per-package declarations,
-including packages that did not originally declare a separate license.
+The source and package table is generated from `FORKS.json` and the active manifests. Run `python3 scripts/gpui_provenance.py --write` after updating them. Per-crate vendoring notes record patch history. `PREVIOUS_VENDOR_NOTES.md` is historical evidence.
 
 ## Workspace and assets
 
 `Cargo.toml` preserves the former toolkit's inherited dependency, feature and
-lint policies for the nineteen source members. Its shared support dependencies
+lint policies for the source members. Its shared support dependencies
 point at the local source above. `assets/fonts` preserves the embedded font bytes,
 readmes and licenses needed by native/web rendering. The source include paths
 retain their original relative layout.

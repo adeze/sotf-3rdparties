@@ -70,3 +70,54 @@ shape, which predates upstream's bind-group caching; the skip returns
 because `flush_uploads` still uses it. No test ported: this tree has no
 `wgpu_atlas` test module (upstream added asserts to its generation
 test).
+
+## 6. Web graphics preparation on local wgpu 29 (Zed v1.25.2 re-vendor, issue #6)
+
+Upstream v1.25.2 `gpui_web` initializes graphics through
+`WgpuContext::new_web(canvas, WebBackendPreference) -> PreparedWebGraphics`
+(WebGPU with WebGL2 fallback) against wgpu 30. This tree keeps local
+`sotf-wgpu` 29 (vello constraint), so the API surface is ported onto the
+retained local context instead of taking upstream's `wgpu_context.rs`
+wholesale:
+
+- **`src/wgpu_context.rs`**: new `WgpuBackend` enum + `WgpuContext::backend()`;
+  `WgpuContext` is now `Clone` (shared `Arc` device/queue, shared
+  device-lost flag). The old zero-argument `new_web()` is replaced by the
+  upstream-shaped `new_web(canvas, preference)` returning
+  `PreparedWebGraphics { context, surface }`: the surface is created before
+  adapter selection (`compatible_surface`), `Auto` uses
+  `wgpu::util::new_instance_with_webgpu_detection`, and the device-lost
+  callback is installed (the old local `new_web` never installed one).
+  `WebDisplaySource` implements `raw_window_handle::HasDisplayHandle`
+  (wgpu 29 blanket-implements `WgpuHasDisplayHandle`; upstream's wgpu 30
+  trait method does not exist here). Local-only behavior is retained:
+  `headless()`, timestamp queries (`SOTF_GPU_TIMESTAMPS`), and the
+  `device_lost` flag — upstream's `DeviceErrorState` is not ported.
+- **`src/wgpu_renderer.rs`**: new `new_from_surface(&WgpuContext, Surface, config)`
+  wasm constructor (upstream signature), built on the retained
+  `new_internal` with a cloned context in the shared `GpuContext` slot so
+  device-lost recovery keeps working. `new_from_canvas` is retained.
+
+## 7. Cosmic text helpers for the web Canvas fallback (upstream port, issue #6)
+
+Upstream v1.25.2 `gpui_web::WebTextSystem` calls two inherent helpers on
+`CosmicTextSystem` that this tree's modularized local cosmic system did
+not have. Ported from upstream `crates/gpui_wgpu/src/cosmic_text_system.rs`:
+
+- `CosmicTextSystem::font_weight_and_style(font_id)` — selected face's
+  actual weight/style from the fontdb face.
+- `CosmicTextSystem::missing_glyphs(text, runs, indices)` — grapheme-level
+  `MissingGlyph` reports with `FallbackFontClass` from the face's
+  `monospaced` flag; implemented on `CosmicTextSystemState` in
+  `src/cosmic_text_system/cosmic_text_system_state.rs`.
+- New dependency `unicode-segmentation = "1.10"` (same version as the
+  `gpui` crate) for `grapheme_indices`.
+
+## 8. `draw` unreachable-tail fix (issue #6 Phase C)
+
+`WgpuRenderer::draw` ended with a `true` that is unreachable in
+non-`headless-qa` builds (the interactive render loop only exits via
+`return`). The two mutually exclusive cfg blocks now form the tail
+expression: the `headless-qa` block evaluates to `true`, the interactive
+block's loop diverges. No behavior change; both feature states check
+warning-free.

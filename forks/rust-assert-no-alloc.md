@@ -36,3 +36,12 @@ Replace this source only when a selected upstream release covers the retained be
 Owner: SOTF dependency maintainers. Inventory reviewed 2026-10-07;
 re-evaluate the upstream delta within 90 days and on every update.
 Follow [the collection update procedure](../README.md#updating-a-fork).
+
+## 2026-10-30 release validation
+
+Strict all-target Clippy, tests/doctests and nextest pass with the upstream
+required warn_debug feature: nine nextest tests, zero skipped. Const TLS
+initializers and equivalent assertion/tail-expression syntax preserve guard
+behavior. The layout argument remains used in abort configurations. Example
+vector pushes intentionally demonstrate allocation and carry a scoped lint
+expectation. Documentation examples now compile and use concrete values/imports.

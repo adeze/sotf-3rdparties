@@ -14,6 +14,10 @@ use crate::tflite::{
 use flatbuffers::{FlatBufferBuilder, UnionWIPOffset, WIPOffset};
 
 #[derive(Debug, PartialEq, Copy, Clone, new)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct BuiltinOp {
     deprecated_builtin_code: i8,
     version: i32,

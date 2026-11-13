@@ -1463,6 +1463,7 @@ pub mod meta_graph_def {
 ///     strings will be stored as bytes_list.
 ///
 /// 2. For Protobuf types, there are three ways to add them:
+/// ```text
 ///     1) tf.add_to_collection("your_collection_name",
 ///          your_proto.SerializeToString())
 ///
@@ -1475,8 +1476,11 @@ pub mod meta_graph_def {
 ///          }
 ///        }
 ///
+/// ```
+///
 ///   or
 ///
+/// ```text
 ///     2) tf.add_to_collection("your_collection_name", str(your_proto))
 ///
 ///        collection_def {
@@ -1488,8 +1492,11 @@ pub mod meta_graph_def {
 ///          }
 ///        }
 ///
+/// ```
+///
 ///   or
 ///
+/// ```text
 ///     3) any_buf = any_pb2.Any()
 ///        tf.add_to_collection("your_collection_name",
 ///          any_buf.Pack(your_proto))
@@ -1505,6 +1512,8 @@ pub mod meta_graph_def {
 ///            }
 ///          }
 ///        }
+///
+/// ```
 ///
 /// 3. For Python objects, implement to_proto() and from_proto(), and register
 ///     them in the following manner:

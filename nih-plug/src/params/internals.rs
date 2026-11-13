@@ -14,56 +14,6 @@ pub enum ParamPtr {
     EnumParam(*const super::enums::EnumParamInner),
 }
 
-#[cfg(test)]
-mod checked_horizon_tests {
-    use super::*;
-    use crate::params::range::{FloatRange, IntRange};
-    use crate::params::smoothing::SmoothingStyle;
-
-    #[test]
-    fn refused_float_automation_preserves_value_modulation_and_smoother() {
-        let param =
-            super::super::FloatParam::new("float", 0.25, FloatRange::Linear { min: 0.0, max: 1.0 })
-                .with_smoother(SmoothingStyle::Linear(1_000.0));
-        param.smoothed.reset(0.25);
-        let ptr = ParamPtr::FloatParam(&param);
-        let invalid_rate = Some(2_147_483_648.0);
-        assert_eq!(
-            unsafe { ptr.set_normalized_value_prepared(0.75, invalid_rate) },
-            None
-        );
-        assert_eq!(
-            unsafe { ptr.modulate_value_prepared(0.1, invalid_rate) },
-            None
-        );
-        assert_eq!(param.value(), 0.25);
-        assert_eq!(param.modulated_normalized_value(), 0.25);
-        assert_eq!(param.smoothed.steps_left(), 0);
-        assert_eq!(param.smoothed.previous_value(), 0.25);
-    }
-
-    #[test]
-    fn refused_integer_automation_preserves_value_modulation_and_smoother() {
-        let param = super::super::IntParam::new("int", 2, IntRange::Linear { min: 0, max: 10 })
-            .with_smoother(SmoothingStyle::Linear(1_000.0));
-        param.smoothed.reset(2);
-        let ptr = ParamPtr::IntParam(&param);
-        let invalid_rate = Some(2_147_483_648.0);
-        assert_eq!(
-            unsafe { ptr.set_normalized_value_prepared(0.8, invalid_rate) },
-            None
-        );
-        assert_eq!(
-            unsafe { ptr.modulate_value_prepared(0.1, invalid_rate) },
-            None
-        );
-        assert_eq!(param.value(), 2);
-        assert_eq!(param.modulated_normalized_value(), 0.2);
-        assert_eq!(param.smoothed.steps_left(), 0);
-        assert_eq!(param.smoothed.previous_value(), 2);
-    }
-}
-
 // These pointers only point to fields on structs kept in an `Arc<dyn Params>`, and the caller
 // always needs to make sure that dereferencing them is safe. To do that the plugin wrappers will
 // keep references to that `Arc` around for the entire lifetime of the plugin.
@@ -126,7 +76,6 @@ impl ParamPtr {
 
     param_ptr_forward!(pub(crate) unsafe fn set_normalized_value(&self, normalized: f32) -> bool);
     param_ptr_forward!(pub(crate) unsafe fn modulate_value(&self, modulation_offset: f32) -> bool);
-    param_ptr_forward!(pub(crate) unsafe fn update_smoother(&self, sample_rate: f64, reset: bool));
     param_ptr_forward!(pub(crate) unsafe fn prepare_smoother(&self, sample_rate: f64) -> Option<i32>);
     param_ptr_forward!(pub(crate) unsafe fn update_smoother_prepared(&self, steps: i32, reset: bool));
 
@@ -256,5 +205,55 @@ impl ParamPtr {
             ParamPtr::BoolParam(_) => normalized,
             ParamPtr::EnumParam(p) => (**p).preview_plain(normalized) as f32,
         }
+    }
+}
+
+#[cfg(test)]
+mod checked_horizon_tests {
+    use super::*;
+    use crate::params::range::{FloatRange, IntRange};
+    use crate::params::smoothing::SmoothingStyle;
+
+    #[test]
+    fn refused_float_automation_preserves_value_modulation_and_smoother() {
+        let param =
+            super::super::FloatParam::new("float", 0.25, FloatRange::Linear { min: 0.0, max: 1.0 })
+                .with_smoother(SmoothingStyle::Linear(1_000.0));
+        param.smoothed.reset(0.25);
+        let ptr = ParamPtr::FloatParam(&param);
+        let invalid_rate = Some(2_147_483_648.0);
+        assert_eq!(
+            unsafe { ptr.set_normalized_value_prepared(0.75, invalid_rate) },
+            None
+        );
+        assert_eq!(
+            unsafe { ptr.modulate_value_prepared(0.1, invalid_rate) },
+            None
+        );
+        assert_eq!(param.value(), 0.25);
+        assert_eq!(param.modulated_normalized_value(), 0.25);
+        assert_eq!(param.smoothed.steps_left(), 0);
+        assert_eq!(param.smoothed.previous_value(), 0.25);
+    }
+
+    #[test]
+    fn refused_integer_automation_preserves_value_modulation_and_smoother() {
+        let param = super::super::IntParam::new("int", 2, IntRange::Linear { min: 0, max: 10 })
+            .with_smoother(SmoothingStyle::Linear(1_000.0));
+        param.smoothed.reset(2);
+        let ptr = ParamPtr::IntParam(&param);
+        let invalid_rate = Some(2_147_483_648.0);
+        assert_eq!(
+            unsafe { ptr.set_normalized_value_prepared(0.8, invalid_rate) },
+            None
+        );
+        assert_eq!(
+            unsafe { ptr.modulate_value_prepared(0.1, invalid_rate) },
+            None
+        );
+        assert_eq!(param.value(), 2);
+        assert_eq!(param.modulated_normalized_value(), 0.2);
+        assert_eq!(param.smoothed.steps_left(), 0);
+        assert_eq!(param.smoothed.previous_value(), 2);
     }
 }

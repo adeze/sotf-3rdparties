@@ -4,10 +4,21 @@ version = "0.1.0"
 edition = "2024"
 description = "Macros used by gpui"
 license = "Apache-2.0"
-repository.workspace = true
-readme.workspace = true
-keywords.workspace = true
-categories.workspace = true
+
+[package.repository]
+workspace = true
+
+[package.readme]
+workspace = true
+
+[package.keywords]
+workspace = true
+
+[package.categories]
+workspace = true
+
+[package.metadata.release]
+tag-name = "{{crate_name}}-v{{version}}"
 
 [lib]
 name = "gpui_macros"
@@ -22,10 +33,18 @@ inspector = []
 heck = "0.5"
 proc-macro2 = "1.0.93"
 quote = "1.0.9"
-syn = { version = "3.0.4", features = ["full", "extra-traits", "visit-mut"] }
 
-[dev-dependencies]
-gpui = { version = "0.2.3", package = "sotf-gpui-toolkit-gpui", path = "../gpui", features = ["inspector"] }
+[dependencies.syn]
+version = "3.0.4"
+features = ["full", "extra-traits", "visit-mut"]
 
-[package.metadata.release]
-tag-name = "{{crate_name}}-v{{version}}"
+[dev-dependencies.gpui]
+version = "0.2.3"
+package = "sotf-gpui-toolkit-gpui"
+path = "../gpui"
+features = ["inspector"]
+
+# Intentionally not inheriting [workspace.lints]: it enables the clippy
+# pedantic group, which this vendored upstream code does not target.
+# The zero-warnings gate (issue #6) runs default rustc/clippy lints.
+[lints]

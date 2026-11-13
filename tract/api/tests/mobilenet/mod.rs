@@ -257,10 +257,12 @@ fn test_cost() -> anyhow::Result<()> {
     let node = nodes[0].as_object().unwrap();
     assert!(node["node_name"].as_str().unwrap() != "");
     assert!(node["op_name"].as_str().unwrap() != "");
-    assert!(nodes
-        .iter()
-        .find_map(|n| n.get("cost").and_then(|c| c.as_object().unwrap().get("FMA(F32)")))
-        .is_some());
+    assert!(
+        nodes
+            .iter()
+            .find_map(|n| n.get("cost").and_then(|c| c.as_object().unwrap().get("FMA(F32)")))
+            .is_some()
+    );
     Ok(())
 }
 
@@ -301,19 +303,23 @@ fn test_transform_registry() -> anyhow::Result<()> {
     Ok(())
 }
 
-fn state_init_from_facts(facts: Vec<Fact>, default_symbol_value: usize) -> Vec<ndarray::ArrayD::<f32>> {
+fn state_init_from_facts(
+    facts: Vec<Fact>,
+    default_symbol_value: usize,
+) -> Vec<ndarray::ArrayD<f32>> {
     let mut state_initializers = vec![];
     for fact in facts {
         let fact = fact.to_string();
         let mut parsed = fact.split(',').collect::<Vec<_>>();
 
         let dt = parsed.pop().unwrap();
-        let dims = parsed.iter()
-        .map(|p| {
-            //Set symbols to 4
-            p.parse::<usize>().unwrap_or(default_symbol_value)
-        })
-        .collect::<Vec<usize>>();
+        let dims = parsed
+            .iter()
+            .map(|p| {
+                //Set symbols to 4
+                p.parse::<usize>().unwrap_or(default_symbol_value)
+            })
+            .collect::<Vec<usize>>();
 
         assert_eq!(dt, "F32");
         let tensor = ndarray::ArrayD::<f32>::zeros(dims);
@@ -355,8 +361,8 @@ fn test_profile_with_state_init() -> anyhow::Result<()> {
     model.optimize()?;
 
     let input = ndarray::ArrayD::<i64>::zeros(vec![1, 1]);
-    let state_initializers: Vec<ndarray::ArrayD::<f32>> = (1..model.input_count()?)
-        .map(|_| ndarray::ArrayD::<f32>::zeros(vec![1, 4, 4, 64]).into())
+    let state_initializers: Vec<ndarray::ArrayD<f32>> = (1..model.input_count()?)
+        .map(|_| ndarray::ArrayD::<f32>::zeros(vec![1, 4, 4, 64]))
         .collect();
 
     // Do KV Cache optim

@@ -6,6 +6,10 @@ use tract_ndarray::{ArrayViewMutD, Axis, Dimension};
 use crate::internal::*;
 
 #[derive(Debug, Clone, new, Default, Hash)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct Topk {
     pub axis: usize,
     pub largest: bool,
@@ -73,11 +77,7 @@ impl Topk {
             .enumerate()
             .sorted_by(|a, b| {
                 let ord = { a.1.partial_cmp(&b.1).unwrap_or(Ordering::Less) };
-                if self.largest {
-                    ord.reverse()
-                } else {
-                    ord
-                }
+                if self.largest { ord.reverse() } else { ord }
             })
             .take(k)
             .enumerate()

@@ -20,12 +20,14 @@ fn fake_quant_with_min_max_vars(
 }
 
 #[derive(Clone, Debug, new, Hash)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 struct FakeQuantWithMinMaxVars {
     narrow_range: bool,
     num_bits: usize,
 }
-
-
 
 impl FakeQuantWithMinMaxVars {
     fn step(&self, min: &Tensor, max: &Tensor) -> TractResult<f32> {
@@ -100,21 +102,15 @@ impl Expansion for FakeQuantWithMinMaxVars {
                 ops::math::sub(),
                 &[wire, min_adj],
             )?[0];
-            let wire = target.wire_node(
-                format!("{prefix}.div-step"),
-                ops::math::div(),
-                &[wire, step],
-            )?[0];
+            let wire =
+                target.wire_node(format!("{prefix}.div-step"), ops::math::div(), &[wire, step])?[0];
             let wire = target.wire_node(
                 format!("{prefix}.round"),
                 ops::math::round_half_to_even(),
                 &[wire],
             )?[0];
-            let wire = target.wire_node(
-                format!("{prefix}.mul-step"),
-                ops::math::mul(),
-                &[wire, step],
-            )?[0];
+            let wire =
+                target.wire_node(format!("{prefix}.mul-step"), ops::math::mul(), &[wire, step])?[0];
             target.wire_node(format!("{prefix}.add-min"), ops::math::add(), &[wire, min_adj])
         } else {
             bail!("Operator can not be made a TypedOp.")

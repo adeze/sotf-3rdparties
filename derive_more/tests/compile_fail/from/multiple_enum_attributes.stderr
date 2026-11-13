@@ -1,0 +1,5 @@
+error: only single kind of `#[from(...)]` attribute is allowed here
+ --> tests/compile_fail/from/multiple_enum_attributes.rs:4:5
+  |
+4 |     #[from(forward)]
+  |     ^

@@ -1,8 +1,8 @@
 //! `Tensor` is the main data container for tract
+use crate::TVec;
 use crate::dim::TDim;
 use crate::internal::*;
 use crate::tensor::Tensor;
-use crate::TVec;
 use half::f16;
 #[cfg(feature = "complex")]
 use num_complex::Complex;
@@ -169,14 +169,14 @@ impl DatumType {
         i: impl IntoIterator<Item = impl std::borrow::Borrow<DatumType>>,
     ) -> Option<DatumType> {
         let mut iter = i.into_iter();
-        let mut current = match iter.next() {
-            None => return None,
-            Some(it) => *it.borrow(),
+        let mut current = {
+            let it = iter.next()?;
+            *it.borrow()
         };
         for n in iter {
-            match current.common_super_type(*n.borrow()) {
-                None => return None,
-                Some(it) => current = it,
+            {
+                let it = current.common_super_type(*n.borrow())?;
+                current = it
             }
         }
         Some(current)
@@ -445,15 +445,7 @@ pub fn round_ties_to_even(x: f32) -> f32 {
     }
     let s = u >> 31;
     let y = if s == 1 { x - TOINT + TOINT } else { x + TOINT - TOINT };
-    if y == 0.0 {
-        if s == 1 {
-            -0f32
-        } else {
-            0f32
-        }
-    } else {
-        y
-    }
+    if y == 0.0 { if s == 1 { -0f32 } else { 0f32 } } else { y }
 }
 
 #[inline]

@@ -666,7 +666,6 @@ mod miri {
             })
         };
         assert_absent_outputs(&buffers);
-        drop(buffers);
 
         let buffers = unsafe {
             manager.create_buffers(0, FRAMES, |sources| {
@@ -691,7 +690,6 @@ mod miri {
             .as_slice_immutable()
             .iter()
             .all(|channel| channel.is_empty()));
-        drop(buffers);
         assert!(aux_output_storage[0]
             .iter()
             .all(|channel| channel.iter().all(|sample| *sample == 0.0)));
@@ -781,7 +779,6 @@ mod miri {
                     *sample = -(channel_idx as f32 + 1.0);
                 }
             }
-            drop(buffers);
 
             for channel in 0..OUTPUTS {
                 let storage = if aliased {
@@ -793,11 +790,11 @@ mod miri {
                     .iter()
                     .all(|sample| *sample == -(channel as f32 + 1.0)));
                 if aliased {
-                    for frame in 0..SAMPLE_OFFSET {
-                        assert_eq!(storage[frame], channel as f32 * 10.0 + frame as f32);
+                    for (frame, sample) in storage.iter().enumerate().take(SAMPLE_OFFSET) {
+                        assert_eq!(*sample, channel as f32 * 10.0 + frame as f32);
                     }
-                    for frame in SAMPLE_OFFSET + FRAMES..STORAGE_FRAMES {
-                        assert_eq!(storage[frame], channel as f32 * 10.0 + frame as f32);
+                    for (frame, sample) in storage.iter().enumerate().skip(SAMPLE_OFFSET + FRAMES) {
+                        assert_eq!(*sample, channel as f32 * 10.0 + frame as f32);
                     }
                 } else {
                     assert!(storage[..SAMPLE_OFFSET]
@@ -808,10 +805,9 @@ mod miri {
                         .all(|sample| *sample == -1.0));
                 }
             }
-            for channel in OUTPUTS..INPUTS {
-                assert!((0..STORAGE_FRAMES).all(|frame| {
-                    input_storage[channel][frame] == channel as f32 * 10.0 + frame as f32
-                }));
+            for (channel, storage) in input_storage.iter().enumerate().skip(OUTPUTS) {
+                assert!((0..STORAGE_FRAMES)
+                    .all(|frame| { storage[frame] == channel as f32 * 10.0 + frame as f32 }));
             }
             assert_eq!(
                 manager
@@ -888,7 +884,6 @@ mod miri {
                 );
             }
         }
-        drop(buffers);
         for channel in 0..OUTPUTS {
             assert_eq!(
                 &output_storage[channel][FULL_OFFSET..FULL_OFFSET + MAX_FRAMES],
@@ -929,7 +924,6 @@ mod miri {
                 assert_eq!(*sample, expected);
             }
         }
-        drop(buffers);
 
         // A missing primary input leaves the legacy output-backed prefix behavior alone, but the
         // scratch suffix is cleared on every callback. The native Ambisonics wrapper rejects a
@@ -947,7 +941,6 @@ mod miri {
         for input_only_slice in buffers.main_buffer.as_slice().iter().skip(OUTPUTS) {
             assert!(input_only_slice.iter().all(|sample| *sample == 0.0));
         }
-        drop(buffers);
 
         assert_eq!(
             manager

@@ -6,6 +6,10 @@ use crate::ops::nn::{BaseDataShape, DataFormat, DataShape, SymDataShape};
 use super::padding::ComputedPaddedDim;
 
 #[derive(Debug, Clone, new, Default, Hash, PartialEq, Eq)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct PoolSpec {
     pub data_format: DataFormat,
     pub kernel_shape: TVec<usize>,

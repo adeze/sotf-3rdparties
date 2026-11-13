@@ -36,3 +36,7 @@ Replace this source only when a selected upstream release covers the retained be
 Owner: SOTF dependency maintainers. Inventory reviewed 2026-10-07;
 re-evaluate the upstream delta within 90 days and on every update.
 Follow [the collection update procedure](../README.md#updating-a-fork).
+
+## macOS release validation (2026-10-30)
+
+Strict all-target Clippy, cargo tests/doctests and nextest pass (one nextest case, two doctests). Updated CFUserNotification::display_alert spelling and removed compiler-confirmed redundant unsafe blocks for current objc2 APIs. Matched optional parent window directly, preserving fallback. No dialogs launched, so visual/interaction validation remains a consumer check. Evidence: aggregate tmp/release-qa/rfd-native-fixed.log; private sotf-3rdparties#13.

@@ -6,6 +6,10 @@ use crate::internal::*;
 use super::Slice;
 
 #[derive(new, Debug, Clone, Hash)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct TypedConcat {
     pub axis: usize,
 }

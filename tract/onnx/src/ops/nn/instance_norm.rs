@@ -11,6 +11,10 @@ pub fn instance_normalization(
 }
 
 #[derive(Debug, Clone, new, Default)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct InstanceNorm {
     epsilon: f32,
 }
@@ -75,11 +79,8 @@ impl Expansion for InstanceNorm {
             tract_hir::ops::math::add(),
             &[vari, epsilon],
         )?;
-        let div = model.wire_node(
-            format!("{name}.rsqrt"),
-            tract_hir::ops::math::rsqrt(),
-            &vari_sane,
-        )?;
+        let div =
+            model.wire_node(format!("{name}.rsqrt"), tract_hir::ops::math::rsqrt(), &vari_sane)?;
         let divised = model.wire_node(
             format!("{name}.div"),
             tract_hir::ops::math::mul(),
@@ -88,11 +89,8 @@ impl Expansion for InstanceNorm {
         let mut scale =
             model.wire_node(format!("{name}.add-scale-axis-n"), AxisOp::Add(0), &inputs[1..2])?;
         for i in 2..rank {
-            scale = model.wire_node(
-                format!("{name}.add-scale-axis-{i}"),
-                AxisOp::Add(2),
-                &scale,
-            )?;
+            scale =
+                model.wire_node(format!("{name}.add-scale-axis-{i}"), AxisOp::Add(2), &scale)?;
         }
         let scaled = model.wire_node(
             format!("{name}.scaled"),
@@ -102,8 +100,7 @@ impl Expansion for InstanceNorm {
         let mut bias =
             model.wire_node(format!("{name}.add-bias-axis-n"), AxisOp::Add(0), &inputs[2..3])?;
         for i in 2..rank {
-            bias =
-                model.wire_node(format!("{name}.add-bias-axis-{i}"), AxisOp::Add(2), &bias)?;
+            bias = model.wire_node(format!("{name}.add-bias-axis-{i}"), AxisOp::Add(2), &bias)?;
         }
         model.wire_node(name, tract_hir::ops::math::add(), &[scaled[0], bias[0]])
     }

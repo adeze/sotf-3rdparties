@@ -1,13 +1,17 @@
-use crate::frame::mmm::fuse::RoundingPolicy;
+use crate::Scaler;
 use crate::frame::mmm::MatMatMulKer;
+use crate::frame::mmm::fuse::RoundingPolicy;
 use crate::generic::rounding::ScaleShiftAndRound;
 use crate::mmm::{FusedKerSpec, FusedSpec};
-use crate::Scaler;
 use proptest::prelude::*;
 
 use super::fuse::fused_ops;
 
 #[derive(Debug, new)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct QScaleProblem<K>
 where
     K: MatMatMulKer<Acc = i32>,

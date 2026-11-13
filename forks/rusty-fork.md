@@ -12,6 +12,10 @@ Align quick-error to version 2 for the test dependency closure.
 
 ## Retained changes
 
+Release maintenance (2026-10-30): mechanical import/borrow/return lint
+fixes, current I/O-error constructor in a test, and doc-list indentation.
+macOS strict Clippy, tests/doctests and release nextest pass (14 cases).
+
 Pinned fork updates quick-error manifest and macro compatibility.
 Read [the existing detail record](../rusty-fork/Cargo.toml) before updating.
 This inventory review does not claim a fresh upstream parity or security audit.

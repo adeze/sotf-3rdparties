@@ -14,9 +14,6 @@ use std::io::{self, BufRead, Seek};
 use std::panic;
 use std::process;
 
-use fnv;
-use tempfile;
-
 use crate::cmdline;
 use crate::error::*;
 use crate::child_wrapper::ChildWrapper;
@@ -185,9 +182,9 @@ fn fork_impl(test_name: &str, fork_id: String,
         let mut child = command.spawn().map(ChildWrapper::new)
             .map(|p| KillOnDrop(p, file))?;
 
-        let ret = in_parent(&mut child.0, &mut child.1);
+        in_parent(&mut child.0, &mut child.1);
 
-        Ok(ret)
+        Ok(())
     }
 }
 
@@ -195,7 +192,7 @@ fn id_str<ID : Hash>(id: ID) -> String {
     let mut hasher = fnv::FnvHasher::default();
     id.hash(&mut hasher);
 
-    return format!(":{:016X}", hasher.finish());
+    format!(":{:016X}", hasher.finish())
 }
 
 #[cfg(test)]

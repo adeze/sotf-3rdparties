@@ -1,9 +1,9 @@
 # Vendored: util
 
-- Upstream: https://github.com/zed-industries/zed/tree/v1.9.0/crates/util
-- Base ref: v1.9.0
+- Upstream: https://github.com/zed-industries/zed/tree/v1.25.2/crates/util
+- Base ref: v1.25.2
 - Import: scripts/import_gpui_upstream.py (history-free snapshot)
-- Excluded on import: examples/, benches/, deps on gpui_platform, gpui_web, reqwest_client, zlog, ztracing, ztracing_macro
+- Excluded on import: examples/, benches/, deps on gpui_platform, reqwest_client, zlog, ztracing, ztracing_macro
 
 ## Local patches
 
@@ -11,6 +11,10 @@
 - root `Cargo.toml` (not this crate): mirrored zed v1.9.0 `[patch.crates-io]` for `async-task` (rev b4486cd).
 - `src/util.rs`: use `Vec::clear` instead of `truncate(0)` so Rust 1.97's
   `clippy::manual_clear` lint passes under `-D warnings`.
+- `src/archive.rs`: `#[allow(deprecated)]` on `extract_seekable_zip`
+  (issue #6 Phase C). async_zip 0.0.19 deprecates `base::read::seek` for the
+  rewritten `read1` module; migrating reworks the extraction loop and its
+  path-sanitization contract, so track upstream Zed's migration instead.
 
 ### Crate-root lint allows (clippy default lints, upstream code unchanged)
 

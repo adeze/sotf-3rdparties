@@ -1,217 +1,162 @@
-["workspace"]
-"resolver" = "3"
-"members" = ["crates/gpui", "crates/gpui_linux", "crates/gpui_macos", "crates/gpui_macros", "crates/gpui_web", "crates/gpui_wgpu", "crates/gpui_windows", "crates/http_client", "crates/perf", "crates/scheduler", "crates/sum_tree", "crates/util", "crates/util_macros", "crates/collections", "crates/gpui_util", "crates/gpui_shared_string", "crates/media", "crates/refineable", "crates/refineable/derive_refineable"]
+[workspace]
+resolver = "3"
+members = ["crates/gpui", "crates/gpui_linux", "crates/gpui_macos", "crates/gpui_macros", "crates/gpui_web", "crates/gpui_wgpu", "crates/gpui_windows", "crates/http_client", "crates/perf", "crates/scheduler", "crates/sum_tree", "crates/util", "crates/util_macros", "crates/collections", "crates/gpui_util", "crates/gpui_shared_string", "crates/refineable", "crates/refineable/derive_refineable", "crates/gpui_apple", "crates/path", "crates/bench_metrics"]
 
-["workspace"."package"]
-"version" = "0.9.31"
-"authors" = ["Pierre F. Aubert pierre@spinorama.org"]
-"description" = "A toolkit to build portable and fast UI"
-"edition" = "2024"
-"documentation" = "https://docs.rs/gpui-toolkit"
-"license" = "ISC"
-"repository" = "https://github.com/pierreaubert/sotf-3rdparties"
-"keywords" = ["gpui", "ui", "visualization"]
-"categories" = ["gui", "visualization"]
-"readme" = "README.md"
+# Only fields members actually inherit; unused ones make cargo warn on
+# every build. Members keep their own version/license (Apache-2.0).
+[workspace.package]
+description = "A toolkit to build portable and fast UI"
+edition = "2024"
+repository = "https://github.com/pierreaubert/sotf-3rdparties"
+keywords = ["gpui", "ui", "visualization"]
+categories = ["gui", "visualization"]
+readme = "README.md"
 
-["workspace"."dependencies"]
-"anyhow" = "1.0"
-"futures" = "0.3"
-"itertools" = "0.15"
-"log" = "0.4.28"
-"proptest" = "1.9"
-"rand" = "0.10.2"
-"windows-core" = "0.62"
+[workspace.dependencies]
+anyhow = "1.0"
+futures = "0.3"
+itertools = "0.15"
+log = "0.4.28"
+proptest = "1.9"
+rand = "0.10.2"
+# Held at the 0.62 line (issue #6 Phase B): `windows` latest is 0.62.2 and
+# it requires windows-core 0.62.2 exactly. windows-core/-numerics/-registry
+# 0.100.0 exist but have no matching `windows` crate yet; mixing them
+# duplicates windows-core and breaks type identity across the interop
+# surface. Revisit when `windows` publishes a 0.100-line release.
+windows-core = "0.62"
+collections = { package = "sotf-collections", path = "crates/collections", version = "0.1.0" }
+gpui = { package = "sotf-gpui-toolkit-gpui", path = "crates/gpui", version = "0.2.3", default-features = false }
+gpui_macros = { package = "sotf-gpui-toolkit-gpui-macros", path = "crates/gpui_macros", version = "0.1.0" }
+gpui_shared_string = { package = "sotf-gpui_shared_string", path = "crates/gpui_shared_string", version = "0.1.0" }
+gpui_util = { package = "sotf-gpui_util", path = "crates/gpui_util", version = "0.1.0" }
+gpui_wgpu = { package = "sotf-gpui-toolkit-gpui-wgpu", path = "crates/gpui_wgpu", version = "0.1.2" }
+http_client = { package = "sotf-gpui-toolkit-http-client", path = "crates/http_client", version = "0.1.0" }
+perf = { package = "sotf-gpui-toolkit-perf", path = "crates/perf", version = "0.1.0" }
+refineable = { package = "sotf-refineable", path = "crates/refineable", version = "0.1.0" }
+scap = { path = "../scap", default-features = false, package = "sotf-zed-scap", version = "0.0.8-zed" }
+scheduler = { package = "sotf-gpui-toolkit-scheduler", path = "crates/scheduler", version = "0.1.0" }
+sum_tree = { package = "sotf-gpui-toolkit-sum-tree", path = "crates/sum_tree", version = "0.1.0" }
+util = { package = "sotf-gpui-toolkit-util", path = "crates/util", version = "0.1.1" }
+util_macros = { package = "sotf-gpui-toolkit-util-macros", path = "crates/util_macros", version = "0.1.0" }
+gpui_apple = { package = "sotf-gpui-toolkit-gpui-apple", path = "crates/gpui_apple", version = "0.1.0" }
+path = { package = "sotf-gpui-toolkit-path", path = "crates/path", version = "0.1.0" }
+bench_metrics = { package = "sotf-gpui-toolkit-bench-metrics", path = "crates/bench_metrics", version = "0.1.0" }
 
-["workspace"."dependencies"."collections"]
-"package" = "sotf-collections"
-"path" = "crates/collections"
-"version" = "0.1.0"
+[workspace.dependencies.image]
+version = "0.25"
+default-features = false
+features = ["bmp", "gif", "ico", "jpeg", "png", "pnm", "tiff", "webp"]
 
-["workspace"."dependencies"."gpui"]
-"package" = "sotf-gpui-toolkit-gpui"
-"path" = "crates/gpui"
-"version" = "0.2.3"
-"default-features" = false
+[workspace.dependencies.parking_lot]
+version = "0.13"
+features = ["deadlock_detection"]
 
-["workspace"."dependencies"."gpui_macros"]
-"package" = "sotf-gpui-toolkit-gpui-macros"
-"path" = "crates/gpui_macros"
-"version" = "0.1.0"
+[workspace.dependencies.smallvec]
+version = "1.6"
+features = ["union", "const_new"]
 
-["workspace"."dependencies"."gpui_shared_string"]
-"package" = "sotf-gpui_shared_string"
-"path" = "crates/gpui_shared_string"
-"version" = "0.1.0"
+[workspace.dependencies.uuid]
+version = "1"
+features = ["v4", "v5", "serde"]
 
-["workspace"."dependencies"."gpui_util"]
-"package" = "sotf-gpui_util"
-"path" = "crates/gpui_util"
-"version" = "0.1.0"
+[workspace.dependencies.windows]
+version = "0.62"
+features = ["Foundation_Numerics", "Globalization_DateTimeFormatting", "Storage_Search", "Storage_Streams", "System_Threading", "UI_ViewManagement", "Wdk_System_SystemServices", "Win32_Foundation", "Win32_Globalization", "Win32_Graphics_Direct3D", "Win32_Graphics_Direct3D11", "Win32_Graphics_Direct3D_Fxc", "Win32_Graphics_DirectComposition", "Win32_Graphics_DirectWrite", "Win32_Graphics_DirectManipulation", "Win32_Graphics_Dwm", "Win32_Graphics_Dxgi", "Win32_Graphics_Dxgi_Common", "Win32_Graphics_Gdi", "Win32_Graphics_Imaging", "Win32_Graphics_Hlsl", "Win32_Networking_WinSock", "Win32_Security", "Win32_Security_Credentials", "Win32_Security_Cryptography", "Win32_Storage_FileSystem", "Win32_System_Com", "Win32_System_Com_StructuredStorage", "Win32_System_Console", "Win32_System_Diagnostics_Debug", "Win32_System_DataExchange", "Win32_System_IO", "Win32_System_LibraryLoader", "Win32_System_Memory", "Win32_System_Ole", "Win32_System_Performance", "Win32_System_Pipes", "Win32_System_RestartManager", "Win32_System_SystemInformation", "Win32_System_SystemServices", "Win32_System_Threading", "Win32_System_Variant", "Win32_System_WinRT", "Win32_UI_Controls", "Win32_UI_HiDpi", "Win32_UI_Input_Ime", "Win32_UI_Input_KeyboardAndMouse", "Win32_UI_Input_Pointer", "Win32_UI_Shell", "Win32_UI_Shell_Common", "Win32_UI_Shell_PropertiesSystem", "Win32_UI_WindowsAndMessaging", "Win32_Media", "Data_Xml_Dom", "UI_Notifications", "Win32_Storage_Packaging_Appx", "Win32_System_StationsAndDesktops"]
 
-["workspace"."dependencies"."gpui_wgpu"]
-"package" = "sotf-gpui-toolkit-gpui-wgpu"
-"path" = "crates/gpui_wgpu"
-"version" = "0.1.2"
+[workspace.lints.rust]
+ambiguous_negative_literals = "warn"
+missing_debug_implementations = "allow"
+redundant_imports = "allow"
+redundant_lifetimes = "warn"
+trivial_numeric_casts = "warn"
+unsafe_op_in_unsafe_fn = "warn"
+unused_lifetimes = "warn"
 
-["workspace"."dependencies"."http_client"]
-"package" = "sotf-gpui-toolkit-http-client"
-"path" = "crates/http_client"
-"version" = "0.1.0"
+[workspace.lints.clippy]
+allow_attributes_without_reason = "allow"
+as_pointer_underscore = "warn"
+assertions_on_result_states = "warn"
+clone_on_ref_ptr = "allow"
+deref_by_slicing = "warn"
+disallowed_script_idents = "warn"
+empty_drop = "warn"
+empty_enum_variants_with_brackets = "warn"
+empty_structs_with_brackets = "warn"
+fn_to_numeric_cast_any = "warn"
+if_then_some_else_none = "warn"
+map_err_ignore = "allow"
+redundant_type_annotations = "warn"
+renamed_function_params = "warn"
+semicolon_outside_block = "warn"
+undocumented_unsafe_blocks = "warn"
+unnecessary_safety_comment = "warn"
+unnecessary_safety_doc = "warn"
+unneeded_field_pattern = "warn"
+unused_result_ok = "warn"
+literal_string_with_formatting_args = "allow"
+multiple_crate_versions = "allow"
+redundant_feature_names = "allow"
+manual_checked_ops = "allow"
+must_use_candidate = "allow"
+return_self_not_must_use = "allow"
+unreadable_literal = "allow"
+cast_possible_truncation = "allow"
+cast_precision_loss = "allow"
+cast_sign_loss = "allow"
+cast_possible_wrap = "allow"
+unused_async = "allow"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+too_many_lines = "allow"
+similar_names = "allow"
+default_trait_access = "allow"
+format_push_string = "allow"
+float_cmp = "allow"
+trivially_copy_pass_by_ref = "allow"
+needless_pass_by_value = "allow"
+unused_self = "allow"
+match_same_arms = "allow"
+items_after_statements = "allow"
+many_single_char_names = "allow"
+struct_excessive_bools = "allow"
+wildcard_imports = "allow"
+assert_is_empty = "allow"
 
-["workspace"."dependencies"."image"]
-"version" = "0.25"
-"default-features" = false
-"features" = ["bmp", "gif", "ico", "jpeg", "png", "pnm", "tiff", "webp"]
+[workspace.lints.clippy.cargo]
+level = "warn"
+priority = -1
 
-["workspace"."dependencies"."media"]
-"package" = "sotf-media"
-"path" = "crates/media"
-"version" = "0.1.0"
+[workspace.lints.clippy.complexity]
+level = "warn"
+priority = -1
 
-["workspace"."dependencies"."parking_lot"]
-"version" = "0.12"
-"features" = ["deadlock_detection"]
+[workspace.lints.clippy.correctness]
+level = "warn"
+priority = -1
 
-["workspace"."dependencies"."perf"]
-"package" = "sotf-gpui-toolkit-perf"
-"path" = "crates/perf"
-"version" = "0.1.0"
+[workspace.lints.clippy.pedantic]
+level = "warn"
+priority = -1
 
-["workspace"."dependencies"."refineable"]
-"package" = "sotf-refineable"
-"path" = "crates/refineable"
-"version" = "0.1.0"
+[workspace.lints.clippy.perf]
+level = "warn"
+priority = -1
 
-["workspace"."dependencies"."scap"]
-"path" = "../scap"
-"default-features" = false
-"package" = "sotf-zed-scap"
-"version" = "0.0.8-zed"
+[workspace.lints.clippy.style]
+level = "warn"
+priority = -1
 
-["workspace"."dependencies"."scheduler"]
-"package" = "sotf-gpui-toolkit-scheduler"
-"path" = "crates/scheduler"
-"version" = "0.1.0"
-
-["workspace"."dependencies"."smallvec"]
-"version" = "1.6"
-"features" = ["union", "const_new"]
-
-["workspace"."dependencies"."sum_tree"]
-"package" = "sotf-gpui-toolkit-sum-tree"
-"path" = "crates/sum_tree"
-"version" = "0.1.0"
-
-["workspace"."dependencies"."util"]
-"package" = "sotf-gpui-toolkit-util"
-"path" = "crates/util"
-"version" = "0.1.1"
-
-["workspace"."dependencies"."util_macros"]
-"package" = "sotf-gpui-toolkit-util-macros"
-"path" = "crates/util_macros"
-"version" = "0.1.0"
-
-["workspace"."dependencies"."uuid"]
-"version" = "1"
-"features" = ["v4", "v5", "serde"]
-
-["workspace"."dependencies"."windows"]
-"version" = "0.62"
-"features" = ["Foundation_Numerics", "Globalization_DateTimeFormatting", "Storage_Search", "Storage_Streams", "System_Threading", "UI_ViewManagement", "Wdk_System_SystemServices", "Win32_Foundation", "Win32_Globalization", "Win32_Graphics_Direct3D", "Win32_Graphics_Direct3D11", "Win32_Graphics_Direct3D_Fxc", "Win32_Graphics_DirectComposition", "Win32_Graphics_DirectWrite", "Win32_Graphics_DirectManipulation", "Win32_Graphics_Dwm", "Win32_Graphics_Dxgi", "Win32_Graphics_Dxgi_Common", "Win32_Graphics_Gdi", "Win32_Graphics_Imaging", "Win32_Graphics_Hlsl", "Win32_Networking_WinSock", "Win32_Security", "Win32_Security_Credentials", "Win32_Security_Cryptography", "Win32_Storage_FileSystem", "Win32_System_Com", "Win32_System_Com_StructuredStorage", "Win32_System_Console", "Win32_System_Diagnostics_Debug", "Win32_System_DataExchange", "Win32_System_IO", "Win32_System_LibraryLoader", "Win32_System_Memory", "Win32_System_Ole", "Win32_System_Performance", "Win32_System_Pipes", "Win32_System_RestartManager", "Win32_System_SystemInformation", "Win32_System_SystemServices", "Win32_System_Threading", "Win32_System_Variant", "Win32_System_WinRT", "Win32_UI_Controls", "Win32_UI_HiDpi", "Win32_UI_Input_Ime", "Win32_UI_Input_KeyboardAndMouse", "Win32_UI_Input_Pointer", "Win32_UI_Shell", "Win32_UI_Shell_Common", "Win32_UI_Shell_PropertiesSystem", "Win32_UI_WindowsAndMessaging", "Win32_Media"]
-
-["workspace"."lints"]
-
-["workspace"."lints"."rust"]
-"ambiguous_negative_literals" = "warn"
-"missing_debug_implementations" = "allow"
-"redundant_imports" = "allow"
-"redundant_lifetimes" = "warn"
-"trivial_numeric_casts" = "warn"
-"unsafe_op_in_unsafe_fn" = "warn"
-"unused_lifetimes" = "warn"
-
-["workspace"."lints"."clippy"]
-"allow_attributes_without_reason" = "allow"
-"as_pointer_underscore" = "warn"
-"assertions_on_result_states" = "warn"
-"clone_on_ref_ptr" = "allow"
-"deref_by_slicing" = "warn"
-"disallowed_script_idents" = "warn"
-"empty_drop" = "warn"
-"empty_enum_variants_with_brackets" = "warn"
-"empty_structs_with_brackets" = "warn"
-"fn_to_numeric_cast_any" = "warn"
-"if_then_some_else_none" = "warn"
-"map_err_ignore" = "allow"
-"redundant_type_annotations" = "warn"
-"renamed_function_params" = "warn"
-"semicolon_outside_block" = "warn"
-"undocumented_unsafe_blocks" = "warn"
-"unnecessary_safety_comment" = "warn"
-"unnecessary_safety_doc" = "warn"
-"unneeded_field_pattern" = "warn"
-"unused_result_ok" = "warn"
-"literal_string_with_formatting_args" = "allow"
-"multiple_crate_versions" = "allow"
-"redundant_feature_names" = "allow"
-"manual_checked_ops" = "allow"
-"must_use_candidate" = "allow"
-"return_self_not_must_use" = "allow"
-"unreadable_literal" = "allow"
-"cast_possible_truncation" = "allow"
-"cast_precision_loss" = "allow"
-"cast_sign_loss" = "allow"
-"cast_possible_wrap" = "allow"
-"unused_async" = "allow"
-"missing_errors_doc" = "allow"
-"missing_panics_doc" = "allow"
-"too_many_lines" = "allow"
-"similar_names" = "allow"
-"default_trait_access" = "allow"
-"format_push_string" = "allow"
-"float_cmp" = "allow"
-"trivially_copy_pass_by_ref" = "allow"
-"needless_pass_by_value" = "allow"
-"unused_self" = "allow"
-"match_same_arms" = "allow"
-"items_after_statements" = "allow"
-"many_single_char_names" = "allow"
-"struct_excessive_bools" = "allow"
-"wildcard_imports" = "allow"
-"assert_is_empty" = "allow"
-
-["workspace"."lints"."clippy"."cargo"]
-"level" = "warn"
-"priority" = -1
-
-["workspace"."lints"."clippy"."complexity"]
-"level" = "warn"
-"priority" = -1
-
-["workspace"."lints"."clippy"."correctness"]
-"level" = "warn"
-"priority" = -1
-
-["workspace"."lints"."clippy"."pedantic"]
-"level" = "warn"
-"priority" = -1
-
-["workspace"."lints"."clippy"."perf"]
-"level" = "warn"
-"priority" = -1
-
-["workspace"."lints"."clippy"."style"]
-"level" = "warn"
-"priority" = -1
-
-["workspace"."lints"."clippy"."suspicious"]
-"level" = "warn"
-"priority" = -1
-
-
-
+[workspace.lints.clippy.suspicious]
+level = "warn"
+priority = -1
 
 [workspace.metadata.release]
 tag-name = "{{crate_name}}-v{{version}}"
+
+# Local patch: registry proptest-macro cannot parse `config = ...` in
+# #[property_test] with current syn (panics in codegen); upstream Zed pins
+# this git rev for the same reason. Patch is workspace-local and ignored
+# when publishing member crates.
+[patch.crates-io]
+proptest = { git = "https://github.com/proptest-rs/proptest", rev = "3dca198a8fef1b32e3a66f1e1897c955b4dc5b5b" }

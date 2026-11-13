@@ -6,6 +6,10 @@ use tract_core::ops::cnn::PoolSpec;
 use tract_core::ops::cnn::SumPool;
 
 #[derive(Debug, Clone, new, Hash)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct HirSumPool {
     pub pool_spec: PoolSpec,
     pub count_include_pad: bool,
@@ -57,6 +61,10 @@ impl Expansion for HirSumPool {
 }
 
 #[derive(Debug, Clone, new, Hash)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct HirMaxPool {
     pub pool_spec: PoolSpec,
     pub with_index_outputs: Option<DatumType>,

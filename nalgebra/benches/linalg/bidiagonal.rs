@@ -1,14 +1,12 @@
 use na::{Bidiagonal, DMatrix, Matrix4};
 
-#[path = "../common/macros.rs"]
-mod macros;
 
 // Without unpack.
 fn bidiagonalize_100x100(bh: &mut criterion::Criterion) {
     bh.bench_function("bidiagonalize_100x100", |bh| {
         bh.iter_batched(
             || DMatrix::<f64>::new_random(100, 100),
-            |m| Bidiagonal::new(m),
+            Bidiagonal::new,
             criterion::BatchSize::SmallInput,
         )
     });
@@ -18,7 +16,7 @@ fn bidiagonalize_100x500(bh: &mut criterion::Criterion) {
     bh.bench_function("bidiagonalize_100x500", |bh| {
         bh.iter_batched(
             || DMatrix::<f64>::new_random(100, 500),
-            |m| Bidiagonal::new(m),
+            Bidiagonal::new,
             criterion::BatchSize::SmallInput,
         )
     });
@@ -27,8 +25,8 @@ fn bidiagonalize_100x500(bh: &mut criterion::Criterion) {
 fn bidiagonalize_4x4(bh: &mut criterion::Criterion) {
     bh.bench_function("bidiagonalize_4x4", |bh| {
         bh.iter_batched(
-            || Matrix4::<f64>::new_random(),
-            |m| Bidiagonal::new(m),
+            Matrix4::<f64>::new_random,
+            Bidiagonal::new,
             criterion::BatchSize::SmallInput,
         )
     });
@@ -38,7 +36,7 @@ fn bidiagonalize_500x100(bh: &mut criterion::Criterion) {
     bh.bench_function("bidiagonalize_500x100", |bh| {
         bh.iter_batched(
             || DMatrix::<f64>::new_random(500, 100),
-            |m| Bidiagonal::new(m),
+            Bidiagonal::new,
             criterion::BatchSize::SmallInput,
         )
     });

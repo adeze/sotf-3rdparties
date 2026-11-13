@@ -13,12 +13,14 @@ pub fn pack(_ctx: &ParsingContext, pb: &NodeDef) -> TractResult<Box<dyn Inferenc
 }
 
 #[derive(Debug, Clone, new, Hash)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct Pack {
     n: usize, // The number of inputs
     axis: usize,
 }
-
-
 
 impl Expansion for Pack {
     fn name(&self) -> StaticName {

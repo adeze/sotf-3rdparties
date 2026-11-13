@@ -5,6 +5,10 @@ use tract_core::internal::*;
 use tract_gpu::tensor::{DeviceTensor, DeviceTensorExt};
 
 #[derive(Clone, Debug, new, Hash)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct MetalFusedAxisOp<O: TypedOp> {
     /// List of axis ops to apply for each op inputs
     /// Length of the list is equal to number of inputs

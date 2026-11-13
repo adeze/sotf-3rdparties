@@ -1825,7 +1825,8 @@ where
             let _ = it.next(); // Drop the first elements (we already tested it).
 
             for (left, right) in it {
-                if let Some(ord) = left.partial_cmp(right) {
+                {
+                    let ord = left.partial_cmp(right)?;
                     match ord {
                         Ordering::Equal => { /* Does not change anything. */ }
                         Ordering::Less => {
@@ -1841,8 +1842,6 @@ where
                             *first_ord = ord
                         }
                     }
-                } else {
-                    return None;
                 }
             }
         }
@@ -1997,30 +1996,7 @@ impl_fmt!(fmt::UpperHex, "{:X}", "{:1$X}");
 impl_fmt!(fmt::Binary, "{:b}", "{:.1$b}");
 impl_fmt!(fmt::Pointer, "{:p}", "{:.1$p}");
 
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn empty_display() {
-        let vec: Vec<f64> = Vec::new();
-        let dvector = crate::DVector::from_vec(vec);
-        assert_eq!(format!("{}", dvector), "[ ]")
-    }
 
-    #[test]
-    fn lower_exp() {
-        let test = crate::Matrix2::new(1e6, 2e5, 2e-5, 1.);
-        assert_eq!(
-            format!("{:e}", test),
-            r"
-  ┌           ┐
-  │  1e6  2e5 │
-  │ 2e-5  1e0 │
-  └           ┘
-
-"
-        )
-    }
-}
 
 /// # Cross product
 impl<
@@ -2377,5 +2353,30 @@ impl<T> super::alias::Matrix1<T> {
     pub fn into_scalar(self) -> T {
         let [[scalar]] = self.data.0;
         scalar
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn empty_display() {
+        let vec: Vec<f64> = Vec::new();
+        let dvector = crate::DVector::from_vec(vec);
+        assert_eq!(format!("{}", dvector), "[ ]")
+    }
+
+    #[test]
+    fn lower_exp() {
+        let test = crate::Matrix2::new(1e6, 2e5, 2e-5, 1.);
+        assert_eq!(
+            format!("{:e}", test),
+            r"
+  ┌           ┐
+  │  1e6  2e5 │
+  │ 2e-5  1e0 │
+  └           ┘
+
+"
+        )
     }
 }

@@ -5,15 +5,19 @@ use tract_num_traits::Zero;
 
 use crate::infer::*;
 
-use self::super::expr::{Exp, IntoExp, Output, TExp};
-use self::super::path::{get_path, set_path, Path};
 use self::super::InferenceResult;
+use self::super::expr::{Exp, IntoExp, Output, TExp};
+use self::super::path::{Path, get_path, set_path};
 
 /// A structure that holds the current sets of InferenceFacts.
 ///
 /// This is used during inference (see `Solver::infer`) to let rules compute
 /// the value of expressions which involve tensor properties.
 #[derive(Debug, new)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct Context {
     pub inputs: TVec<InferenceFact>,
     pub outputs: TVec<InferenceFact>,
@@ -362,9 +366,8 @@ impl<'rules> Solver<'rules> {
                 }
 
                 trace!("  Applying rule {rule:?}");
-                let (step_used, mut step_added) = rule
-                    .apply(&mut context)
-                    .with_context(|| format!("Applying rule {rule:?}"))?;
+                let (step_used, mut step_added) =
+                    rule.apply(&mut context).with_context(|| format!("Applying rule {rule:?}"))?;
                 *used |= step_used;
 
                 // There is a change if the rule was used, or if it added new rules.
@@ -548,7 +551,7 @@ macro_rules! given_tuple {
 
             /// Returns the paths that the rule depends on.
             fn get_paths(&self) -> Vec<&Path> {
-                let mut v = vec!();
+                let mut v = vec![];
                 $(v.extend(self.$id.get_paths());)*
                 v
             }

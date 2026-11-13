@@ -5,7 +5,6 @@ use rand::{
         uniform::{SampleRange, SampleUniform},
         Distribution, StandardUniform,
     },
-    seq::IndexedRandom as _,
     RngExt as _, SeedableRng as _,
 };
 use rand_chacha::ChaCha8Rng as ChaCha;

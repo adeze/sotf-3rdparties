@@ -315,7 +315,7 @@ pub fn run_cts(
         "--manifest-path".into(),
         wgpu_cargo_toml.into(),
         "-p".into(),
-        "cts_runner".into(),
+        "sotf-cts_runner".into(),
         "--bin".into(),
         "cts_runner".into(),
     ];

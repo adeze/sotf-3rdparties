@@ -8,6 +8,7 @@ use tract_linalg::pack::PackedFormat;
 use super::*;
 use crate::ops::cast::cast;
 use crate::ops::math::add;
+use crate::ops::matmul::ModePicker;
 use crate::ops::matmul::optimized::{
     AddMatMulGeometry, MapOutputAxisToInput, OptMatMul, ProtoFusedSpec,
 };
@@ -15,7 +16,6 @@ use crate::ops::matmul::pack::{OptMatMulPack, OptSimpleMatMulPack};
 use crate::ops::matmul::quant::{
     combine_scales, compensate_zero_points, requant, wire_ensure_q8_flavour,
 };
-use crate::ops::matmul::ModePicker;
 use crate::ops::nn::{Reduce, Reducer};
 
 pub fn detect_all(model: &mut TypedModel) -> TractResult<()> {
@@ -344,7 +344,7 @@ pub(super) fn regroup_k_axes(
                 AxesMapping::from_strs(&[&exprs[slot]], &[&after])?.translate_to_axis_ops()?;
             for (ix, op) in transpose.into_iter().enumerate() {
                 wires[slot] = patch.wire_node(
-                    format!("{}.transpose_input_{}.{}", &node.name, slot, ix),
+                    format!("{}.transpose_input_{}.{}", node.name, slot, ix),
                     op,
                     &[wires[slot]],
                 )?[0];
@@ -353,7 +353,7 @@ pub(super) fn regroup_k_axes(
         }
         let pos = exprs[slot].chars().position(|c| k_axes[0].repr == c).unwrap();
         wires[slot] = patch.wire_node(
-            format!("{}.fold_k_in_input_{}", &node.name, slot),
+            format!("{}.fold_k_in_input_{}", node.name, slot),
             AxisOp::Reshape(pos, k_dims.clone(), tvec!(k.clone())),
             &[wires[slot]],
         )?[0];

@@ -122,7 +122,7 @@ impl ClassDecl {
         if cls.is_null() {
             None
         } else {
-            Some(ClassDecl { cls: cls })
+            Some(ClassDecl { cls })
         }
     }
 
@@ -158,6 +158,9 @@ impl ClassDecl {
     /// Adds a method with the given name and implementation to self.
     /// Panics if the method wasn't sucessfully added
     /// or if the selector and function take different numbers of arguments.
+    ///
+    /// # Safety
+    ///
     /// Unsafe because the caller must ensure that the types match those that
     /// are expected when the method is invoked from Objective-C.
     pub unsafe fn add_method<F>(&mut self, sel: Sel, func: F)
@@ -182,6 +185,9 @@ impl ClassDecl {
     /// Adds a class method with the given name and implementation to self.
     /// Panics if the method wasn't sucessfully added
     /// or if the selector and function take different numbers of arguments.
+    ///
+    /// # Safety
+    ///
     /// Unsafe because the caller must ensure that the types match those that
     /// are expected when the method is invoked from Objective-C.
     pub unsafe fn add_class_method<F>(&mut self, sel: Sel, func: F)
@@ -263,7 +269,7 @@ impl ProtocolDecl {
         if proto.is_null() {
             None
         } else {
-            Some(ProtocolDecl { proto: proto })
+            Some(ProtocolDecl { proto })
         }
     }
 

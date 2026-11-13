@@ -158,6 +158,10 @@ impl Nearest {
 }
 
 #[derive(Clone, new, Debug, Hash)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 struct Resize {
     axes: Option<Vec<i64>>,
     coord_transformer: CoordTransformer,
@@ -194,7 +198,9 @@ impl Resize {
                     } else if let Ok(i) = i.to_usize() {
                         shape.push(((i as f32 * s) as usize).into());
                     } else {
-                        bail!("Can not compute output shape. inputs are {input_shape:?} and scale {scale:?}")
+                        bail!(
+                            "Can not compute output shape. inputs are {input_shape:?} and scale {scale:?}"
+                        )
                     }
                 }
                 return Ok(shape);

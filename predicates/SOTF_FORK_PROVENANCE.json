@@ -17,5 +17,15 @@
   "proof_only_locks_and_fixtures_not_imported": true,
   "declared_rust_version": "1.74",
   "tested_toolchain": "1.99.0",
-  "minimum_qualified": false
+  "minimum_qualified": false,
+  "release_dependency_updates": [
+    {
+      "date": "2026-10-30",
+      "dependency": "float-cmp",
+      "from": "0.9",
+      "to": "0.10.0",
+      "source_helpers_changed": false,
+      "validation": "offline all-feature resolution passed; executable gates pending"
+    }
+  ]
 }

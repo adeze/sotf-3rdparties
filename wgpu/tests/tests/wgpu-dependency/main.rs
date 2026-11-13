@@ -46,9 +46,13 @@ fn check_feature_dependency(requirement: Requirement) {
     let output = Command::new("cargo")
         .args(&args)
         .output()
-        .expect("Failed to run cargo tree")
-        .stdout;
-    let output = String::from_utf8(output).expect("Output is not valid UTF-8");
+        .expect("Failed to run cargo tree");
+    assert!(
+        output.status.success(),
+        "cargo tree failed: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let output = String::from_utf8(output.stdout).expect("Output is not valid UTF-8");
 
     let mut any_failed = false;
     println!("{output}");
@@ -88,7 +92,7 @@ fn get_all_wgpu_features() -> Vec<String> {
     metadata
         .packages
         .iter()
-        .find(|p| p.name.as_str() == "wgpu")
+        .find(|p| p.name.as_str() == "sotf-wgpu")
         .unwrap()
         .features
         .keys()
@@ -112,10 +116,10 @@ fn wasm32_without_webgl_or_noop_does_not_depend_on_wgpu_core() {
         human_readable_name:
             "wasm32 without `webgl` or `noop` feature does not depend on `wgpu-core`",
         target: "wasm32-unknown-unknown",
-        packages: &["wgpu"],
+        packages: &["sotf-wgpu"],
         features: &features_no_webgl,
         default_features: false,
-        search_terms: &[Search::Negative("wgpu-core")],
+        search_terms: &[Search::Negative("sotf-wgpu-core")],
     });
 }
 
@@ -124,10 +128,10 @@ fn wasm32_with_webgpu_and_wgsl_does_not_depend_on_naga() {
     check_feature_dependency(Requirement {
         human_readable_name: "wasm32 with `webgpu` and `wgsl` feature does not depend on `naga`",
         target: "wasm32-unknown-unknown",
-        packages: &["wgpu"],
+        packages: &["sotf-wgpu"],
         features: &["webgpu", "wgsl"],
         default_features: false,
-        search_terms: &[Search::Negative("naga")],
+        search_terms: &[Search::Negative("sotf-naga")],
     });
 }
 
@@ -136,7 +140,7 @@ fn wasm32_with_webgl_depends_on_glow() {
     check_feature_dependency(Requirement {
         human_readable_name: "wasm32 with `webgl` feature depends on `glow`",
         target: "wasm32-unknown-unknown",
-        packages: &["wgpu"],
+        packages: &["sotf-wgpu"],
         features: &["webgl"],
         default_features: false,
         search_terms: &[Search::Positive("glow")],
@@ -148,7 +152,7 @@ fn wasm32_with_only_custom_backend_does_not_depend_on_web_specifics() {
     check_feature_dependency(Requirement {
         human_readable_name: "wasm32 with only the `custom` backend does not depend on web-specific bindings [`wasm-bindgen`, `js-sys`, `web-sys`]",
         target: "wasm32-unknown-unknown",
-        packages: &["wgpu"],
+        packages: &["sotf-wgpu"],
         features: &["custom"],
         default_features: false,
         search_terms: &[Search::Negative("wasm-bindgen"), Search::Negative("js-sys"), Search::Negative("web-sys")],
@@ -160,7 +164,7 @@ fn wasm32_with_webgpu_backend_does_depend_on_web_specifics() {
     check_feature_dependency(Requirement {
         human_readable_name: "wasm32 with the `webgpu` backend depends on web-specific bindings [`wasm-bindgen`, `js-sys`, `web-sys`]",
         target: "wasm32-unknown-unknown",
-        packages: &["wgpu"],
+        packages: &["sotf-wgpu"],
         features: &["webgpu"],
         default_features: false,
         search_terms: &[Search::Positive("wasm-bindgen"), Search::Positive("js-sys"), Search::Positive("web-sys")],
@@ -172,7 +176,7 @@ fn wasm32_with_webgl_backend_does_depend_on_web_specifics() {
     check_feature_dependency(Requirement {
         human_readable_name: "wasm32 with the `webgl` backend depends on web-specific bindings [`wasm-bindgen`, `js-sys`, `web-sys`]",
         target: "wasm32-unknown-unknown",
-        packages: &["wgpu"],
+        packages: &["sotf-wgpu"],
         features: &["webgl"],
         default_features: false,
         search_terms: &[Search::Positive("wasm-bindgen"), Search::Positive("js-sys"), Search::Positive("web-sys")],
@@ -184,7 +188,7 @@ fn windows_with_webgpu_webgl_backend_does_not_depend_on_web_specifics() {
     check_feature_dependency(Requirement {
         human_readable_name: "windows with the `webgpu` and `webgl` backends enabled does not depend on web-specific bindings [`wasm-bindgen`, `js-sys`, `web-sys`]",
         target: "x86_64-pc-windows-msvc",
-        packages: &["wgpu"],
+        packages: &["sotf-wgpu"],
         features: &["webgpu", "webgl"],
         default_features: false,
         search_terms: &[Search::Negative("wasm-bindgen"), Search::Negative("js-sys"), Search::Negative("web-sys")],
@@ -196,7 +200,7 @@ fn windows_with_webgl_does_not_depend_on_glow() {
     check_feature_dependency(Requirement {
         human_readable_name: "windows with `webgl` does not depend on `glow`",
         target: "x86_64-pc-windows-msvc",
-        packages: &["wgpu"],
+        packages: &["sotf-wgpu"],
         features: &["webgl"],
         default_features: false,
         search_terms: &[Search::Negative("glow")],
@@ -208,7 +212,7 @@ fn apple_with_vulkan_does_not_depend_on_ash() {
     check_feature_dependency(Requirement {
         human_readable_name: "apple with `vulkan` feature does not depend on `ash`",
         target: "aarch64-apple-darwin",
-        packages: &["wgpu"],
+        packages: &["sotf-wgpu"],
         features: &["vulkan"],
         default_features: false,
         search_terms: &[Search::Negative("ash")],
@@ -221,7 +225,7 @@ fn apple_with_vulkan_portability_depends_on_ash_and_renderdoc_sys() {
         human_readable_name:
             "apple with `vulkan-portability` feature depends on `ash` and `renderdoc-sys`",
         target: "aarch64-apple-darwin",
-        packages: &["wgpu"],
+        packages: &["sotf-wgpu"],
         features: &["vulkan-portability"],
         default_features: false,
         search_terms: &[Search::Positive("ash"), Search::Positive("renderdoc-sys")],
@@ -233,7 +237,7 @@ fn apple_with_gles_does_not_depend_on_glow() {
     check_feature_dependency(Requirement {
         human_readable_name: "apple with 'gles' feature does not depend on 'glow'",
         target: "aarch64-apple-darwin",
-        packages: &["wgpu"],
+        packages: &["sotf-wgpu"],
         features: &["gles"],
         default_features: false,
         search_terms: &[Search::Negative("glow")],
@@ -245,7 +249,7 @@ fn apple_with_angle_depends_on_glow_and_renderdoc_sys() {
     check_feature_dependency(Requirement {
         human_readable_name: "apple with 'angle' feature depends on 'glow' and `renderdoc-sys`",
         target: "aarch64-apple-darwin",
-        packages: &["wgpu"],
+        packages: &["sotf-wgpu"],
         features: &["angle"],
         default_features: false,
         search_terms: &[Search::Positive("glow"), Search::Positive("renderdoc-sys")],
@@ -257,7 +261,7 @@ fn apple_with_no_features_does_not_depend_on_renderdoc_sys() {
     check_feature_dependency(Requirement {
         human_readable_name: "apple with no features does not depend on 'renderdoc-sys'",
         target: "aarch64-apple-darwin",
-        packages: &["wgpu"],
+        packages: &["sotf-wgpu"],
         features: &[],
         default_features: false,
         search_terms: &[Search::Negative("renderdoc-sys")],
@@ -270,7 +274,7 @@ fn windows_with_no_features_does_not_depend_on_glow_windows_or_ash() {
         human_readable_name:
             "windows with no features does not depend on 'glow', `windows`, or `ash`",
         target: "x86_64-pc-windows-msvc",
-        packages: &["wgpu"],
+        packages: &["sotf-wgpu"],
         features: &[],
         default_features: false,
         search_terms: &[
@@ -286,7 +290,7 @@ fn windows_with_no_features_depends_on_renderdoc_sys() {
     check_feature_dependency(Requirement {
         human_readable_name: "windows with no features depends on renderdoc-sys",
         target: "x86_64-pc-windows-msvc",
-        packages: &["wgpu"],
+        packages: &["sotf-wgpu"],
         features: &[],
         default_features: false,
         search_terms: &[Search::Positive("renderdoc-sys")],
@@ -298,7 +302,7 @@ fn emscripten_with_webgl_does_not_depend_on_glow() {
     check_feature_dependency(Requirement {
         human_readable_name: "emscripten with webgl feature does not depend on glow",
         target: "wasm32-unknown-emscripten",
-        packages: &["wgpu"],
+        packages: &["sotf-wgpu"],
         features: &["webgl"],
         default_features: false,
         search_terms: &[Search::Negative("glow")],
@@ -310,7 +314,7 @@ fn emscripten_with_gles_depends_on_glow() {
     check_feature_dependency(Requirement {
         human_readable_name: "emscripten with gles feature depends on glow",
         target: "wasm32-unknown-emscripten",
-        packages: &["wgpu"],
+        packages: &["sotf-wgpu"],
         features: &["gles"],
         default_features: false,
         search_terms: &[Search::Positive("glow")],
@@ -322,7 +326,7 @@ fn x86_64_does_not_depend_on_portable_atomic() {
     check_feature_dependency(Requirement {
         human_readable_name: "x86-64 does not depend on portable-atomic",
         target: "x86_64-unknown-linux-gnu",
-        packages: &["wgpu"],
+        packages: &["sotf-wgpu"],
         features: &[],
         default_features: false,
         search_terms: &[Search::Negative("portable-atomic")],
@@ -334,7 +338,7 @@ fn ppc32_does_depend_on_portable_atomic() {
     check_feature_dependency(Requirement {
         human_readable_name: "ppc32 does depend on portable-atomic",
         target: "powerpc-unknown-linux-gnu",
-        packages: &["wgpu"],
+        packages: &["sotf-wgpu"],
         features: &[],
         default_features: false,
         search_terms: &[Search::Positive("portable-atomic")],

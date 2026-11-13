@@ -11,6 +11,9 @@ use rand::RngExt;
 use rand::distr::{Distribution, StandardUniform};
 use rand_xorshift::XorShiftRng;
 
+#[path = "common/macros.rs"]
+mod macros;
+
 pub mod core;
 pub mod geometry;
 pub mod linalg;

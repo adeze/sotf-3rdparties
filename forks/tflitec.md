@@ -15,8 +15,13 @@ publication. Its only in-collection consumer is the private
 
 ## Retained changes
 
-Exact pinned snapshot; no SOTF Rust patch. Package renamed `sotf-tflitec`
-for publication.
+Package renamed `sotf-tflitec` for publication. Release preparation updates
+bindgen to 0.73.2, makes lifetimes explicit, and resolves current strict Rust
+lints without suppressing diagnostics. The native macOS build uses Bazel 5
+C++ toolchain defaults with the Xcode SDK and Apple linker, disables GNU
+start/end-lib, and patches the pinned TensorFlow float abs call for current
+libc++. User-provided Bazel environment options retain precedence. Native
+build and full test validation are tracked in the aggregate release report.
 Read [the existing detail record](../tflitec/Cargo.toml) before updating.
 This inventory review does not claim a fresh upstream parity or security audit.
 
@@ -26,6 +31,11 @@ Import kind: `pinned-git-snapshot`.
 Archive SHA-256: `ade04b55d92199a0e97a45bbe0c9b3308c6d3e8aa2e83cbbc87e676c4b5bf027`. Pinned commit subject: workaround weird uint32_t usage.
 
 ## Validation and removal
+
+Native macOS default-feature validation on 2026-10-30 passed strict Clippy,
+7 unit tests, 4 doctests, and 7 nextest tests with the checked-in build setup.
+Optional XNNPACK configurations remain outside that result. The aggregate
+release report contains the commands and log paths.
 
 From the aggregate `all_of_sotf` directory:
 

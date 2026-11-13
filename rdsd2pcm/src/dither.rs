@@ -16,7 +16,7 @@
  along with rdsd2pcm. If not, see <https://www.gnu.org/licenses/>.
 */
 
-use rand::Rng;
+use rand::RngExt;
 use std::env;
 
 use crate::DitherType;

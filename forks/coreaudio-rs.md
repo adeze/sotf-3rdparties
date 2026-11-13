@@ -36,3 +36,7 @@ Replace this source only when a selected upstream release covers the retained be
 Owner: SOTF dependency maintainers. Inventory reviewed 2026-10-07;
 re-evaluate the upstream delta within 90 days and on every update.
 Follow [the collection update procedure](../README.md#updating-a-fork).
+
+## macOS release validation (2026-10-30)
+
+Strict all-target Clippy, cargo tests/doctests and nextest passed locally (eight nextest cases, zero skipped). Mechanical example lint fixes preserve channel interleaving and stream configuration; examples were compiled, not played. Evidence: aggregate tmp/release-qa/coreaudio-fixed.log. Private issue: http://192.168.1.32:3001/pierre/sotf-3rdparties/issues/11. Consumer git dependencies still require separate adoption/validation.

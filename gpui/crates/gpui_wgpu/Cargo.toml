@@ -25,14 +25,15 @@ anyhow = "1.0"
 bytemuck = "1"
 collections = { workspace = true }
 cosmic-text = { version = "0.19.0", package = "sotf-cosmic-text", path = "../../../cosmic-text" }
-etagere = "0.2"
+etagere = "0.3"
 itertools = "0.15.0"
 log = "0.4"
-parking_lot = "0.12"
+parking_lot = "0.13"
 profiling = "1"
 raw-window-handle = "0.6"
 smallvec = { version = "1.6", features = ["union", "const_new"] }
 swash = "0.2.6"
+unicode-segmentation = "1.10"
 gpui_util = { workspace = true }
 wgpu = { package = "sotf-wgpu", path = "../../../wgpu/wgpu", version = "29.0.0" }
 image = { workspace = true, optional = true }
@@ -52,3 +53,8 @@ js-sys = "0.3"
 
 [package.metadata.release]
 tag-name = "{{crate_name}}-v{{version}}"
+
+# Intentionally not inheriting [workspace.lints]: it enables the clippy
+# pedantic group, which this vendored upstream code does not target.
+# The zero-warnings gate (issue #6) runs default rustc/clippy lints.
+[lints]

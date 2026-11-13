@@ -159,6 +159,12 @@ version = "2.0.45"
 version = "0.2.2"
 optional = true
 
+[dev-dependencies.derive_more]
+package = "sotf-derive_more"
+path = "../derive_more"
+version = "=2.1.2"
+features = ["full"]
+
 [dev-dependencies.itertools]
 version = "0.14.0"
 

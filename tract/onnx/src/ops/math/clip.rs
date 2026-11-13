@@ -33,18 +33,19 @@ pub fn clip_11(
 }
 
 #[derive(Debug, Clone, new, Hash)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct Clip11 {
     input_min: Option<usize>,
     input_max: Option<usize>,
 }
 
-
-
 impl Expansion for Clip11 {
     fn name(&self) -> StaticName {
         "Clip".into()
     }
-
 
     fn rules<'r, 'p: 'r, 's: 'r>(
         &'s self,

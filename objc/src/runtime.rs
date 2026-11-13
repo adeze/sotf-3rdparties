@@ -178,9 +178,13 @@ impl Sel {
     /// Wraps a raw pointer to a selector into a `Sel` object.
     ///
     /// This is almost never what you want; use `Sel::register()` instead.
+    ///
+    /// # Safety
+    ///
+    /// `ptr` must be a valid selector registered with the Objective-C runtime.
     #[inline]
     pub unsafe fn from_ptr(ptr: *const c_void) -> Sel {
-        Sel { ptr: ptr }
+        Sel { ptr }
     }
 
     /// Returns a pointer to the raw selector.
@@ -225,8 +229,7 @@ impl Ivar {
 
     /// Returns the offset of self.
     pub fn offset(&self) -> isize {
-        let offset = unsafe { ivar_getOffset(self) };
-        offset as isize
+        unsafe { ivar_getOffset(self) }
     }
 
     /// Returns the `Encoding` of self.
@@ -332,7 +335,7 @@ impl Class {
 
     /// Returns the size of instances of self.
     pub fn instance_size(&self) -> usize {
-        unsafe { class_getInstanceSize(self) as usize }
+        unsafe { class_getInstanceSize(self) }
     }
 
     /// Returns a specified instance method for self, or `None` if self and
@@ -479,6 +482,9 @@ impl Object {
 
     /// Returns a reference to the ivar of self with the given name.
     /// Panics if self has no ivar with the given name.
+    ///
+    /// # Safety
+    ///
     /// Unsafe because the caller must ensure that the ivar is actually
     /// of type `T`.
     pub unsafe fn get_ivar<T>(&self, name: &str) -> &T
@@ -504,6 +510,9 @@ impl Object {
 
     /// Returns a mutable reference to the ivar of self with the given name.
     /// Panics if self has no ivar with the given name.
+    ///
+    /// # Safety
+    ///
     /// Unsafe because the caller must ensure that the ivar is actually
     /// of type `T`.
     pub unsafe fn get_mut_ivar<T>(&mut self, name: &str) -> &mut T
@@ -529,6 +538,9 @@ impl Object {
 
     /// Sets the value of the ivar of self with the given name.
     /// Panics if self has no ivar with the given name.
+    ///
+    /// # Safety
+    ///
     /// Unsafe because the caller must ensure that the ivar is actually
     /// of type `T`.
     pub unsafe fn set_ivar<T>(&mut self, name: &str, value: T)
@@ -560,7 +572,7 @@ mod tests {
         assert!(ivar.offset() > 0);
 
         let ivars = cls.instance_variables();
-        assert!(ivars.len() > 0);
+        assert!(!ivars.is_empty());
     }
 
     #[test]
@@ -574,7 +586,7 @@ mod tests {
         assert!(method.argument_type(1).unwrap() == Sel::encode());
 
         let methods = cls.instance_methods();
-        assert!(methods.len() > 0);
+        assert!(!methods.is_empty());
     }
 
     #[test]
@@ -598,7 +610,7 @@ mod tests {
     fn test_classes() {
         assert!(Class::classes_count() > 0);
         let classes = Class::classes();
-        assert!(classes.len() > 0);
+        assert!(!classes.is_empty());
     }
 
     #[test]
@@ -608,7 +620,7 @@ mod tests {
         let class = test_utils::custom_class();
         assert!(class.conforms_to(proto));
         let class_protocols = class.adopted_protocols();
-        assert!(class_protocols.len() > 0);
+        assert!(!class_protocols.is_empty());
     }
 
     #[test]
@@ -633,7 +645,7 @@ mod tests {
         let _ = test_utils::custom_protocol();
 
         let protocols = Protocol::protocols();
-        assert!(protocols.len() > 0);
+        assert!(!protocols.is_empty());
     }
 
     #[test]

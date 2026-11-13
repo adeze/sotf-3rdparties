@@ -6,6 +6,10 @@ use tract_core::ops::array::TypedConcat;
 use tract_gpu::tensor::DeviceTensorExt;
 
 #[derive(new, Debug, Clone, Hash)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct CudaConcat {
     pub kernel: Concat,
 }

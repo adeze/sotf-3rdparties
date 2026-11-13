@@ -36,3 +36,7 @@ Replace this source only when a selected upstream release covers the retained be
 Owner: SOTF dependency maintainers. Inventory reviewed 2026-10-07;
 re-evaluate the upstream delta within 90 days and on every update.
 Follow [the collection update procedure](../README.md#updating-a-fork).
+
+## macOS release validation (2026-10-30)
+
+Default native strict all-target Clippy, workspace tests/docs and nextest pass (30 cases, zero skipped). Current vergen-gitcl 10.0.3 aligns build metadata types and requires Rust 1.96 (workspace minimum updated); Build/Gitcl builders preserve short SHA and date output. Equivalent condition/iterator lint repairs across core, audio, metadata, playback, connect and CLI. Evidence: aggregate tmp/release-qa/librespot-final-gates.log; private thirdparties#15. No authenticated playback tested. Consumer Git dependencies need adoption separately.

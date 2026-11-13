@@ -212,11 +212,11 @@ mod miri {
             }
         }
 
-        for i in 0..32 {
-            assert_eq!(real_buffers[0][i], 0.001);
+        for sample in &real_buffers[0][..32] {
+            assert_eq!(*sample, 0.001);
         }
-        for i in 32..48 {
-            assert_eq!(real_buffers[0][i], 0.0);
+        for sample in &real_buffers[0][32..48] {
+            assert_eq!(*sample, 0.0);
         }
     }
 }

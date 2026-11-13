@@ -6,6 +6,10 @@ use std::collections::{BTreeSet, HashMap};
 
 /// A graph analyser, along with its current state.
 #[derive(new)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct Analyser<M: BorrowMut<InferenceModel>> {
     model: M,
 }

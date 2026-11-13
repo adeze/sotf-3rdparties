@@ -9,7 +9,7 @@
 // except according to those terms.
 
 extern crate clap;
-extern crate font_kit;
+extern crate zed_font_kit as font_kit;
 
 use clap::{Arg, ArgMatches, Command};
 
@@ -17,7 +17,7 @@ use font_kit::loader::Loader;
 use font_kit::source::SystemSource;
 
 #[cfg(any(target_family = "windows", target_os = "macos"))]
-static SANS_SERIF_FONT_REGULAR_POSTSCRIPT_NAME: &'static str = "ArialMT";
+static SANS_SERIF_FONT_REGULAR_POSTSCRIPT_NAME: &str = "ArialMT";
 #[cfg(not(any(target_family = "windows", target_os = "macos")))]
 static SANS_SERIF_FONT_REGULAR_POSTSCRIPT_NAME: &str = "DejaVuSans";
 

@@ -5,7 +5,7 @@ fn full_piv_lu_decompose_10x10(bh: &mut criterion::Criterion) {
     bh.bench_function("full_piv_lu_decompose_10x10", |bh| {
         bh.iter_batched(
             || DMatrix::<f64>::new_random(10, 10),
-            |m| FullPivLU::new(m),
+            FullPivLU::new,
             criterion::BatchSize::SmallInput,
         )
     });
@@ -15,7 +15,7 @@ fn full_piv_lu_decompose_100x100(bh: &mut criterion::Criterion) {
     bh.bench_function("full_piv_lu_decompose_100x100", |bh| {
         bh.iter_batched(
             || DMatrix::<f64>::new_random(100, 100),
-            |m| FullPivLU::new(m),
+            FullPivLU::new,
             criterion::BatchSize::SmallInput,
         )
     });

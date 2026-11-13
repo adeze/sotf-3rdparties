@@ -70,7 +70,7 @@ impl Model<'_> {
     /// # Errors
     ///
     /// Returns error if TensorFlow Lite C fails to load model from the buffer.
-    pub fn from_bytes(bytes: &[u8]) -> std::result::Result<Model, Error> {
+    pub fn from_bytes(bytes: &[u8]) -> std::result::Result<Model<'_>, Error> {
         let model_ptr = unsafe { TfLiteModelCreate(bytes.as_ptr() as *const c_void, bytes.len()) };
         if model_ptr.is_null() {
             Err(Error::new(ErrorKind::FailedToLoadModel))

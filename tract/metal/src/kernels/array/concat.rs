@@ -94,7 +94,7 @@ impl Concat {
         let pipeline = stream.load_pipeline(LibraryName::ArrayOps, &kernel_name)?;
         let command_buffer = stream.command_buffer();
 
-        for (input, offset) in inputs.iter().zip(offsets.into_iter()) {
+        for (input, offset) in inputs.iter().zip(offsets) {
             if input.len() == 0 {
                 continue;
             }

@@ -36,3 +36,7 @@ Replace this source only when a selected upstream release covers the retained be
 Owner: SOTF dependency maintainers. Inventory reviewed 2026-10-07;
 re-evaluate the upstream delta within 90 days and on every update.
 Follow [the collection update procedure](../README.md#updating-a-fork).
+
+## macOS release validation (2026-10-30)
+
+Workspace strict all-target Clippy, cargo tests/docs and nextest pass (one test across six binaries). Fixed macro helpers, removed expression-position vtable trailing semicolon, documented COM safety contracts and repaired example lints. Example bus-input helper is safe because it only mutates owned RefCell data. Evidence: aggregate tmp/release-qa/vst3-example-fixed.log; private thirdparties#15. Actual hosted-plugin behavior needs consumer QA.

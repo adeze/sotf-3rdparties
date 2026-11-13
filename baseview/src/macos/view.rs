@@ -540,7 +540,7 @@ extern "C" fn handle_notification(this: &Object, _cmd: Sel, notification: id) {
         // and if the window's first responder is our NSView.
         // If the first responder isn't our NSView, the focus events will instead be triggered
         // by the becomeFirstResponder and resignFirstResponder methods on the NSView itself.
-        if notification_object == window && first_responder == this as *const Object as id {
+        if notification_object == window && std::ptr::eq(first_responder, this) {
             let is_key_window: BOOL = msg_send![window, isKeyWindow];
             state.trigger_event(Event::Window(if is_key_window == YES {
                 WindowEvent::Focused

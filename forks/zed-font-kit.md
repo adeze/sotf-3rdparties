@@ -36,3 +36,7 @@ Replace this source only when a selected upstream release covers the retained be
 Owner: SOTF dependency maintainers. Inventory reviewed 2026-10-07;
 re-evaluate the upstream delta within 90 days and on every update.
 Follow [the collection update procedure](../README.md#updating-a-fork).
+
+## macOS release repair (2026-10-30)
+
+Strict all-target Clippy fixes preserve bitmap order and font loading behavior. Tests/examples/docs now reference the renamed zed_font_kit library. Restored resources/tests unchanged from zed-industries/font-kit revision 94b0f28166665e8fd2f53ff6d268a14955c82269, including font licenses. Source archive SHA-256: 902a9466b39fdcaa4a428b487474c4107028cbc92a8d2eee281193879f25f7a0. These fixtures were absent from the normalized package (which excludes resources). Private tracking: sotf-3rdparties#12. Validation evidence is recorded in aggregate release-progress.md.

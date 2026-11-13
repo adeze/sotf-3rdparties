@@ -4,22 +4,46 @@ version = "0.1.0"
 edition = "2024"
 description = "A tool for measuring Zed test performance, with too many Clippy lints"
 license = "Apache-2.0"
-repository.workspace = true
-readme.workspace = true
-keywords.workspace = true
-categories.workspace = true
+
+[package.repository]
+workspace = true
+
+[package.readme]
+workspace = true
+
+[package.keywords]
+workspace = true
+
+[package.categories]
+workspace = true
+
+[package.metadata.release]
+tag-name = "{{crate_name}}-v{{version}}"
 
 [lib]
 name = "perf"
 
-[dependencies]
-collections = { workspace = true }
-serde = { version = "1.0.221", features = ["derive", "rc"] }
-serde_json = { version = "1.0.144", features = ["preserve_order", "raw_value"] }
+[features]
+default = ["cli"]
+cli = ["dep:serde_json"]
+
+[dependencies.collections]
+workspace = true
+
+[dependencies.serde]
+version = "1.0.221"
+features = ["derive", "rc"]
+
+[dependencies.serde_json]
+version = "1.0.144"
+features = ["preserve_order", "raw_value"]
+optional = true
 
 [[bin]]
 name = "gpui-toolkit-perf"
 path = "src/main.rs"
 
-[package.metadata.release]
-tag-name = "{{crate_name}}-v{{version}}"
+# Intentionally not inheriting [workspace.lints]: it enables the clippy
+# pedantic group, which this vendored upstream code does not target.
+# The zero-warnings gate (issue #6) runs default rustc/clippy lints.
+[lints]

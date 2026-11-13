@@ -1,6 +1,10 @@
 use crate::internal::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, new)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct DynSlice {
     pub axis: usize,
     pub len: TDim,
@@ -24,11 +28,7 @@ impl Op for DynSlice {
     op_as_typed_op!();
 
     fn same_as(&self, other: &dyn Op) -> bool {
-        if let Some(other) = other.downcast_ref::<Self>() {
-            other == self
-        } else {
-            false
-        }
+        if let Some(other) = other.downcast_ref::<Self>() { other == self } else { false }
     }
 }
 

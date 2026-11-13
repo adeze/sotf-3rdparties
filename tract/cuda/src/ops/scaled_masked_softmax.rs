@@ -7,6 +7,10 @@ use tract_gpu::tensor::DeviceTensorExt;
 /// A = SOFTMAX(INPUT * SCALE + MASK, AXIS=2)
 /// Only input of rank of 3 is supported
 #[derive(Clone, Debug, new, Hash)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct CudaScaledMaskedSoftmax {
     pub scale: Arc<Tensor>,
 }

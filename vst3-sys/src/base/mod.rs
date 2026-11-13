@@ -14,7 +14,6 @@ pub use funknown::*;
 pub use ibstream::*;
 pub use icloneable::*;
 pub use ierrorcontext::*;
-pub use ipersistant::*;
 pub use ipluginbase::*;
 pub use istringresult::*;
 pub use iupdatehandler::*;

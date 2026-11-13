@@ -13,6 +13,10 @@ pub enum PaddingSpec {
 use PaddingSpec::*;
 
 #[derive(Debug, Clone, new, PartialEq, Eq)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct ComputedPaddedDim<D: DimLike> {
     pub deconvoluted: D,
     pub convoluted: D,
@@ -308,7 +312,9 @@ impl PaddingSpec {
         upper: bool,
     ) -> TractResult<ComputedPaddedDim<D>> {
         if (kernel - 1) * dilation < stride {
-            bail!("Invalid axis geometry for SAME padding: expect (kernel_len - 1) * dilation > stride - 1");
+            bail!(
+                "Invalid axis geometry for SAME padding: expect (kernel_len - 1) * dilation > stride - 1"
+            );
         }
         let kernel_field = (kernel - 1) * dilation + 1;
         let crop = kernel_field + adjustment - stride;

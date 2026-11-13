@@ -81,7 +81,7 @@ pub fn gen_allocate_function_parameters_signature(struct_item: &ItemStruct) -> H
 pub fn gen_allocate_aggregate_fields<S: ::std::hash::BuildHasher>(
     aggr_map: &HashMap<Ident, Vec<Ident>, S>,
 ) -> HelperTokenStream {
-    let aggregate_inits = aggr_map.iter().map(|(aggr_field_ident, _)| {
+    let aggregate_inits = aggr_map.keys().map(|aggr_field_ident| {
         quote!(
             #aggr_field_ident: std::ptr::null_mut()
         )

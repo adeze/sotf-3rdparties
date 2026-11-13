@@ -3,9 +3,9 @@ use core_graphics::base::kCGImageAlphaPremultipliedLast;
 use core_graphics::color_space::CGColorSpace;
 use std::f32;
 
-pub(super) const TTC_TAG: [u8; 4] = [b't', b't', b'c', b'f'];
+pub(super) const TTC_TAG: [u8; 4] = *b"ttcf";
 
-pub(super) const OTTO_TAG: [u8; 4] = [b'O', b'T', b'T', b'O'];
+pub(super) const OTTO_TAG: [u8; 4] = *b"OTTO";
 
 pub(super) const OTTO_HEX: u32 = 0x4f54544f; // 'OTTO'
 

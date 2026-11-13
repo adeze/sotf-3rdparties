@@ -3,6 +3,7 @@ mod clipboard;
 mod cursor;
 mod display;
 pub(crate) mod foreign_parent;
+mod popup;
 mod serial;
 mod window;
 

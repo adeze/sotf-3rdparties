@@ -18,7 +18,9 @@ pub struct Test {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Default)]
 pub enum TestTarget {
+    #[default]
     Default,
     Pattern,
     Font,
@@ -33,15 +35,11 @@ parse_enum! {
     (Scan, "scan"),
 }
 
-impl Default for TestTarget {
-    fn default() -> Self {
-        TestTarget::Default
-    }
-}
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Default)]
 pub enum TestCompare {
+    #[default]
     Eq,
     NotEq,
     Less,
@@ -64,15 +62,11 @@ parse_enum! {
     (NotContains, "not_contains"),
 }
 
-impl Default for TestCompare {
-    fn default() -> Self {
-        TestCompare::Eq
-    }
-}
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Default)]
 pub enum TestQual {
+    #[default]
     Any,
     All,
 }
@@ -81,10 +75,4 @@ parse_enum! {
     TestQual,
     (Any, "any"),
     (All, "all"),
-}
-
-impl Default for TestQual {
-    fn default() -> Self {
-        TestQual::Any
-    }
 }

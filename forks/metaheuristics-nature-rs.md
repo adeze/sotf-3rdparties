@@ -36,3 +36,7 @@ Replace this source only when a selected upstream release covers the retained be
 Owner: SOTF dependency maintainers. Inventory reviewed 2026-10-07;
 re-evaluate the upstream delta within 90 days and on every update.
 Follow [the collection update procedure](../README.md#updating-a-fork).
+
+## 2026-10-30 release validation
+
+Recognized the existing documentation cfg, updated lint key spellings, removed an unused rand import and derived Default for unit test fixtures. Solver algorithms unchanged. Strict all-target Clippy, tests/doctests and nextest pass on macOS: six nextest tests, zero skipped.

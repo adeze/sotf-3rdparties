@@ -52,6 +52,10 @@ impl OpState for VariableV2State {
 }
 
 #[derive(Clone, Debug, new, Hash)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct VariableV2 {
     container: Option<String>,
     shared_name: Option<String>,
@@ -62,8 +66,6 @@ pub struct VariableV2 {
     pub initializer: Option<Arc<Tensor>>,
 }
 
-
-
 impl Op for VariableV2 {
     fn name(&self) -> StaticName {
         "VariableV2".into()
@@ -73,7 +75,7 @@ impl Op for VariableV2 {
         if let Some(init) = &self.initializer {
             Ok(vec![format!("Initialized to {init:?}")])
         } else {
-            Ok(vec![format!("Uninitialized")])
+            Ok(vec!["Uninitialized".to_string()])
         }
     }
 
@@ -133,11 +135,13 @@ struct AssignState;
 trivial_op_state_freeeze!(AssignState);
 
 #[derive(Clone, Debug, new, Default, Hash)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct Assign {
     pub var_id: Option<String>,
 }
-
-
 
 impl Op for Assign {
     fn name(&self) -> StaticName {

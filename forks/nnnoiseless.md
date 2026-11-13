@@ -36,3 +36,7 @@ Replace this source only when a selected upstream release covers the retained be
 Owner: SOTF dependency maintainers. Inventory reviewed 2026-10-07;
 re-evaluate the upstream delta within 90 days and on every update.
 Follow [the collection update procedure](../README.md#updating-a-fork).
+
+## 2026-10-30 release validation
+
+Corrected real-model test fixture paths for the sibling sotf-daw layout. Strict all-target Clippy, cargo test and nextest pass on macOS (25 nextest tests, zero skipped); asset hashes and independent transpose/inference checks preserved.

@@ -5,6 +5,10 @@ use std::iter::Sum;
 use crate::ops::cnn::pools::{ConcretePoolGeometry, PoolGeometry, PoolSpec};
 
 #[derive(Debug, Clone, new, Hash)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct SumPool {
     pub pool_spec: PoolSpec,
     pub count_include_pad: bool,
@@ -75,6 +79,10 @@ impl SumPool {
 }
 
 #[derive(Debug, Clone, new, Hash)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct OptSumPool {
     pub pool_spec: PoolSpec,
     pub count_include_pad: bool,

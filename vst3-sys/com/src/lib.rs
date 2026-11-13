@@ -67,7 +67,7 @@ pub unsafe trait ComInterface: IUnknown + 'static {
 /// The implementing struct must have the following properties:
 /// * it is `#[repr(C)]`
 /// * The first fields of the struct are pointers to the backing VTables for
-/// each of the COM Interfaces the class implements
+///   each of the COM Interfaces the class implements
 pub unsafe trait CoClass: IUnknown {}
 
 /// A COM interface that will be exposed in a COM server
@@ -80,7 +80,7 @@ pub trait ProductionComInterface<T: IUnknown>: ComInterface {
 #[macro_export]
 macro_rules! vtable {
     ($class:ty: $interface:ident, $offset:path) => {
-        <dyn $interface as $crate::ProductionComInterface<$class>>::vtable::<$offset>();
+        <dyn $interface as $crate::ProductionComInterface<$class>>::vtable::<$offset>()
     };
 }
 

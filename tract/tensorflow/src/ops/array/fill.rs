@@ -3,11 +3,13 @@ use crate::tfpb::tensorflow::NodeDef;
 use tract_hir::internal::*;
 
 #[derive(Debug, Clone, new, Hash)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct Fill {
     dt: DatumType,
 }
-
-
 
 pub fn fill(_ctx: &ParsingContext, pb: &NodeDef) -> TractResult<Box<dyn InferenceOp>> {
     let dtype = pb.get_attr_datum_type("T")?;

@@ -12,6 +12,11 @@ Accept roxmltree 0.21 in the Linux font discovery dependency closure.
 
 ## Retained changes
 
+Release maintenance (2026-10-30): Criterion updated to 0.8.2; mechanical
+Clippy fixes preserve enum defaults and path behavior. The property macro
+marks only Family as its derived default. macOS strict Clippy,
+tests/doctests and release nextest pass (10 cases).
+
 Pinned fork manifest updates roxmltree compatibility.
 Read [the existing detail record](../fontconfig-parser/Cargo.toml) before updating.
 This inventory review does not claim a fresh upstream parity or security audit.

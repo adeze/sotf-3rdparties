@@ -70,7 +70,7 @@ impl_vec_conversion!(i32, IVec2, IVec3, IVec4);
 impl_vec_conversion!(u32, UVec2, UVec3, UVec4);
 impl_vec_conversion!(bool, BVec2, BVec3, BVec4);
 
-const ERR: &'static str = "Normalization failed.";
+const ERR: &str = "Normalization failed.";
 
 macro_rules! impl_unit_vec_conversion(
     ($N: ty, $Vec2: ty, $Vec3: ty, $Vec4: ty) => {

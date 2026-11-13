@@ -425,7 +425,7 @@ impl Scan {
                     let inner_node = self.body.node(inner_node);
                     let mut patch =
                         TypedModelPatch::new(format!("Extract const node {inner_node}"));
-                    let cst = patch.add_const(format!("{}.{}", &node.name, &inner_node.name), k)?;
+                    let cst = patch.add_const(format!("{}.{}", node.name, inner_node.name), k)?;
                     patch.shunt_outside(model, OutletId::new(node.id, slot), cst)?;
                     return Ok(Some(patch));
                 }
@@ -571,11 +571,7 @@ impl Scan {
     fn body_locked_outlets(&self, node_input_facts: &[&TypedFact]) -> TractResult<TVec<OutletId>> {
         let input_outlets =
             self.body.input_outlets()?.iter().enumerate().filter_map(|(slot, o)| {
-                if node_input_facts[slot].konst.is_none() {
-                    Some(o)
-                } else {
-                    None
-                }
+                if node_input_facts[slot].konst.is_none() { Some(o) } else { None }
             });
         let output_outlets = self
             .output_mapping
@@ -714,7 +710,8 @@ impl TypedOp for Scan {
         {
             let ifact = self.body.outlet_fact(self.body.inputs[i])?;
             let ofact = self.body.outlet_fact(self.body.outputs[o])?;
-            anyhow::ensure!(ifact == ofact,
+            anyhow::ensure!(
+                ifact == ofact,
                 "inconsistent state shape: body input {i} is {ifact:?} and body output {o} is {ofact:?}",
             )
         }

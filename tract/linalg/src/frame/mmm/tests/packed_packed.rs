@@ -169,6 +169,10 @@ macro_rules! mmm_packed_packed_tests {
 }
 
 #[derive(Debug, new)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct PackedPackedProblem<K>
 where
     K: MatMatMulKer,
@@ -202,7 +206,7 @@ pub fn arbitrary_problem<K: MatMatMulKer>(
             a.reverse();
             b.reverse();
             PackedPackedProblem {
-                frame_test: Some(mn).filter(|_| frame_test),
+                frame_test: frame_test.then_some(mn),
                 ker: ker.clone(),
                 packing,
                 a,

@@ -451,6 +451,8 @@ impl<P: Vst3Plugin> WrapperInner<P> {
             return;
         }
         let bit = 1_u64 << index;
+        // Keep Rust 1.80 support; try_update was stabilized in Rust 1.95.
+        #[allow(deprecated)]
         let _ = self.active_audio_output_buses.fetch_update(
             Ordering::AcqRel,
             Ordering::Acquire,

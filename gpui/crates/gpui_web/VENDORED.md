@@ -1,9 +1,44 @@
 # Vendored: gpui_web
 
-- Upstream: https://github.com/zed-industries/zed/tree/v1.9.0/crates/gpui_web
-- Base ref: v1.9.0
+- Upstream: https://github.com/zed-industries/zed/tree/v1.25.2/crates/gpui_web
+- Base ref: v1.25.2
 - Import: scripts/import_gpui_upstream.py (history-free snapshot)
 - Excluded on import: examples/, benches/, deps on gpui_platform, reqwest_client, zlog, ztracing, ztracing_macro
+
+## Zed v1.25.2 re-vendor deltas (issue #6, 2026-10-22)
+
+The three-way re-vendor took upstream v1.25.2 `gpui_web` as the base.
+Deltas that remain local after the merge:
+
+- `src/canvas_size.rs` + the `contentRect` logical-size rule in
+  `src/window.rs` are retained (sotf-3rdparties#1, below); upstream
+  `src/viewport.rs` (`WebViewport`) is used alongside for visual-viewport
+  and safe-area reporting.
+- `src/text_system.rs::layout_line` returns `Arc<LineLayout>` (unwrap the
+  native `Arc`, apply Canvas fallback replacements, re-wrap) because this
+  fork's `gpui::PlatformTextSystem::layout_line` returns `Arc<LineLayout>`
+  where upstream returns an owned `LineLayout`. The
+  `font_weight_and_style` / `missing_glyphs` helpers it calls on
+  `CosmicTextSystem` were ported into `gpui_wgpu` (see its PATCHES.md §7).
+- Clipboard follows upstream: synchronous `read_from_clipboard` returns
+  `None`, real reads go through `read_from_clipboard_async`, writes are
+  fire-and-forget `navigator.clipboard.write_text`. The pre-1.25.2 local
+  in-memory clipboard cache (`self.clipboard`) was dropped.
+- Graphics init uses upstream `PreparedWebGraphics` flow; the
+  wgpu-29-compatible side lives in `gpui_wgpu` (see its PATCHES.md §6).
+- `Drop for WebWindow` is upstream's (cancels rAF, disconnects observers,
+  breaks the DPR media-query Rc cycle, removes canvas, drops the IME
+  mirror, marks the lifecycle closed). The pre-1.25.2 local Drop and its
+  hidden input element are gone; upstream uses `ime_mirror` instead.
+- Crate-root `#![allow(clippy::unnecessary_lazy_evaluations)]` in
+  `src/gpui_web.rs` (issue #6 Phase C, zero-warnings gate; upstream code
+  unchanged).
+
+The "Local patches" and "Deliberately not ported" sections below describe
+the pre-1.25.2 (v1.9.0-based) state. Several items listed there (e.g. the
+#61707 callback rework, the WebGPU-failure DOM message) are upstream-native
+at v1.25.2 and arrived with the re-vendor; treat those sections as history
+until the per-hunk audit (issue #6, GAP-14) rewrites them.
 
 ## Local patches
 

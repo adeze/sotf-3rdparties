@@ -10,6 +10,10 @@ pub fn fused_batch_norm(_ctx: &ParsingContext, pb: &NodeDef) -> TractResult<Box<
 }
 
 #[derive(Debug, Clone, new)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 struct FusedBatchNorm {
     epsilon: f32,
 }
@@ -22,7 +26,6 @@ impl Expansion for FusedBatchNorm {
     fn validation(&self) -> Validation {
         Validation::Rounding
     }
-
 
     /// Registers the inference rules of the operator.
     fn rules<'r, 'p: 'r, 's: 'r>(

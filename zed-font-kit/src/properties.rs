@@ -19,7 +19,7 @@ use std::fmt::{self, Debug, Display, Formatter};
 ///
 /// This object supports a method chaining style for idiomatic initialization; e.g.
 ///
-///     # use font_kit::properties::{Properties, Style};
+///     # use zed_font_kit::properties::{Properties, Style};
 ///     println!("{:?}", Properties::new().style(Style::Italic));
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct Properties {

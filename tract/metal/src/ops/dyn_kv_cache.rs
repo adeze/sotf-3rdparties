@@ -7,6 +7,10 @@ use tract_gpu::tensor::{DeviceTensor, DeviceTensorExt, IntoDevice};
 use tract_transformers::ops::dyn_kv_cache::{DynKeyValueCache, DynKeyValueCacheState};
 
 #[derive(Debug, Clone, new)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct MetalDynKVCacheState {
     node_id: usize,
     name: String,
@@ -97,7 +101,7 @@ pub struct FrozenMetalDynKVCacheState {
 }
 
 impl OpStateFreeze for MetalDynKVCacheState {
-    fn freeze(&self) -> Box<(dyn FrozenOpState + 'static)> {
+    fn freeze(&self) -> Box<dyn FrozenOpState + 'static> {
         Box::new(FrozenMetalDynKVCacheState {
             node_id: self.node_id,
             name: self.name.clone(),
@@ -121,6 +125,10 @@ impl FrozenOpState for FrozenMetalDynKVCacheState {
 }
 
 #[derive(new, Debug, Clone, Hash)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct MetalDynKVCache {
     name: String,
     past_sequence_fact: TypedFact,
@@ -196,8 +204,8 @@ impl TypedOp for MetalDynKVCache {
 
 #[cfg(test)]
 mod tests {
-    use crate::utils::with_borrowed_metal_stream;
     use crate::MetalTransform;
+    use crate::utils::with_borrowed_metal_stream;
 
     use super::*;
     use tract_core::ops::array::TypedConcat;
@@ -223,11 +231,7 @@ mod tests {
                         .iter()
                         .enumerate()
                         .map(|(i, &dim)| {
-                            if i == axis {
-                                TDim::Sym(model.sym(sym))
-                            } else {
-                                TDim::Val(dim as _)
-                            }
+                            if i == axis { TDim::Sym(model.sym(sym)) } else { TDim::Val(dim as _) }
                         })
                         .collect::<TVec<TDim>>()
                 };

@@ -3,6 +3,10 @@ use tract_linalg::block_quant::{BlockQuantFact, BlockQuantValue};
 use crate::internal::*;
 
 #[derive(Debug, Clone, new, Hash)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct BlockQuantIntoShape {
     pub shape: TVec<usize>,
 }
@@ -58,6 +62,10 @@ impl TypedOp for BlockQuantIntoShape {
 }
 
 #[derive(Debug, Clone, new, Hash)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct SplitGroupBlockQuant {
     pub group: usize,
 }

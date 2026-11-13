@@ -4,6 +4,10 @@ use crate::infer::*;
 use crate::internal::*;
 
 #[derive(Debug, Clone, new, Default, Hash)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct ScatterElements {
     axis: i64,
 }

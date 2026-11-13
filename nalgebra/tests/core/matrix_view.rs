@@ -172,7 +172,7 @@ fn rows_range_pair() {
                            31.0, 32.0, 33.0, 34.0);
 
     let (l, r) = a.rows_range_pair(.. 3, 3 ..);
-    assert!(r.len() == 0 && l.eq(&a));
+    assert!(r.is_empty() && l.eq(&a));
 
     let (l, r) = a.rows_range_pair(0, 1 ..);
 
@@ -190,7 +190,7 @@ fn columns_range_pair() {
                            31.0, 32.0, 33.0, 34.0);
 
     let (l, r) = a.columns_range_pair(.. 4, 4 ..);
-    assert!(r.len() == 0 && l.eq(&a));
+    assert!(r.is_empty() && l.eq(&a));
 
     let (l, r) = a.columns_range_pair(0, 1 ..);
 
@@ -251,31 +251,31 @@ fn new_from_slice_mut() {
                         0.0, 0.0,  7.0,  8.0,
                         9.0, 10.0, 11.0, 12.0 ];
 
-    let mut data_mut = data.clone();
+    let mut data_mut = data;
     MatrixViewMut2::from_slice(&mut data_mut).fill(0.0);
     assert!(data_mut == expected2);
 
-    let mut data_mut = data.clone();
+    let mut data_mut = data;
     MatrixViewMut3::from_slice(&mut data_mut).fill(0.0);
     assert!(data_mut == expected3);
 
-    let mut data_mut = data.clone();
+    let mut data_mut = data;
     MatrixViewMut2x3::from_slice(&mut data_mut).fill(0.0);
     assert!(data_mut == expected2x3);
 
-    let mut data_mut = data.clone();
+    let mut data_mut = data;
     MatrixViewMut3x2::from_slice(&mut data_mut).fill(0.0);
     assert!(data_mut == expected3x2);
 
-    let mut data_mut = data.clone();
+    let mut data_mut = data;
     MatrixViewMut2xX::from_slice(&mut data_mut, 3).fill(0.0);
     assert!(data_mut == expected2x3);
 
-    let mut data_mut = data.clone();
+    let mut data_mut = data;
     MatrixViewMutXx3::from_slice(&mut data_mut, 2).fill(0.0);
     assert!(data_mut == expected2x3);
 
-    let mut data_mut = data.clone();
+    let mut data_mut = data;
     DMatrixViewMut::from_slice(&mut data_mut, 2, 3).fill(0.0);
     assert!(data_mut == expected2x3);
 }

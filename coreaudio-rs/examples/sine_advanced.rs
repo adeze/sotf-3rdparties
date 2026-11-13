@@ -93,7 +93,7 @@ fn main() -> Result<(), coreaudio::Error> {
     };
 
     if !INTERLEAVED {
-        format_flag = format_flag | LinearPcmFlags::IS_NON_INTERLEAVED;
+        format_flag |= LinearPcmFlags::IS_NON_INTERLEAVED;
     }
 
     let stream_format = StreamFormat {
@@ -104,14 +104,14 @@ fn main() -> Result<(), coreaudio::Error> {
         channels: 2,
     };
 
-    println!("stream format={:#?}", &stream_format);
-    println!("asbd={:#?}", &stream_format.to_asbd());
+    println!("stream format={:#?}", stream_format);
+    println!("asbd={:#?}", stream_format.to_asbd());
 
     // Lets print all supported formats, disabled for now since it often crashes.
     println!("All supported formats");
     let formats = get_supported_physical_stream_formats(audio_unit_id)?;
     for fmt in formats {
-        println!("{:?}", &fmt);
+        println!("{:?}", fmt);
     }
 
     // set the sample rate. This isn't actually needed since the sample rate

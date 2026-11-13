@@ -11,6 +11,10 @@ pub enum PaddingStrat {
 }
 
 #[derive(Debug, Clone, new, Hash)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct SpaceToBatchUnary {
     pub datum_type: DatumType,
     pub space_shape: TVec<TDim>,
@@ -92,6 +96,10 @@ impl TypedOp for SpaceToBatchUnary {
 }
 
 #[derive(Debug, Clone, new, Hash)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct BatchToSpaceUnary {
     datum_type: DatumType,
     batch_shape: TVec<TDim>,

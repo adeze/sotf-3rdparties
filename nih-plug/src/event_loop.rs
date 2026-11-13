@@ -6,7 +6,7 @@ mod background_thread;
 
 #[cfg(all(target_family = "unix", not(target_os = "macos")))]
 mod linux;
-#[cfg(target_os = "macos")]
+#[cfg(all(target_os = "macos", any(feature = "vst3", feature = "standalone")))]
 mod macos;
 #[cfg(target_os = "windows")]
 mod windows;
@@ -17,7 +17,7 @@ pub(crate) use self::background_thread::BackgroundThread;
 #[cfg(all(target_family = "unix", not(target_os = "macos")))]
 pub(crate) use self::linux::LinuxEventLoop as OsEventLoop;
 #[cfg_attr(not(feature = "vst3"), allow(unused_imports))]
-#[cfg(target_os = "macos")]
+#[cfg(all(target_os = "macos", any(feature = "vst3", feature = "standalone")))]
 pub(crate) use self::macos::MacOSEventLoop as OsEventLoop;
 #[cfg_attr(not(feature = "vst3"), allow(unused_imports))]
 #[cfg(target_os = "windows")]
@@ -46,6 +46,8 @@ where
 {
     /// Create and start a new event loop. The thread this is called on will be designated as the
     /// main thread, so this should be called when constructing the wrapper.
+    // CLAP uses the host main-thread queue; only VST3 and standalone construct this loop.
+    #[cfg_attr(not(any(feature = "vst3", feature = "standalone")), allow(dead_code))]
     fn new_and_spawn(executor: Weak<E>) -> Self;
 
     /// Either post the function to the task queue so it can be delegated to the main thread, or

@@ -36,3 +36,7 @@ Replace this source only when a selected upstream release covers the retained be
 Owner: SOTF dependency maintainers. Inventory reviewed 2026-10-07;
 re-evaluate the upstream delta within 90 days and on every update.
 Follow [the collection update procedure](../README.md#updating-a-fork).
+
+## macOS release validation (2026-10-30)
+
+Strict all-target full-feature Clippy, cargo tests/doctests and nextest PASS (17 cases, zero skipped), derive-impl-docs-fixed.log. Constructor expansion emits field shorthand; equivalent Option/iterator lint fixes. Added the matching local macro facade as a dev dependency so public macro examples compile. Private issue sotf-3rdparties#13.

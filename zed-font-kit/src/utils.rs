@@ -17,9 +17,9 @@ use std::io::{Error as IOError, Read};
 
 pub(crate) static SFNT_VERSIONS: [[u8; 4]; 4] = [
     [0x00, 0x01, 0x00, 0x00],
-    [b'O', b'T', b'T', b'O'],
-    [b't', b'r', b'u', b'e'],
-    [b't', b'y', b'p', b'1'],
+    *b"OTTO",
+    *b"true",
+    *b"typ1",
 ];
 
 pub(crate) fn clamp(x: f32, min: f32, max: f32) -> f32 {
@@ -39,7 +39,7 @@ pub(crate) fn lerp(a: f32, b: f32, t: f32) -> f32 {
 
 #[inline]
 pub(crate) fn div_round_up(a: usize, b: usize) -> usize {
-    (a + b - 1) / b
+    a.div_ceil(b)
 }
 
 pub(crate) fn slurp_file(file: &mut File) -> Result<Vec<u8>, IOError> {

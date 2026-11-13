@@ -43,12 +43,16 @@ pub fn derive_params(input: TokenStream) -> TokenStream {
         // then we'll error out.
         let mut processed_attribute = false;
         for attr in &field.attrs {
-            if attr.path.is_ident("id") {
-                match attr.parse_meta() {
-                    Ok(syn::Meta::NameValue(syn::MetaNameValue {
-                        lit: syn::Lit::Str(s),
+            if attr.path().is_ident("id") {
+                match attr.meta.clone() {
+                    syn::Meta::NameValue(syn::MetaNameValue {
+                        value:
+                            syn::Expr::Lit(syn::ExprLit {
+                                lit: syn::Lit::Str(s),
+                                ..
+                            }),
                         ..
-                    })) => {
+                    }) => {
                         if processed_attribute {
                             return syn::Error::new(
                                 attr.span(),
@@ -90,12 +94,16 @@ pub fn derive_params(input: TokenStream) -> TokenStream {
                         .into()
                     }
                 };
-            } else if attr.path.is_ident("persist") {
-                match attr.parse_meta() {
-                    Ok(syn::Meta::NameValue(syn::MetaNameValue {
-                        lit: syn::Lit::Str(s),
+            } else if attr.path().is_ident("persist") {
+                match attr.meta.clone() {
+                    syn::Meta::NameValue(syn::MetaNameValue {
+                        value:
+                            syn::Expr::Lit(syn::ExprLit {
+                                lit: syn::Lit::Str(s),
+                                ..
+                            }),
                         ..
-                    })) => {
+                    }) => {
                         if processed_attribute {
                             return syn::Error::new(
                                 attr.span(),
@@ -131,20 +139,23 @@ pub fn derive_params(input: TokenStream) -> TokenStream {
                         .into()
                     }
                 };
-            } else if attr.path.is_ident("nested") {
+            } else if attr.path().is_ident("nested") {
                 // This one is more complicated. Supports an `array` attribute, an `id_prefix =
                 // "foo"` attribute, and a `group = "group name"` attribute. All are optional, and
                 // the first two are mutually exclusive.
                 let mut nested_array = false;
                 let mut nested_id_prefix: Option<syn::LitStr> = None;
                 let mut nested_group: Option<syn::LitStr> = None;
-                match attr.parse_meta() {
+                match attr.meta.clone() {
                     // In this case it's a plain `#[nested]` attribute without parameters
-                    Ok(syn::Meta::Path(..)) => (),
-                    Ok(syn::Meta::List(syn::MetaList {
-                        nested: nested_attrs,
-                        ..
-                    })) => {
+                    syn::Meta::Path(..) => (),
+                    syn::Meta::List(list) => {
+                        let nested_attrs = match list.parse_args_with(
+                            syn::punctuated::Punctuated::<syn::Meta, syn::Token![,]>::parse_terminated,
+                        ) {
+                            Ok(attrs) => attrs,
+                            Err(error) => return error.to_compile_error().into(),
+                        };
                         if processed_attribute {
                             return syn::Error::new(
                                 attr.span(),
@@ -156,27 +167,29 @@ pub fn derive_params(input: TokenStream) -> TokenStream {
 
                         for nested_attr in nested_attrs {
                             match nested_attr {
-                                syn::NestedMeta::Meta(syn::Meta::Path(p))
-                                    if p.is_ident("array") =>
-                                {
+                                syn::Meta::Path(p) if p.is_ident("array") => {
                                     nested_array = true;
                                 }
-                                syn::NestedMeta::Meta(syn::Meta::NameValue(
-                                    syn::MetaNameValue {
-                                        path,
-                                        lit: syn::Lit::Str(s),
-                                        ..
-                                    },
-                                )) if path.is_ident("id_prefix") => {
+                                syn::Meta::NameValue(syn::MetaNameValue {
+                                    path,
+                                    value:
+                                        syn::Expr::Lit(syn::ExprLit {
+                                            lit: syn::Lit::Str(s),
+                                            ..
+                                        }),
+                                    ..
+                                }) if path.is_ident("id_prefix") => {
                                     nested_id_prefix = Some(s.clone());
                                 }
-                                syn::NestedMeta::Meta(syn::Meta::NameValue(
-                                    syn::MetaNameValue {
-                                        path,
-                                        lit: syn::Lit::Str(s),
-                                        ..
-                                    },
-                                )) if path.is_ident("group") => {
+                                syn::Meta::NameValue(syn::MetaNameValue {
+                                    path,
+                                    value:
+                                        syn::Expr::Lit(syn::ExprLit {
+                                            lit: syn::Lit::Str(s),
+                                            ..
+                                        }),
+                                    ..
+                                }) if path.is_ident("group") => {
                                     let group_name = s.value();
                                     if group_name.is_empty() {
                                         return syn::Error::new(

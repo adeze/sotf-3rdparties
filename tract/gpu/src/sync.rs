@@ -17,6 +17,10 @@ impl fmt::Display for DeviceSyncKind {
 }
 
 #[derive(Debug, Clone, new, Copy, PartialEq, Eq, Hash)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct DeviceSync {
     pub kind: DeviceSyncKind,
 }

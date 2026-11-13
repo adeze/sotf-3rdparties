@@ -2,11 +2,13 @@ use crate::infer::*;
 use crate::internal::*;
 
 #[derive(Debug, Clone, new, Hash)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct PermuteAxes {
     pub axes: Option<TVec<usize>>,
 }
-
-
 
 impl PermuteAxes {
     fn compute_shape<D: DimLike>(&self, input: &[D]) -> TractResult<TVec<D>> {
@@ -35,7 +37,6 @@ impl Expansion for PermuteAxes {
     fn name(&self) -> StaticName {
         "PermuteAxes".into()
     }
-
 
     fn info(&self) -> TractResult<Vec<String>> {
         Ok(vec![format!("{:?}", self.axes)])

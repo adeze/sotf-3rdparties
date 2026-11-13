@@ -67,7 +67,7 @@ fn schur_static_mat4_fail() {
         -94.61793793643038,  -18.64216213611094,   88.32376703241675,  -99.30169870309795,
          90.62661897246733,   96.74200696130146,    34.7421322611369,   84.86773307198098);
 
-    let (vecs, vals) = m.clone().schur().unpack();
+    let (vecs, vals) = m.schur().unpack();
     assert!(relative_eq!(vecs * vals * vecs.transpose(), m, epsilon = 1.0e-7))
 }
 
@@ -80,7 +80,7 @@ fn schur_static_mat4_fail2() {
         27.932377940728202, 82.94220150938, -35.5898884705951, 67.56447552434219,
         55.66754906908682, -42.14328890569226, -20.684709585152206, -87.9456949841046);
 
-    let (vecs, vals) = m.clone().schur().unpack();
+    let (vecs, vals) = m.schur().unpack();
     assert!(relative_eq!(vecs * vals * vecs.transpose(), m, epsilon = 1.0e-7))
 }
 
@@ -92,7 +92,7 @@ fn schur_static_mat3_fail() {
         -7.525423104386547, -17.827350599642287,  11.297377444555849,
         38.080736654870464,  -84.27428302131528,  -95.88198590331922);
 
-    let (vecs, vals) = m.clone().schur().unpack();
+    let (vecs, vals) = m.schur().unpack();
     assert!(relative_eq!(vecs * vals * vecs.transpose(), m, epsilon = 1.0e-7))
 }
 

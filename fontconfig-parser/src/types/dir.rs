@@ -22,7 +22,7 @@ pub struct Include {
 }
 
 /// This element contains a directory name where will be mapped as the path 'as-path' in cached information. This is useful if the directory name is an alias (via a bind mount or symlink) to another directory in the system for which cached font information is likely to exist.
-
+///
 /// 'salt' property affects to determine cache filename as same as [`Dir`] element.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -35,7 +35,9 @@ pub struct RemapDir {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Default)]
 pub enum DirPrefix {
+    #[default]
     Default,
     Cwd,
     Xdg,
@@ -55,12 +57,6 @@ parse_enum! {
     (Cwd, "cwd"),
     (Xdg, "xdg"),
     (Relative, "relative"),
-}
-
-impl Default for DirPrefix {
-    fn default() -> Self {
-        DirPrefix::Default
-    }
 }
 
 /// Get the location to user home directory.
@@ -87,7 +83,7 @@ fn config_home() -> Result<String, std::env::VarError> {
 fn config_get_file_name(p: &std::path::PathBuf) -> std::path::PathBuf {
     if cfg!(target_os = "windows") {
         // TODO: get config file path properly for Windows
-        return p.clone();
+        p.clone()
     } else {
         std::path::Path::new("/etc/fonts").join(p)
     }

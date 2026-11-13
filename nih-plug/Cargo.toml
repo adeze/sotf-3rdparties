@@ -119,3 +119,7 @@ strip = "none"
 
 [package.metadata.release]
 tag-name = "{{crate_name}}-v{{version}}"
+
+# objc 0.2 macros test this historical cfg in the consuming crate.
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(feature, values("cargo-clippy"))'] }

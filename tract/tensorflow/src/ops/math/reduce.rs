@@ -5,14 +5,16 @@ use crate::model::ParsingContext;
 use crate::tfpb::tensorflow::NodeDef;
 
 #[derive(Debug, Clone, new, Hash)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct Reduce {
     t: DatumType,
     t_idx: DatumType,
     keep_dims: bool,
     reducer: nn::Reducer,
 }
-
-
 
 pub fn max(_ctx: &ParsingContext, pb: &NodeDef) -> TractResult<Box<dyn InferenceOp>> {
     reduce(pb, nn::Reducer::Max)

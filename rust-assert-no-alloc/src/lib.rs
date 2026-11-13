@@ -33,11 +33,11 @@ compile_error!("disable_release cannot be active at the same time with warn_rele
 
 #[cfg(not(all(feature = "disable_release", not(debug_assertions))))] // if not disabled
 thread_local! {
-	static ALLOC_FORBID_COUNT: Cell<u32> = Cell::new(0);
-	static ALLOC_PERMIT_COUNT: Cell<u32> = Cell::new(0);
+	static ALLOC_FORBID_COUNT: Cell<u32> = const { Cell::new(0) };
+	static ALLOC_PERMIT_COUNT: Cell<u32> = const { Cell::new(0) };
 	
 	#[cfg(any( all(feature="warn_debug", debug_assertions), all(feature="warn_release", not(debug_assertions)) ))]
-	static ALLOC_VIOLATION_COUNT: Cell<u32> = Cell::new(0);
+	static ALLOC_VIOLATION_COUNT: Cell<u32> = const { Cell::new(0) };
 }
 
 #[cfg(all(feature = "disable_release", not(debug_assertions)))] // if disabled
@@ -88,7 +88,7 @@ pub fn assert_no_alloc<T, F: FnOnce() -> T> (func: F) -> T {
 		eprintln!("Tried to (de)allocate memory in a thread that forbids allocator calls!");
 	}
 
-	return ret;
+	ret
 }
 
 #[cfg(not(all(feature = "disable_release", not(debug_assertions))))] // if not disabled
@@ -113,7 +113,7 @@ pub fn permit_alloc<T, F: FnOnce() -> T> (func: F) -> T {
 	let ret = func();
 	std::mem::drop(guard);    // decrement the forbid counter
 
-	return ret;
+	ret
 }
 
 #[cfg(any( all(feature="warn_debug", debug_assertions), all(feature="warn_release", not(debug_assertions)) ))] // if warn mode is selected
@@ -150,7 +150,7 @@ pub struct AllocDisabler;
 
 #[cfg(not(all(feature = "disable_release", not(debug_assertions))))] // if not disabled
 impl AllocDisabler {
-	fn check(&self, layout: Layout) {
+	fn check(&self, _layout: Layout) {
 		let forbid_count = ALLOC_FORBID_COUNT.with(|f| f.get());
 		let permit_count = ALLOC_PERMIT_COUNT.with(|p| p.get());
 		if forbid_count > permit_count {
@@ -160,16 +160,16 @@ impl AllocDisabler {
 			#[cfg(any( all(not(feature="warn_debug"), debug_assertions), all(not(feature="warn_release"), not(debug_assertions)) ))] // if abort mode is selected
 			{
 				#[cfg(all(feature = "log", feature = "backtrace"))]
-				permit_alloc(|| log::error!("Memory allocation of {} bytes failed from:\n{:?}", layout.size(), backtrace::Backtrace::new()));
+				permit_alloc(|| log::error!("Memory allocation of {} bytes failed from:\n{:?}", _layout.size(), backtrace::Backtrace::new()));
 				#[cfg(all(feature = "log", not(feature = "backtrace")))]
-				permit_alloc(|| log::error!("Memory allocation of {} bytes failed", layout.size()));
+				permit_alloc(|| log::error!("Memory allocation of {} bytes failed", _layout.size()));
 
 				#[cfg(all(not(feature = "log"), feature = "backtrace"))]
 				permit_alloc(|| eprintln!("Allocation failure from:\n{:?}", backtrace::Backtrace::new()));
 
 				// This handler can be overridden (although as of writing, the API to do so is still
 				// unstable) so we must always call this even when the log feature is enabled
-				std::alloc::handle_alloc_error(layout);
+				std::alloc::handle_alloc_error(_layout);
 			}
 		}
 	}
@@ -194,9 +194,11 @@ unsafe impl GlobalAlloc for AllocDisabler {
 /// Typical usage:
 ///
 /// ```rust
+/// use assert_no_alloc::{permit_alloc, PermitDrop};
+///
 /// let foo = PermitDrop::new(
 ///     permit_alloc(||
-///         Box::new(...)
+///         Box::new(42u32)
 ///     )
 /// );
 /// ```

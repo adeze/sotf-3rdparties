@@ -10,7 +10,7 @@
 
 extern crate clap;
 extern crate colored;
-extern crate font_kit;
+extern crate zed_font_kit as font_kit;
 extern crate pathfinder_geometry;
 
 use clap::{Arg, ArgAction, ArgGroup, ArgMatches, Command};
@@ -22,7 +22,7 @@ use pathfinder_geometry::transform2d::Transform2F;
 use std::fmt::Write;
 
 #[cfg(any(target_family = "windows", target_os = "macos"))]
-static SANS_SERIF_FONT_REGULAR_POSTSCRIPT_NAME: &'static str = "ArialMT";
+static SANS_SERIF_FONT_REGULAR_POSTSCRIPT_NAME: &str = "ArialMT";
 #[cfg(not(any(target_family = "windows", target_os = "macos")))]
 static SANS_SERIF_FONT_REGULAR_POSTSCRIPT_NAME: &str = "DejaVuSans";
 
@@ -59,13 +59,13 @@ fn get_args() -> ArgMatches {
         .short('H')
         .long("hinting")
         .value_parser(hinting_value_parser)
-        .value_names(&["TYPE"]);
+        .value_names(["TYPE"]);
     let transform_arg = Arg::new("transform")
         .help("Transform to apply to glyph when rendering")
         .long("transform")
         .num_args(4);
     let rasterization_mode_group =
-        ArgGroup::new("rasterization-mode").args(&["grayscale", "bilevel", "subpixel"]);
+        ArgGroup::new("rasterization-mode").args(["grayscale", "bilevel", "subpixel"]);
     Command::new("render-glyph")
         .version("0.1")
         .author("The Pathfinder Project Developers")

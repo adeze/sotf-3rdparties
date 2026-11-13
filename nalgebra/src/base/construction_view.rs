@@ -48,8 +48,7 @@ impl<'a, T: Scalar, R: Dim, C: Dim, RStride: Dim, CStride: Dim>
         // underflow panics:
         //      len >= (ncols - 1) * cstride + (nrows - 1) * rstride + 1
         assert!(
-            data.len() + cstride.value() + rstride.value()
-                >= ncols.value() * cstride.value() + nrows.value() * rstride.value() + 1,
+            data.len() + cstride.value() + rstride.value() > ncols.value() * cstride.value() + nrows.value() * rstride.value(),
             "Matrix view: input data buffer too small."
         );
 
@@ -197,8 +196,7 @@ impl<'a, T: Scalar, R: Dim, C: Dim, RStride: Dim, CStride: Dim>
         // underflow panics:
         //      len >= (ncols - 1) * cstride + (nrows - 1) * rstride + 1
         assert!(
-            data.len() + cstride.value() + rstride.value()
-                >= ncols.value() * cstride.value() + nrows.value() * rstride.value() + 1,
+            data.len() + cstride.value() + rstride.value() > ncols.value() * cstride.value() + nrows.value() * rstride.value(),
             "Matrix view: input data buffer too small."
         );
 

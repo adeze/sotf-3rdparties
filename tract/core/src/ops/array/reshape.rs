@@ -2,6 +2,10 @@ use crate::internal::*;
 use tract_itertools::Itertools;
 
 #[derive(Debug, Clone, new, Default, Hash)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct FiniteReshape {
     pub shape: TVec<usize>,
 }
@@ -17,8 +21,6 @@ impl Op for FiniteReshape {
 
     op_as_typed_op!();
 }
-
-
 
 impl EvalOp for FiniteReshape {
     fn is_stateless(&self) -> bool {

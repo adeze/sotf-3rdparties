@@ -148,7 +148,7 @@ macro_rules! iterator {
                         // Compute pointer to last element
                         let last = self
                             .ptr
-                            .add((outer_remaining * outer_stride + inner_remaining * inner_stride));
+                            .add(outer_remaining * outer_stride + inner_remaining * inner_stride);
 
                         Some(last)
                     }

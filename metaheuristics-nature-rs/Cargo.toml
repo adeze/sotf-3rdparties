@@ -43,11 +43,12 @@ features = ["sys_rng", "alloc"]
 getrandom = { version = "0.4", features = ["wasm_js"] }
 
 [lints.rust]
-missing-docs = "warn"
-unsafe-code = "deny"
+unexpected_cfgs = { level = "warn", check-cfg = ["cfg(doc_cfg)"] }
+missing_docs = "warn"
+unsafe_code = "deny"
 
 [workspace.lints.clippy]
-semicolon-if-nothing-returned = "warn"
+semicolon_if_nothing_returned = "warn"
 
 [package.metadata.docs.rs]
 all-features = true

@@ -15,25 +15,25 @@
 //! processes:
 //!
 //! - When tests share a process, if any test causes the process to abort,
-//! segfault, overflow the stack, etc., the entire test runner process dies. If
-//! the test is in a subprocess, only the subprocess dies and the test runner
-//! simply fails the test.
+//!   segfault, overflow the stack, etc., the entire test runner process dies. If
+//!   the test is in a subprocess, only the subprocess dies and the test runner
+//!   simply fails the test.
 //!
 //! - Isolating a test to a subprocess makes it possible to add a timeout to
-//! the test and forcibly terminate it and produce a normal test failure.
+//!   the test and forcibly terminate it and produce a normal test failure.
 //!
 //! - Tests which need to interact with some inherently global property, such
-//! as the current working directory, can do so without interfering with other
-//! tests.
+//!   as the current working directory, can do so without interfering with other
+//!   tests.
 //!
 //! This crate itself provides two things:
 //!
 //! - The [`rusty_fork_test!`](macro.rusty_fork_test.html) macro, which is a
-//! simple way to wrap standard Rust tests to be run in subprocesses with
-//! optional timeouts.
+//!   simple way to wrap standard Rust tests to be run in subprocesses with
+//!   optional timeouts.
 //!
 //! - The [`fork`](fn.fork.html) function which can be used as a building block
-//! to make other types of process isolation strategies.
+//!   to make other types of process isolation strategies.
 //!
 //! ## Quick Start
 //!
@@ -76,10 +76,10 @@
 //! test environment for a number of reasons.
 //!
 //! - While true process forking can be done on Windows, it's neither fast nor
-//! reliable.
+//!   reliable.
 //!
 //! - The Rust test environment is multi-threaded, so attempting to do anything
-//! non-trivial after a process fork would result in undefined behaviour.
+//!   non-trivial after a process fork would result in undefined behaviour.
 //!
 //! Rusty-fork instead works by _spawning_ a fresh instance of the current
 //! process, after adjusting the command-line to ensure that only the desired

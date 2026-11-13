@@ -3,10 +3,7 @@ use std::fmt::{Debug, Display};
 #[allow(unused_imports)]
 use std::fs;
 
-use nu_ansi_term::Color::*;
-
 use log::Level::Info;
-use tract_core::internal::*;
 
 use crate::dump::annotate_with_graph_def;
 use crate::*;

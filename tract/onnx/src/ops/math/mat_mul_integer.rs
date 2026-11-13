@@ -12,6 +12,10 @@ pub fn mat_mul_integer(
 }
 
 #[derive(Debug, Clone, new, Hash)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 struct MatMulInteger {
     pub optional_a_zero_point_input: Option<usize>,
     pub optional_b_zero_point_input: Option<usize>,

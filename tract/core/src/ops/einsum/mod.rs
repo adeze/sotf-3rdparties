@@ -71,10 +71,9 @@ impl EinSum {
             .iter()
             .map(|t| block_quant_aware_input_shape(t.borrow()))
             .collect::<TractResult<_>>()?;
-        ensure!(shapes
-            .iter()
-            .enumerate()
-            .all(|(ix, fact)| fact.len() == self.axes.rank(InOut::In(ix))));
+        ensure!(
+            shapes.iter().enumerate().all(|(ix, fact)| fact.len() == self.axes.rank(InOut::In(ix)))
+        );
         Ok(shapes)
     }
 
@@ -97,7 +96,7 @@ impl EinSum {
             } else if new_axis.inputs[ix].is_empty() {
                 let insert_at = self.axes.rank(InOut::In(ix));
                 tap = patch.wire_node(
-                    format!("{}.prop_axis.{}.input_{}", &node.name, new_axis.repr, ix),
+                    format!("{}.prop_axis.{}.input_{}", node.name, new_axis.repr, ix),
                     AxisOp::Add(insert_at),
                     &[tap],
                 )?[0];
@@ -121,7 +120,7 @@ impl EinSum {
         let mut wire = patch.wire_node(&node.name, Self { axes, ..self.clone() }, &taps)?;
         if let Some(position) = must_rm_axis {
             wire = patch.wire_node(
-                format!("{}.prop_axis.{}.output", &node.name, repr),
+                format!("{}.prop_axis.{}.output", node.name, repr),
                 AxisOp::Rm(position),
                 &wire,
             )?;
@@ -185,12 +184,14 @@ impl TypedOp for EinSum {
             ensure!(shapes[i].len() == self.axes.rank(InOut::In(i)));
         }
         for axis in self.axes.iter_all_axes() {
-            assert!(shapes
-                .iter()
-                .enumerate()
-                .flat_map(|(slot, shape)| axis.inputs[slot].iter().map(|a| &shape[*a]))
-                .try_fold(TDim::one(), |a, b| TDim::broadcast(a, b.clone()))
-                .is_ok());
+            assert!(
+                shapes
+                    .iter()
+                    .enumerate()
+                    .flat_map(|(slot, shape)| axis.inputs[slot].iter().map(|a| &shape[*a]))
+                    .try_fold(TDim::one(), |a, b| TDim::broadcast(a, b.clone()))
+                    .is_ok()
+            );
         }
         if let Some(qp) = self.q_params {
             ensure!(inputs.len() == 9);

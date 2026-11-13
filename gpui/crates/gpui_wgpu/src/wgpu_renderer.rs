@@ -66,7 +66,8 @@ struct GammaParams {
     gamma_ratios: [f32; 4],
     grayscale_enhanced_contrast: f32,
     subpixel_enhanced_contrast: f32,
-    _pad: [f32; 2],
+    is_bgr: u32,
+    _pad: u32,
 }
 
 #[derive(Clone, Debug)]
@@ -184,6 +185,7 @@ pub struct WgpuRenderer {
     max_buffer_size: u64,
     storage_buffer_alignment: u64,
     rendering_params: RenderingParameters,
+    is_bgr: bool,
     dual_source_blending: bool,
     adapter_info: wgpu::AdapterInfo,
     transparent: bool,
@@ -324,6 +326,27 @@ impl WgpuRenderer {
 
         Self::new_internal(
             Some(Rc::clone(&gpu_context)),
+            context,
+            Some(surface),
+            config,
+            None,
+            atlas,
+        )
+    }
+
+    #[cfg(target_family = "wasm")]
+    pub fn new_from_surface(
+        context: &WgpuContext,
+        surface: wgpu::Surface<'static>,
+        config: WgpuSurfaceConfig,
+    ) -> anyhow::Result<Self> {
+        context.check_compatible_with_surface(&surface)?;
+
+        let gpu_context = Rc::new(RefCell::new(Some(context.clone())));
+        let atlas = Arc::new(WgpuAtlas::from_context(context));
+
+        Self::new_internal(
+            Some(gpu_context),
             context,
             Some(surface),
             config,
@@ -604,6 +627,7 @@ impl WgpuRenderer {
             max_buffer_size,
             storage_buffer_alignment,
             rendering_params,
+            is_bgr: false,
             dual_source_blending,
             adapter_info,
             transparent: config.transparent,
@@ -1049,6 +1073,10 @@ impl WgpuRenderer {
         Some((texture, view))
     }
 
+    pub fn set_subpixel_layout(&mut self, is_bgr: bool) {
+        self.is_bgr = is_bgr;
+    }
+
     pub fn update_drawable_size(&mut self, size: Size<DevicePixels>) {
         let width = size.width.0 as u32;
         let height = size.height.0 as u32;
@@ -1184,7 +1212,7 @@ impl WgpuRenderer {
         self.max_texture_size
     }
 
-    pub fn draw(&mut self, scene: &Scene) {
+    pub fn draw(&mut self, scene: &Scene) -> bool {
         let last_error = self.last_error.lock().unwrap().take();
         if let Some(error) = last_error {
             self.instance_upload_cache.borrow_mut().clear();
@@ -1208,7 +1236,7 @@ impl WgpuRenderer {
             let Some(surface) = resources.surface.as_ref() else {
                 // Headless callers use `render_scene_to_image`; there is no
                 // presentable surface for the interactive draw entry point.
-                return;
+                return false;
             };
             match surface.get_current_texture() {
                 wgpu::CurrentSurfaceTexture::Success(frame) => frame,
@@ -1222,7 +1250,7 @@ impl WgpuRenderer {
                         .as_ref()
                         .expect("interactive renderer has a surface")
                         .configure(&resources.device, &surface_config);
-                    return;
+                    return false;
                 }
                 wgpu::CurrentSurfaceTexture::Lost | wgpu::CurrentSurfaceTexture::Outdated => {
                     let surface_config = self.surface_config.clone();
@@ -1232,15 +1260,15 @@ impl WgpuRenderer {
                         .as_ref()
                         .expect("interactive renderer has a surface")
                         .configure(&resources.device, &surface_config);
-                    return;
+                    return false;
                 }
                 wgpu::CurrentSurfaceTexture::Timeout | wgpu::CurrentSurfaceTexture::Occluded => {
-                    return;
+                    return false;
                 }
                 wgpu::CurrentSurfaceTexture::Validation => {
                     *self.last_error.lock().unwrap() =
                         Some("Surface texture validation error".to_string());
-                    return;
+                    return false;
                 }
             }
         };
@@ -1252,12 +1280,16 @@ impl WgpuRenderer {
             .texture
             .create_view(&wgpu::TextureViewDescriptor::default());
 
+        // Exactly one of the two cfg blocks below is present per build and
+        // forms the tail expression: headless-qa evaluates to `true`, the
+        // interactive block's render loop only exits via `return`.
         #[cfg(feature = "headless-qa")]
         {
             if let Err(error) = self.render_scene_to_view(scene, &frame_view) {
                 *self.last_error.lock().unwrap() = Some(error.to_string());
             }
             frame.present();
+            true
         }
 
         #[cfg(not(feature = "headless-qa"))]
@@ -1266,7 +1298,8 @@ impl WgpuRenderer {
                 gamma_ratios: self.rendering_params.gamma_ratios,
                 grayscale_enhanced_contrast: self.rendering_params.grayscale_enhanced_contrast,
                 subpixel_enhanced_contrast: self.rendering_params.subpixel_enhanced_contrast,
-                _pad: [0.0; 2],
+                is_bgr: u32::from(self.is_bgr),
+                _pad: 0,
             };
 
             let globals = GlobalParams {
@@ -1494,7 +1527,7 @@ impl WgpuRenderer {
                             self.instance_buffer_capacity
                         );
                         frame.present();
-                        return;
+                        return true;
                     }
                     self.grow_instance_buffer();
                     continue;
@@ -1504,7 +1537,7 @@ impl WgpuRenderer {
                     .queue
                     .submit(std::iter::once(encoder.finish()));
                 frame.present();
-                return;
+                return true;
             }
         }
     }
@@ -1533,7 +1566,8 @@ impl WgpuRenderer {
             gamma_ratios: self.rendering_params.gamma_ratios,
             grayscale_enhanced_contrast: self.rendering_params.grayscale_enhanced_contrast,
             subpixel_enhanced_contrast: self.rendering_params.subpixel_enhanced_contrast,
-            _pad: [0.0; 2],
+            is_bgr: u32::from(self.is_bgr),
+            _pad: 0,
         };
         let globals = GlobalParams {
             viewport_size: [

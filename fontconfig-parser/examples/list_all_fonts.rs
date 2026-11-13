@@ -4,14 +4,12 @@ use std::path::PathBuf;
 fn visit_dir(dir: PathBuf, fonts: &mut Vec<PathBuf>) -> Result<()> {
     let dir = std::fs::read_dir(dir)?;
 
-    for entry in dir {
-        if let Ok(entry) = entry {
-            if let Ok(ty) = entry.file_type() {
-                if ty.is_dir() {
-                    visit_dir(entry.path(), fonts).ok();
-                } else if ty.is_file() || ty.is_symlink() {
-                    fonts.push(entry.path());
-                }
+    for entry in dir.flatten() {
+        if let Ok(ty) = entry.file_type() {
+            if ty.is_dir() {
+                visit_dir(entry.path(), fonts).ok();
+            } else if ty.is_file() || ty.is_symlink() {
+                fonts.push(entry.path());
             }
         }
     }

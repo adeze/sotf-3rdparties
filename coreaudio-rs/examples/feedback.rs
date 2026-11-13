@@ -53,10 +53,10 @@ fn main() -> Result<(), coreaudio::Error> {
         channels: 2,
     };
 
-    println!("input={:#?}", &in_stream_format);
-    println!("output={:#?}", &out_stream_format);
-    println!("input_asbd={:#?}", &in_stream_format.to_asbd());
-    println!("output_asbd={:#?}", &out_stream_format.to_asbd());
+    println!("input={:#?}", in_stream_format);
+    println!("output={:#?}", out_stream_format);
+    println!("input_asbd={:#?}", in_stream_format.to_asbd());
+    println!("output_asbd={:#?}", out_stream_format.to_asbd());
 
     let id = kAudioUnitProperty_StreamFormat;
     let asbd = in_stream_format.to_asbd();
@@ -73,7 +73,7 @@ fn main() -> Result<(), coreaudio::Error> {
     let consumer_right = buffer_right.clone();
 
     // seed roughly 1 second of data to create a delay in the feedback loop for easier testing
-    for buffer in vec![buffer_left, buffer_right] {
+    for buffer in [buffer_left, buffer_right] {
         let mut buffer = buffer.lock().unwrap();
         for _ in 0..(out_stream_format.sample_rate as i32) {
             buffer.push_back(0 as S);
@@ -95,7 +95,7 @@ fn main() -> Result<(), coreaudio::Error> {
         println!("input cb {} frames", num_frames);
         let buffer_left = producer_left.lock().unwrap();
         let buffer_right = producer_right.lock().unwrap();
-        let mut buffers = vec![buffer_left, buffer_right];
+        let mut buffers = [buffer_left, buffer_right];
         for i in 0..num_frames {
             for (ch, channel) in data.channels_mut().enumerate() {
                 let value: S = channel[i];
@@ -119,7 +119,7 @@ fn main() -> Result<(), coreaudio::Error> {
         println!("output cb {} frames", num_frames);
         let buffer_left = consumer_left.lock().unwrap();
         let buffer_right = consumer_right.lock().unwrap();
-        let mut buffers = vec![buffer_left, buffer_right];
+        let mut buffers = [buffer_left, buffer_right];
         for i in 0..num_frames {
             // Default other channels to copy value from first channel as a fallback
             let zero: S = 0 as S;

@@ -14,7 +14,7 @@ fn cholesky_100x100(bh: &mut criterion::Criterion) {
     bh.bench_function("cholesky_100x100", |bh| {
         bh.iter_batched(
             || random_positive_definite_dmatrix(100, 100),
-            |m| Cholesky::new(m),
+            Cholesky::new,
             criterion::BatchSize::SmallInput,
         )
     });
@@ -24,7 +24,7 @@ fn cholesky_500x500(bh: &mut criterion::Criterion) {
     bh.bench_function("cholesky_500x500", |bh| {
         bh.iter_batched(
             || random_positive_definite_dmatrix(500, 500),
-            |m| Cholesky::new(m),
+            Cholesky::new,
             criterion::BatchSize::SmallInput,
         )
     });

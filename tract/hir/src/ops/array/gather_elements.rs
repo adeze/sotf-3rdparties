@@ -2,16 +2,18 @@ use crate::infer::*;
 use crate::internal::*;
 
 #[derive(Debug, Clone, new, Default, Hash)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct GatherElements {
     axis: i64,
 }
-
 
 impl Expansion for GatherElements {
     fn name(&self) -> StaticName {
         "GatherElements".into()
     }
-
 
     fn rules<'r, 'p: 'r, 's: 'r>(
         &'s self,

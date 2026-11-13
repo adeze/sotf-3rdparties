@@ -1,4 +1,6 @@
 use alloc::{boxed::Box, sync::Arc, vec::Vec};
+// SOTF local (sotf-3rdparties#6): Deref is only used by non-wasm dispatch paths.
+#[cfg_attr(target_family = "wasm", allow(unused_imports))]
 use core::{
     error, fmt,
     ops::{Bound, Deref, Range, RangeBounds},

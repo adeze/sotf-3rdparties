@@ -1,0 +1,38 @@
+[package]
+name = "sotf-gpui-toolkit-path"
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0"
+repository = "https://github.com/pierreaubert/sotf-3rdparties"
+description.workspace = true
+readme.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[lib]
+path = "src/path.rs"
+doctest = false
+name = "path"
+
+[features]
+test-support = []
+
+[dependencies]
+anyhow = "1.0.86"
+dunce = "1.0"
+
+[dependencies.serde]
+version = "1.0"
+features = ["derive"]
+optional = true
+
+[target.'cfg(windows)'.dependencies]
+tendril = "0.5"
+
+[dev-dependencies]
+tempfile = "3.20.0"
+
+# Intentionally not inheriting [workspace.lints]: it enables the clippy
+# pedantic group, which this vendored upstream code does not target.
+# The zero-warnings gate (issue #6) runs default rustc/clippy lints.
+[lints]

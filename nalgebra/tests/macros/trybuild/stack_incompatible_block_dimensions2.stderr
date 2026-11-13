@@ -1,20 +1,27 @@
-error[E0277]: the trait bound `ShapeConstraint: SameNumberOfRows<Const<1>, Const<2>>` is not satisfied
+error[E0277]: the trait bound `ShapeConstraint: SameNumberOfRows<nalgebra::Const<1>, nalgebra::Const<2>>` is not satisfied
   --> tests/macros/trybuild/stack_incompatible_block_dimensions2.rs:13:17
    |
 13 |            a21, a22];
-   |                 ^^^ the trait `SameNumberOfRows<Const<1>, Const<2>>` is not implemented for `ShapeConstraint`
+   |                 ^^^ the trait `SameNumberOfRows<nalgebra::Const<1>, nalgebra::Const<2>>` is not implemented for `ShapeConstraint`
    |
-   = help: the following other types implement trait `SameNumberOfRows<D1, D2>`:
-             `ShapeConstraint` implements `SameNumberOfRows<D, D>`
-             `ShapeConstraint` implements `SameNumberOfRows<D, Dyn>`
-             `ShapeConstraint` implements `SameNumberOfRows<Dyn, D>`
-   = note: this error originates in the macro `stack` (in Nightly builds, run with -Z macro-backtrace for more info)
-
-error[E0282]: type annotations needed
-  --> tests/macros/trybuild/stack_incompatible_block_dimensions2.rs:12:5
+help: `ShapeConstraint` implements trait `SameNumberOfRows<D1, D2>`
+  --> src/base/constraint.rs
    |
-12 | /     stack![a11, a12;
-13 | |            a21, a22];
-   | |____________________^ cannot infer type
-   |
-   = note: this error originates in the macro `stack` (in Nightly builds, run with -Z macro-backtrace for more info)
+   |           impl<D: Dim> $Trait<D, D> for ShapeConstraint {
+   |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `SameNumberOfRows<D, D>`
+...
+   |           impl<D: DimName> $Trait<D, Dyn> for ShapeConstraint {
+   |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `SameNumberOfRows<D, Dyn>`
+...
+   |           impl<D: DimName> $Trait<Dyn, D> for ShapeConstraint {
+   |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `SameNumberOfRows<Dyn, D>`
+...
+   | / equality_trait_decl!(
+   | |     "Constrains `D1` and `D2` to be equivalent. \
+   | |      They are both assumed to be the number of \
+   | |      rows of a matrix.",
+...  |
+   | |     SameNumberOfColumns
+   | | );
+   | |_- in this macro invocation
+   = note: this error originates in the macro `stack` which comes from the expansion of the macro `equality_trait_decl` (in Nightly builds, run with -Z macro-backtrace for more info)

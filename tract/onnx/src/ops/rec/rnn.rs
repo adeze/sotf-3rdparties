@@ -17,6 +17,10 @@ pub fn rnn(
 }
 
 #[derive(Debug, Clone, new)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct RNN {
     pub fore: Box<dyn TypedOp>,
     pub back: Box<dyn TypedOp>,

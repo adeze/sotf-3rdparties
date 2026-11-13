@@ -10,8 +10,10 @@ pub struct Edit {
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Default)]
 pub enum EditBinding {
     Strong,
+    #[default]
     Weak,
     Same,
 }
@@ -23,15 +25,11 @@ parse_enum! {
     (Same, "same"),
 }
 
-impl Default for EditBinding {
-    fn default() -> Self {
-        EditBinding::Weak
-    }
-}
-
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Default)]
 pub enum EditMode {
+    #[default]
     Assign,
     AssignReplace,
     Prepend,
@@ -52,10 +50,4 @@ parse_enum! {
     (AppendLast, "append_last"),
     (Delete, "delete"),
     (DeleteAll, "delete_all"),
-}
-
-impl Default for EditMode {
-    fn default() -> Self {
-        EditMode::Assign
-    }
 }

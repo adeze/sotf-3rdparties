@@ -46,3 +46,13 @@ Replace this source only when a selected upstream release covers the retained be
 Owner: SOTF dependency maintainers. Inventory reviewed 2026-10-08;
 re-evaluate the upstream delta within 90 days and on every update.
 Follow [the collection update procedure](../README.md#updating-a-fork).
+
+## 2026-10-30 release validation
+
+Default and OpenGL all-target strict Clippy and cargo test compile successfully
+on macOS after recognizing the specific obsolete cfg emitted by upstream objc
+macros, using ptr::eq and matching optional sample counts directly. The existing
+missing-safety-doc lint key uses its current spelling. No new feature is enabled.
+Both nextest configurations discover zero tests; this is not runtime validation.
+The registry block future-incompatibility warning and consumer window/OpenGL
+checks remain outstanding.

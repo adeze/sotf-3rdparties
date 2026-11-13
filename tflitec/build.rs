@@ -151,16 +151,31 @@ fn prepare_tensorflow_source(tf_src_path: &Path) {
         let spectrogram_h = tf_src_path.join("tensorflow/lite/kernels/internal/spectrogram.h");
         std::fs::OpenOptions::new()
             .read(true)
-            .write(true)
             .create(false)
             .append(true)
             .open(&spectrogram_h)
             .unwrap()
-            .write("#include <cstdint>\n".as_bytes())
+            .write_all("#include <cstdint>\n".as_bytes())
             .unwrap();
 
         std::fs::File::create(complete_clone_hint_file).expect("Cannot create clone hint file!");
         println!("Clone took {:?}", Instant::now() - start);
+    }
+
+    if target_os() == "macos" {
+        // TF 2.9 selects a nonstandard std::abs<float> template that current
+        // libc++ no longer exposes. Select the standard float overload.
+        let path = tf_src_path.join("tensorflow/lite/kernels/elementwise.cc");
+        let source = std::fs::read_to_string(&path).expect("Cannot read elementwise kernel");
+        let old = "EvalImpl<float>(context, node, std::abs<float>, type)";
+        let new =
+            "EvalImpl<float>(context, node, [](float value) { return std::abs(value); }, type)";
+        if source.contains(old) {
+            std::fs::write(path, source.replace(old, new))
+                .expect("Cannot patch elementwise kernel");
+        } else {
+            assert!(source.contains(new), "Unexpected TensorFlow AbsEval source");
+        }
     }
 
     #[cfg(feature = "xnnpack")]
@@ -174,6 +189,36 @@ fn prepare_tensorflow_source(tf_src_path: &Path) {
 }
 
 fn check_and_set_envs() {
+    if target_os() == "macos" && cfg!(target_os = "macos") {
+        // Bazel 5's Apple wrapper and linker detection predate current Xcode.
+        // Use its C++ toolchain with explicit Apple SDK and linker defaults.
+        let sdk = std::process::Command::new("xcrun")
+            .args(["--sdk", "macosx", "--show-sdk-path"])
+            .output()
+            .expect("Cannot query macOS SDK with xcrun");
+        assert!(sdk.status.success(), "xcrun could not locate the macOS SDK");
+        let sdk = String::from_utf8(sdk.stdout).expect("Non-UTF-8 macOS SDK path");
+        let mut sdk = PathBuf::from(sdk.trim());
+        // Clang's dependency file can retain Xcode's unversioned SDK alias.
+        // Use that spelling so Bazel recognizes SDKSettings.json as a system file.
+        if let Some(parent) = sdk.parent() {
+            let alias = parent.join("MacOSX.sdk");
+            if alias.exists() {
+                sdk = alias;
+            }
+        }
+        let cpp_options = format!("-std=c++14:-isystem:{}", sdk.display());
+        for (name, value) in [
+            ("BAZEL_USE_CPP_ONLY_TOOLCHAIN", "1"),
+            ("BAZEL_CXXOPTS", cpp_options.as_str()),
+            ("BAZEL_LINKOPTS", "-fuse-ld=/usr/bin/ld:-lc++:-lm"),
+        ] {
+            println!("cargo:rerun-if-env-changed={name}");
+            if env::var_os(name).is_none() {
+                env::set_var(name, value);
+            }
+        }
+    }
     let python_bin_path = get_python_bin_path().expect(
         "Cannot find Python binary having required packages. \
         Make sure that `which python3` or `which python` points to a Python3 binary having numpy \
@@ -233,9 +278,7 @@ fn lib_output_path() -> PathBuf {
 
 fn build_tensorflow_with_bazel(tf_src_path: &str, config: &str, lib_output_path: &Path) {
     let target_os = target_os();
-    let bazel_output_path_buf;
-    let bazel_target;
-    if target_os != "ios" {
+    let (bazel_output_path_buf, bazel_target) = if target_os != "ios" {
         let ext = dll_extension();
         let sub_directory = if cfg!(feature = "xnnpack") {
             "/tmp"
@@ -251,16 +294,21 @@ fn build_tensorflow_with_bazel(tf_src_path: &str, config: &str, lib_output_path:
             lib_out_dir = lib_out_dir.join(&sub_directory[1..]);
         }
         let lib_prefix = dll_prefix();
-        bazel_output_path_buf = lib_out_dir.join(format!("{}tensorflowlite_c.{}", lib_prefix, ext));
-        bazel_target = format!("//tensorflow/lite/c{}:tensorflowlite_c", sub_directory);
+        (
+            lib_out_dir.join(format!("{}tensorflowlite_c.{}", lib_prefix, ext)),
+            format!("//tensorflow/lite/c{}:tensorflowlite_c", sub_directory),
+        )
     } else {
-        bazel_output_path_buf = PathBuf::from(tf_src_path)
+        let bazel_output_path_buf = PathBuf::from(tf_src_path)
             .join("bazel-bin")
             .join("tensorflow")
             .join("lite")
             .join("ios")
             .join("TensorFlowLiteC_framework.zip");
-        bazel_target = String::from("//tensorflow/lite/ios:TensorFlowLiteC_framework");
+        (
+            bazel_output_path_buf,
+            String::from("//tensorflow/lite/ios:TensorFlowLiteC_framework"),
+        )
     };
 
     let python_bin_path = env::var("PYTHON_BIN_PATH").expect("Cannot read PYTHON_BIN_PATH");
@@ -268,7 +316,7 @@ fn build_tensorflow_with_bazel(tf_src_path: &str, config: &str, lib_output_path:
         .arg("configure.py")
         .current_dir(tf_src_path)
         .status()
-        .unwrap_or_else(|_| panic!("Cannot execute python at {}", &python_bin_path))
+        .unwrap_or_else(|_| panic!("Cannot execute python at {}", python_bin_path))
         .success()
     {
         panic!("Cannot configure tensorflow")
@@ -283,6 +331,10 @@ fn build_tensorflow_with_bazel(tf_src_path: &str, config: &str, lib_output_path:
         ));
     }
     bazel.arg("build").arg("-c").arg("opt");
+    if target_os == "macos" {
+        // Apple ld does not implement GNU --start-lib/--end-lib.
+        bazel.arg("--features=-supports_start_end_lib");
+    }
 
     // Configure XNNPACK flags
     // In r2.6, it is enabled for some OS such as Windows by default.
@@ -387,10 +439,15 @@ fn generate_bindings(tf_src_path: PathBuf) {
     }
 
     let bindings = builder
+        .size_t_is_usize(true)
+        // Bind the library API, not incidental libc declarations from its headers.
+        .allowlist_function("TfLite.*")
+        .allowlist_type("TfLite.*")
+        .allowlist_var("(k)?TfLite.*")
         .clang_arg(format!("-I{}", tf_src_path.to_str().unwrap()))
         // Tell cargo to invalidate the built crate whenever any of the
         // included header files changed.
-        .parse_callbacks(Box::new(bindgen::CargoCallbacks))
+        .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()))
         // Finish the builder and generate the bindings.
         .generate()
         // Unwrap the Result and panic on failure.

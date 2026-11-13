@@ -10,7 +10,7 @@
 
 //! Lists all fonts on the system.
 
-extern crate font_kit;
+extern crate zed_font_kit as font_kit;
 extern crate pbr;
 extern crate prettytable;
 

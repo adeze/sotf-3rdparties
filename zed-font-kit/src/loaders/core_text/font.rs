@@ -60,17 +60,17 @@ impl Font {
     ) -> Result<Font, FontLoadingError> {
         // Sadly, there's no API to load OpenType collections on macOS, I don't believe…
         // If not otf/ttf or otc/ttc, we unpack it as data fork font.
-        if !font_is_single_otf(&*font_data) && !font_is_collection(&*font_data) {
+        if !font_is_single_otf(&font_data) && !font_is_collection(&font_data) {
             let mut new_font_data = (*font_data).clone();
             unpack_data_fork_font(&mut new_font_data)?;
             font_data = Arc::new(new_font_data);
-        } else if font_is_collection(&*font_data) {
+        } else if font_is_collection(&font_data) {
             let mut new_font_data = (*font_data).clone();
             unpack_otc_font(&mut new_font_data, font_index)?;
             font_data = Arc::new(new_font_data);
         }
 
-        let core_text_font = match core_text::font::new_from_buffer(&*font_data) {
+        let core_text_font = match core_text::font::new_from_buffer(&font_data) {
             Ok(ct_font) => ct_font,
             Err(_) => return Err(FontLoadingError::Parse),
         };
@@ -101,10 +101,18 @@ impl Font {
     }
 
     /// Creates a font from a native API handle.
+    ///
+    /// # Safety
+    ///
+    /// The wrapper must own a valid Core Text font reference.
     pub unsafe fn from_native_font(core_text_font: &NativeFont) -> Font {
         Font::from_core_text_font_no_path(core_text_font.clone())
     }
     /// Creates a font from a native API handle, without performing a lookup on the disk.
+    ///
+    /// # Safety
+    ///
+    /// The wrapper must own a valid Core Text font reference.
     pub unsafe fn from_core_text_font_no_path(core_text_font: NativeFont) -> Font {
         Font {
             core_text_font,
@@ -135,7 +143,7 @@ impl Font {
         if let Ok(font_count) = read_number_of_fonts_from_otc_header(&font_data) {
             return Ok(FileType::Collection(font_count));
         }
-        match core_text::font::new_from_buffer(&*font_data) {
+        match core_text::font::new_from_buffer(&font_data) {
             Ok(_) => Ok(FileType::Single),
             Err(_) => Err(FontLoadingError::Parse),
         }
@@ -150,7 +158,7 @@ impl Font {
             return Ok(FileType::Collection(font_count));
         }
 
-        match core_text::font::new_from_buffer(&*font_data) {
+        match core_text::font::new_from_buffer(&font_data) {
             Ok(_) => Ok(FileType::Single),
             Err(_) => Err(FontLoadingError::Parse),
         }
@@ -444,7 +452,7 @@ impl Font {
         glyph_id: u32,
         point_size: f32,
         transform: Transform2F,
-        hinting_options: HintingOptions,
+        _hinting_options: HintingOptions,
         rasterization_options: RasterizationOptions,
     ) -> Result<(), GlyphLoadingError> {
         if canvas.size.x() == 0 || canvas.size.y() == 0 {
@@ -465,7 +473,7 @@ impl Font {
                         glyph_id,
                         point_size,
                         transform,
-                        hinting_options,
+                        _hinting_options,
                         rasterization_options,
                     )?;
                     canvas.blit_from_canvas(&temp_canvas);

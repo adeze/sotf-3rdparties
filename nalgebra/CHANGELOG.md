@@ -1,5 +1,10 @@
 # Changelog
 
+## SOTF release update
+
+- Advance the sole glam conversion dependency to 0.34.1. The versioned feature
+  is now `convert-glam034` instead of `convert-glam033`.
+
 All notable changes to `nalgebra`, starting with the version 0.6.0 will be
 documented here.
 

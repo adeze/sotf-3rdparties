@@ -1,9 +1,10 @@
-use anyhow::Result;
+use anyhow::{Context as _, Result};
 use collections::HashMap;
 use cosmic_text::{FontSystem, ShapeBuffer};
 use gpui::{
-    Bounds, DevicePixels, Font, FontId, FontMetrics, FontRun, GlyphId, LineLayout, Pixels,
-    PlatformTextSystem, RenderGlyphParams, Size, TextRenderingMode, point, size,
+    Bounds, DevicePixels, Font, FontId, FontMetrics, FontRun, FontStyle, FontWeight, GlyphId,
+    LineLayout, MissingGlyph, Pixels, PlatformTextSystem, RenderGlyphParams, Size,
+    TextRenderingMode, point, size,
 };
 use itertools::Itertools;
 use parking_lot::RwLock;
@@ -32,6 +33,39 @@ impl CosmicTextSystem {
         paths: impl IntoIterator<Item = &'a std::path::Path>,
     ) -> Result<()> {
         self.0.write().add_font_paths(paths)
+    }
+
+    /// Returns the selected face's weight and style, which may differ from the request.
+    pub fn font_weight_and_style(&self, font_id: FontId) -> Result<(FontWeight, FontStyle)> {
+        let state = self.0.read();
+        let font = state
+            .loaded_fonts
+            .get(font_id.0)
+            .context("invalid font ID")?;
+        let face = state
+            .font_system
+            .db()
+            .face(font.font.id())
+            .context("font face not found")?;
+        let style = match face.style {
+            cosmic_text::Style::Normal => FontStyle::Normal,
+            cosmic_text::Style::Italic => FontStyle::Italic,
+            cosmic_text::Style::Oblique => FontStyle::Oblique,
+        };
+        Ok((FontWeight(face.weight.0 as f32), style))
+    }
+
+    /// Builds reports for unresolved source indices after an outer text system
+    /// has applied its own fallback.
+    pub fn missing_glyphs(
+        &self,
+        text: &str,
+        font_runs: &[FontRun],
+        missing_text_indices: impl IntoIterator<Item = usize>,
+    ) -> Vec<MissingGlyph> {
+        self.0
+            .read()
+            .missing_glyphs(text, font_runs, missing_text_indices)
     }
 
     pub fn new(system_font_fallback: &str) -> Self {

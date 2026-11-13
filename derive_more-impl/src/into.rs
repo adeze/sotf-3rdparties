@@ -590,7 +590,7 @@ where
     if [&owned, &ref_, &ref_mut].into_iter().any(Option::is_some) {
         let format = |list: Option<Vec<_>>, name: &str| match list {
             Some(l)
-                if top_level.as_ref().map_or(true, Vec::is_empty) && l.is_empty() =>
+                if top_level.as_ref().is_none_or(Vec::is_empty) && l.is_empty() =>
             {
                 Some(name.to_owned())
             }

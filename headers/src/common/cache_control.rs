@@ -75,6 +75,12 @@ impl Flags {
     }
 }
 
+impl Default for CacheControl {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CacheControl {
     /// Construct a new empty `CacheControl` header.
     pub fn new() -> Self {

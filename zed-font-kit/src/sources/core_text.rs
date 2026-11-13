@@ -37,6 +37,7 @@ use crate::utils;
 /// A source that contains the installed fonts on macOS.
 #[allow(missing_debug_implementations)]
 #[allow(missing_copy_implementations)]
+#[derive(Default)]
 pub struct CoreTextSource;
 
 impl CoreTextSource {
@@ -94,7 +95,7 @@ impl CoreTextSource {
         let collection = font_collection::new_from_descriptors(&descriptors);
         match collection.get_descriptors() {
             None => Err(SelectionError::NotFound),
-            Some(descriptors) => create_handle_from_descriptor(&*descriptors.get(0).unwrap()),
+            Some(descriptors) => create_handle_from_descriptor(&descriptors.get(0).unwrap()),
         }
     }
 

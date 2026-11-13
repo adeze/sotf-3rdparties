@@ -30,17 +30,10 @@ static FILE_PATH_EB_GARAMOND_TTF: &str = "resources/tests/eb-garamond/EBGaramond
 static FILE_PATH_INCONSOLATA_TTF: &str = "resources/tests/inconsolata/Inconsolata-Regular.ttf";
 
 #[cfg(not(target_os = "linux"))]
-static KNOWN_SYSTEM_FONT_NAME: &'static str = "Arial";
+static KNOWN_SYSTEM_FONT_NAME: &str = "Arial";
 
 #[cfg(target_os = "linux")]
 static KNOWN_SYSTEM_FONT_NAME: &str = "DejaVu Sans";
-
-static SFNT_VERSIONS: [[u8; 4]; 4] = [
-    [0x00, 0x01, 0x00, 0x00],
-    [b'O', b'T', b'T', b'O'],
-    [b't', b'r', b'u', b'e'],
-    [b't', b'y', b'p', b'1'],
-];
 
 const OPENTYPE_TABLE_TAG_HEAD: u32 = 0x68656164;
 

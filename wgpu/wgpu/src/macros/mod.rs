@@ -1,4 +1,8 @@
 //! Convenience macros
+// SOTF local (sotf-3rdparties#6): the hal_type_* doc macros and their
+// re-exports are only used by native backends; silence them on wasm so
+// the vendored GPUI wasm gate can run with -D warnings.
+#![cfg_attr(target_family = "wasm", allow(unused_macros, unused_imports))]
 
 #[cfg(doc)]
 use crate::{VertexAttribute, VertexBufferLayout, VertexFormat};

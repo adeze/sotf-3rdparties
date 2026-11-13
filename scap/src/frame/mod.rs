@@ -95,7 +95,12 @@ pub fn remove_alpha_channel(frame_data: Vec<u8>) -> Vec<u8> {
 
     let mut data: Vec<u8> = vec![0; width_without_alpha];
 
-    for (src, dst) in frame_data.chunks_exact(4).zip(data.chunks_exact_mut(3)) {
+    for (src, dst) in frame_data
+        .as_chunks::<4>()
+        .0
+        .iter()
+        .zip(data.as_chunks_mut::<3>().0.iter_mut())
+    {
         dst[0] = src[0];
         dst[1] = src[1];
         dst[2] = src[2];
@@ -110,7 +115,12 @@ pub fn convert_bgra_to_rgb(frame_data: Vec<u8>) -> Vec<u8> {
 
     let mut data: Vec<u8> = vec![0; width_without_alpha];
 
-    for (src, dst) in frame_data.chunks_exact(4).zip(data.chunks_exact_mut(3)) {
+    for (src, dst) in frame_data
+        .as_chunks::<4>()
+        .0
+        .iter()
+        .zip(data.as_chunks_mut::<3>().0.iter_mut())
+    {
         dst[0] = src[2];
         dst[1] = src[1];
         dst[2] = src[0];

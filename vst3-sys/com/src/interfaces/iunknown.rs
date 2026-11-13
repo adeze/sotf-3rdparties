@@ -16,6 +16,12 @@ pub trait IUnknown {
     ///
     /// [`QueryInterface` Method]: https://docs.microsoft.com/en-us/windows/win32/api/unknwn/nf-unknwn-iunknown-queryinterface(refiid_void)
     /// [`IUnknown::get_interface`]: trait.IUnknown.html#method.get_interface
+    ///
+    /// # Safety
+    ///
+    /// `riid` must point to a valid interface identifier and `ppv` must point
+    /// to writable pointer storage. The caller must release any returned
+    /// interface reference according to COM ownership rules.
     unsafe fn query_interface(&self, riid: *const GUID, ppv: *mut *mut c_void) -> HRESULT;
 
     /// The COM [`AddRef` Method]
@@ -25,6 +31,11 @@ pub trait IUnknown {
     ///
     /// [`AddRef` Method]: https://docs.microsoft.com/en-us/windows/win32/api/unknwn/nf-unknwn-iunknown-addref
     /// [`ComRc`]: struct.ComRc.html
+    ///
+    /// # Safety
+    ///
+    /// The object must be alive and accessible from the calling COM apartment.
+    /// Each acquired reference must be balanced by one release.
     unsafe fn add_ref(&self) -> u32;
 
     /// The COM [`Release` Method]
@@ -34,5 +45,11 @@ pub trait IUnknown {
     ///
     /// [`Release` Method]: https://docs.microsoft.com/en-us/windows/win32/api/unknwn/nf-unknwn-iunknown-release
     /// [`ComRc`]: struct.ComRc.html
+    ///
+    /// # Safety
+    ///
+    /// The caller must own a reference to release and obey the object's COM
+    /// threading rules. The final release destroys the object; references to
+    /// it must not be used afterward.
     unsafe fn release(&self) -> u32;
 }

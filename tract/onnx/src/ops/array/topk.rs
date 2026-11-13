@@ -12,6 +12,10 @@ pub fn topk(
 }
 
 #[derive(Debug, Clone, new, Default, Hash)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 struct Topk {
     axis: i64,
     largest: bool,

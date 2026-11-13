@@ -59,6 +59,9 @@ pub trait ContextLessSummary: Clone {
     fn add_summary(&mut self, summary: &Self);
 }
 
+// The trait's GAT methods carry an explicit 'a that is unused when
+// Context is (); the binder cannot be dropped in the impl.
+#[allow(unused_lifetimes)]
 impl<T: ContextLessSummary> Summary for T {
     type Context<'a> = ();
 

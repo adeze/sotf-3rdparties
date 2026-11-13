@@ -27,8 +27,8 @@ impl Reducer {
         target: &mut TypedModel,
         mut wire: OutletId,
     ) -> TractResult<OutletId> {
-        use tract_core::ops::math;
         use Reducer::*;
+        use tract_core::ops::math;
         match self {
             ArgMax(last) => {
                 wire =
@@ -108,13 +108,15 @@ impl Reducer {
 }
 
 #[derive(Clone, Debug, new, Hash)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct Reduce {
     pub axes: Option<Vec<i64>>,
     pub keep_dims: bool,
     pub reducer: Reducer,
 }
-
-
 
 impl Reduce {
     pub fn must_reduce(&self, ax: usize, rank: usize) -> bool {
@@ -138,11 +140,7 @@ impl Reduce {
             .enumerate()
             .filter_map(|(ix, d)| {
                 if self.must_reduce(ix, shape.len()) {
-                    if self.keep_dims {
-                        Some(1.to_dim())
-                    } else {
-                        None
-                    }
+                    if self.keep_dims { Some(1.to_dim()) } else { None }
                 } else {
                     Some(d.clone())
                 }

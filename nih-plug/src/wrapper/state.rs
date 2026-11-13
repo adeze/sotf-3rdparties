@@ -211,7 +211,7 @@ pub(crate) unsafe fn deserialize_object<P: Plugin>(
             // Preflight every parameter before changing any value or persisted field. A
             // restore resets smoothers rather than starting a timed ramp, so their
             // validated step counts do not need to be retained or allocated here.
-            for (param_id, _) in &state.params {
+            for param_id in state.params.keys() {
                 if let Some(param) = params_getter(param_id) {
                     if param.prepare_smoother(config.sample_rate).is_none() {
                         return false;
@@ -285,6 +285,7 @@ pub(crate) unsafe fn deserialize_object<P: Plugin>(
 /// `Plugin::reset()`, and this way all of that behavior can be encapsulated so it can be reused in
 /// multiple places. The returned state object can be passed to [`deserialize_object()`].
 pub(crate) unsafe fn deserialize_json(state: &[u8]) -> Option<PluginState> {
+    // Host-provided state may be malformed; reject it without a debug-build panic.
     #[cfg(feature = "zstd")]
     let result: Option<PluginState> = match zstd::decode_all(state) {
         Ok(decompressed) => match serde_json::from_slice(decompressed.as_slice()) {
@@ -300,7 +301,7 @@ pub(crate) unsafe fn deserialize_json(state: &[u8]) -> Option<PluginState> {
                 Some(s)
             }
             Err(err) => {
-                nih_debug_assert_failure!("Error while deserializing state: {}", err);
+                nih_warn!("Error while deserializing state: {}", err);
                 None
             }
         },
@@ -312,7 +313,7 @@ pub(crate) unsafe fn deserialize_json(state: &[u8]) -> Option<PluginState> {
                 Some(s)
             }
             Err(json_err) => {
-                nih_debug_assert_failure!(
+                nih_warn!(
                     "Error while deserializing state as either compressed or uncompressed state: \
                      {}, {}",
                     zstd_err,
@@ -327,7 +328,7 @@ pub(crate) unsafe fn deserialize_json(state: &[u8]) -> Option<PluginState> {
     let result: Option<PluginState> = match serde_json::from_slice(state) {
         Ok(s) => Some(s),
         Err(err) => {
-            nih_debug_assert_failure!("Error while deserializing state: {}", err);
+            nih_warn!("Error while deserializing state: {}", err);
             None
         }
     };
@@ -444,7 +445,7 @@ mod admission_tests {
         ) -> bool {
             self.validate_calls.fetch_add(1, Ordering::SeqCst);
             // Allocating probe: must not run on audio refusal.
-            let probe = vec![1, 2, 3];
+            let probe = std::hint::black_box(Vec::from([1, 2, 3]));
             let _ = probe.len();
             true
         }
@@ -452,7 +453,7 @@ mod admission_tests {
         fn deserialize_fields(&self, _serialized: &BTreeMap<String, String>) {
             self.deserialize_calls.fetch_add(1, Ordering::SeqCst);
             // Allocating probe.
-            let probe = format!("deserialize");
+            let probe = "deserialize".to_string();
             let _ = probe.len();
         }
     }
@@ -626,7 +627,10 @@ mod admission_tests {
             )
         };
         assert!(restored);
-        assert_eq!(state.fields.get("probe_migrated").as_deref(), Some("1"));
+        assert_eq!(
+            state.fields.get("probe_migrated").map(String::as_str),
+            Some("1")
+        );
     }
 
     #[test]
@@ -671,7 +675,10 @@ mod admission_tests {
             )
         };
         assert!(restored);
-        assert_eq!(state.fields.get("probe_migrated").as_deref(), Some("1"));
+        assert_eq!(
+            state.fields.get("probe_migrated").map(String::as_str),
+            Some("1")
+        );
     }
 
     #[test]
@@ -699,18 +706,18 @@ mod admission_tests {
         };
         assert!(!restored);
         // No filter_state, validation, param write, or field restore ran.
-        assert_eq!(state.params, params_before);
+        assert_eq!(
+            serde_json::to_value(&state.params).unwrap(),
+            serde_json::to_value(&params_before).unwrap(),
+        );
         assert_eq!(state.fields, fields_before);
         assert!(!state.fields.contains_key("probe_migrated"));
         assert_eq!(params.validate_calls.load(Ordering::SeqCst), 0);
         assert_eq!(params.deserialize_calls.load(Ordering::SeqCst), 0);
         // Live values untouched: initial 0.5/1/true, not state 0.9/2/false.
-        // SAFETY: params Arc is alive.
-        unsafe {
-            assert_eq!(params.float.unmodulated_plain_value(), 0.5f32);
-            assert_eq!(params.int.unmodulated_plain_value(), 1);
-            assert!(params.flag.unmodulated_plain_value());
-        }
+        assert_eq!(params.float.unmodulated_plain_value(), 0.5f32);
+        assert_eq!(params.int.unmodulated_plain_value(), 1);
+        assert!(params.flag.unmodulated_plain_value());
     }
 
     #[test]
@@ -756,15 +763,15 @@ mod admission_tests {
             )
         };
         assert!(restored);
-        assert_eq!(state.fields.get("probe_migrated").as_deref(), Some("1"));
+        assert_eq!(
+            state.fields.get("probe_migrated").map(String::as_str),
+            Some("1")
+        );
         assert_eq!(params.validate_calls.load(Ordering::SeqCst), 1);
         assert_eq!(params.deserialize_calls.load(Ordering::SeqCst), 1);
-        // SAFETY: params Arc is alive.
-        unsafe {
-            assert_eq!(params.float.unmodulated_plain_value(), 0.9f32);
-            assert_eq!(params.int.unmodulated_plain_value(), 2);
-            assert!(!params.flag.unmodulated_plain_value());
-        }
+        assert_eq!(params.float.unmodulated_plain_value(), 0.9f32);
+        assert_eq!(params.int.unmodulated_plain_value(), 2);
+        assert!(!params.flag.unmodulated_plain_value());
     }
 
     #[test]

@@ -24,5 +24,8 @@ name = "block"
 
 [workspace]
 
+[dev-dependencies]
+objc_test_utils = { package = "sotf-objc-test-utils", version = "0.0.2", path = "test_utils" }
+
 [package.metadata.release]
 tag-name = "{{crate_name}}-v{{version}}"

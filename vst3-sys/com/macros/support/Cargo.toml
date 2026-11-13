@@ -14,7 +14,7 @@ license = "MIT"
 name = "vst3_com_macros_support"
 
 [dependencies]
-syn = { version = "1.0.5", features = ["full"] }
+syn = { version = "3.0.9", features = ["full"] }
 quote = "1.0"
 proc-macro2 = "1.0.1"
 

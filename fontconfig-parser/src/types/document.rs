@@ -35,9 +35,9 @@ pub struct FontConfig {
 
 impl FontConfig {
     pub fn merge_config<P: AsRef<Path> + ?Sized>(&mut self, config_path: &P) -> Result<()> {
-        match std::fs::canonicalize(&config_path) {
+        match std::fs::canonicalize(config_path) {
             Ok(p) => {
-                if !self.config_files.insert(std::path::PathBuf::from(p)) {
+                if !self.config_files.insert(p) {
                     return Ok(());
                 }
             }

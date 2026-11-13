@@ -1,6 +1,10 @@
 use crate::internal::*;
 
 #[derive(Debug, Clone, new, Hash)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct Softmax {
     axis: isize,
 }

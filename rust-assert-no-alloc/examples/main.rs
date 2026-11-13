@@ -4,6 +4,7 @@ use assert_no_alloc::*;
 #[global_allocator]
 static A: AllocDisabler = AllocDisabler;
 
+#[expect(clippy::vec_init_then_push, reason = "Demonstrate that pushing into an empty Vec allocates both outside and inside the allocation guard")]
 fn main() {
 	println!("Alloc is allowed. Let's allocate some memory...");
 	let mut vec_can_push = Vec::new();

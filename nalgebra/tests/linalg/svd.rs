@@ -372,12 +372,12 @@ fn svd_fail() {
         0.843196731466686,  0.08951878746549924,   0.7533450877576973, 0.009558876499740077,   0.9429679490873482,   0.9355764454129878);
     
     // Check unordered ...
-    let svd = m.clone().svd_unordered(true, true);
+    let svd = m.svd_unordered(true, true);
     let recomp = svd.recompose().unwrap();
     assert_relative_eq!(m, recomp, epsilon = 1.0e-5);
 
     // ... and ordered SVD.
-    let svd = m.clone().svd(true, true);
+    let svd = m.svd(true, true);
     let recomp = svd.recompose().unwrap();
     assert_relative_eq!(m, recomp, epsilon = 1.0e-5);
 }

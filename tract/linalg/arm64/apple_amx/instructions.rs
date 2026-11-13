@@ -1,4 +1,3 @@
-use liquid::model::KString;
 use liquid::partials::PartialCompiler;
 use liquid::{ParserBuilder, ValueView};
 use liquid_core::{
@@ -10,11 +9,13 @@ pub fn register<C: PartialCompiler>(parser: ParserBuilder<C>) -> ParserBuilder<C
     parser.tag(AmxTag).filter(LeftShift).filter(Setting).filter(Unsigned)
 }
 
-pub fn globals() -> Vec<(KString, Value)> {
+pub fn globals() -> liquid::Object {
     vec![
         ("AMX_SET".to_string().into(), Value::scalar(amx_nop_op_imm5(17, 0))),
         ("AMX_CLR".to_string().into(), Value::scalar(amx_nop_op_imm5(17, 1))),
     ]
+    .into_iter()
+    .collect()
 }
 
 fn amx_nop_op_imm5(op: usize, imm5: usize) -> String {
@@ -162,10 +163,7 @@ impl Filter for SettingFilter {
     }
 }
 
-fn invalid_argument<S>(argument: S, cause: S) -> liquid::Error
-where
-    S: Into<liquid_core::model::KString>,
-{
+fn invalid_argument(argument: &'static str, cause: &'static str) -> liquid::Error {
     liquid_core::Error::with_msg("Invalid argument")
         .context("argument", argument)
         .context("cause", cause)

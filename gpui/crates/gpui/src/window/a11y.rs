@@ -100,6 +100,8 @@
 
 use crate::*;
 
+pub(crate) mod debug;
+
 use crate::{App, Bounds, FocusId, Pixels, SharedString, Window};
 use accesskit::{Action, NodeId, TreeUpdate};
 use collections::{FxHashMap, FxHashSet};
@@ -130,7 +132,7 @@ pub(crate) struct A11y {
     ///
     /// Updated by AccessKit using callbacks provided to the adapter. Can change
     /// halfway through a frame.
-    active_flag: Arc<AtomicBool>,
+    pub(crate) active_flag: Arc<AtomicBool>,
     /// Whether a11y features are active for *this specific frame*.
     ///
     /// At the start of each frame, we load [`Self::active_flag`] (using
@@ -150,6 +152,15 @@ pub(crate) struct A11y {
     /// The window's title, used to label the root node so assistive
     /// technology can tell windows apart.
     window_title: Option<SharedString>,
+    /// The focus id we most recently reported as having no accessibility node,
+    /// used to log at most once per focus change rather than every frame.
+    last_focus_without_node: Option<FocusId>,
+    /// Retains the last tree update (and, in debug builds, per-node provenance)
+    /// so it can be dumped via [`crate::Window::debug_a11y_tree_json`].
+    pub(crate) debug: debug::A11yDebug,
+    /// Maps a view's [`EntityId`] to its `Render` type name
+    #[cfg(debug_assertions)]
+    pub(crate) view_type_names: FxHashMap<EntityId, &'static str>,
 }
 
 impl A11y {
@@ -167,6 +178,26 @@ impl A11y {
             node_bounds: FxHashMap::default(),
             action_listeners: FxHashMap::default(),
             window_title,
+            last_focus_without_node: None,
+            debug: debug::A11yDebug::default(),
+            #[cfg(debug_assertions)]
+            view_type_names: FxHashMap::default(),
+        }
+    }
+
+    /// Logs (once per focus change) that the focused element is not exposed to
+    /// assistive technology because it has no accessibility node. When this
+    /// happens, screen readers fall back to announcing the whole window instead
+    /// of the focused element. The fix is to give the element both an
+    /// `.id(...)` and a `.role(...)`.
+    pub(crate) fn note_focus_without_node(&mut self, focus_id: FocusId, reason: &str) {
+        if self.last_focus_without_node != Some(focus_id) {
+            self.last_focus_without_node = Some(focus_id);
+            log::info!(
+                "a11y: focused element ({focus_id:?}) has no accessibility node \
+                 ({reason}); assistive technology will announce the whole window \
+                 instead. Give it both an `.id(...)` and a `.role(...)` to expose it."
+            );
         }
     }
 
@@ -179,7 +210,11 @@ impl A11y {
     /// See the docs for [`Self::active_flag`] and [`Self::active_this_frame`]
     /// for more commentary.
     pub(crate) fn sync_active_flag(&mut self) {
-        self.active_this_frame = !self.force_disabled && self.active_flag.load(Ordering::SeqCst);
+        self.active_this_frame = self.is_enabled() && self.active_flag.load(Ordering::SeqCst);
+    }
+
+    pub(crate) fn is_enabled(&self) -> bool {
+        !self.force_disabled
     }
 
     pub(crate) fn is_active(&self) -> bool {
@@ -187,6 +222,7 @@ impl A11y {
     }
 
     pub(crate) fn set_focusable(&mut self, node_id: NodeId, focus_id: FocusId) {
+        crate::fast::a11y::A11yLog::focusable(&mut self.nodes.fast, node_id, focus_id);
         self.focus_ids.insert(node_id, focus_id);
     }
 
@@ -207,11 +243,21 @@ impl A11y {
             }
         }
         if self.nodes.has_node(node_id) {
+            // The focused element is properly exposed; reset the dedup so a
+            // later focus on a node-less element logs again.
+            self.last_focus_without_node = None;
             self.nodes.set_focus(node_id);
+        } else {
+            // The element registered a focus handle and an id, but never got a
+            // node because it has no role.
+            if let Some(focus_id) = self.focus_ids.get(&node_id).copied() {
+                self.note_focus_without_node(focus_id, "it has an id but no role");
+            }
         }
     }
 
     pub(crate) fn set_active_descendant(&mut self, node_id: NodeId) {
+        crate::fast::a11y::A11yLog::active_descendant(&mut self.nodes.fast, node_id);
         // The active descendant must be a descendant of the focused container,
         // not the focused node itself.
         if self.nodes.node_is_focused(node_id) {
@@ -229,6 +275,7 @@ impl A11y {
 
     /// Clear per-frame state and push the root node to start a new frame.
     pub(crate) fn begin_frame(&mut self) {
+        crate::fast::a11y::begin_frame(self);
         self.focus_ids.clear();
         self.node_bounds.clear();
         self.action_listeners.clear();
@@ -236,8 +283,23 @@ impl A11y {
     }
 
     /// Finalize the tree and produce a [`TreeUpdate`] for the platform adapter.
-    pub(crate) fn end_frame(&mut self) -> TreeUpdate {
-        self.nodes.finalize()
+    pub(crate) fn end_frame(&mut self, frame: debug::FrameDebugInfo) -> TreeUpdate {
+        crate::fast::a11y::A11yLog::end_frame(&mut self.nodes.fast);
+        let update = self.nodes.finalize();
+        self.debug.capture(
+            &update,
+            self.nodes.focus,
+            self.nodes.active_descendant,
+            self.window_title.as_ref(),
+            frame,
+        );
+        #[cfg(debug_assertions)]
+        self.debug.capture_node_info(&self.nodes.node_info);
+        update
+    }
+
+    pub(crate) fn debug_tree_json(&self) -> Option<String> {
+        self.debug.to_json()
     }
 }
 
@@ -247,6 +309,10 @@ pub struct A11ySubtreeBuilder<'a> {
     parent_id: NodeId,
     nodes: &'a mut A11yNodeBuilder,
     action_listeners: &'a mut FxHashMap<NodeId, Vec<(Action, A11yActionListener)>>,
+    /// Provenance of the real element whose `a11y_synthetic_children` is
+    /// running.
+    #[cfg(debug_assertions)]
+    creator: debug::NodeCreator,
 }
 
 impl<'a> A11ySubtreeBuilder<'a> {
@@ -259,7 +325,15 @@ impl<'a> A11ySubtreeBuilder<'a> {
             parent_id,
             nodes,
             action_listeners,
+            #[cfg(debug_assertions)]
+            creator: debug::NodeCreator::default(),
         }
+    }
+
+    #[cfg(debug_assertions)]
+    pub(crate) fn with_creator(mut self, creator: debug::NodeCreator) -> Self {
+        self.creator = creator;
+        self
     }
 
     /// Derive a [`NodeId`] for a synthetic child.
@@ -280,7 +354,20 @@ impl<'a> A11ySubtreeBuilder<'a> {
     /// Returns `false` if a node with this id is already present in the tree,
     /// in which case the node is discarded.
     pub fn push_child(&mut self, id: NodeId, node: accesskit::Node) -> bool {
-        self.nodes.push_leaf(id, node)
+        let pushed = self.nodes.push_leaf(id, node);
+        #[cfg(debug_assertions)]
+        if pushed {
+            self.nodes.record_node_info(
+                id,
+                debug::NodeDebugInfo {
+                    synthetic: true,
+                    view: self.creator.view,
+                    element_id: self.creator.element_id.clone(),
+                    source_location: self.creator.source_location,
+                },
+            );
+        }
+        pushed
     }
 
     /// Register a callback for actions requested on a synthetic child node.
@@ -308,10 +395,10 @@ impl<'a> A11ySubtreeBuilder<'a> {
 
 pub(crate) struct A11yNodeBuilder {
     ids_stack: SmallVec<[NodeId; 16]>,
-    nodes_stack: SmallVec<[accesskit::Node; 16]>,
+    pub(crate) nodes_stack: SmallVec<[accesskit::Node; 16]>,
     /// This is the exact type required by accesskit, so we can't just make it a
     /// `HashMap<NodeId, Node>` to remove the need for `seen_ids`
-    all_nodes: Vec<(NodeId, accesskit::Node)>,
+    pub(crate) all_nodes: Vec<(NodeId, accesskit::Node)>,
     seen_ids: FxHashSet<NodeId>,
     /// The node that GPUI considers focused. Note that this may be different to
     /// what is reported to accesskit - see [`Self::active_descendant`]
@@ -321,6 +408,9 @@ pub(crate) struct A11yNodeBuilder {
     /// pattern, which allows a focused container to act as if a descendant is
     /// focused.
     active_descendant: Option<NodeId>,
+    #[cfg(debug_assertions)]
+    pub(crate) node_info: FxHashMap<NodeId, debug::NodeDebugInfo>,
+    pub(crate) fast: crate::fast::a11y::A11yLog,
 }
 
 impl A11yNodeBuilder {
@@ -332,7 +422,16 @@ impl A11yNodeBuilder {
             seen_ids: FxHashSet::default(),
             focus: None,
             active_descendant: None,
+            #[cfg(debug_assertions)]
+            node_info: FxHashMap::default(),
+            fast: Default::default(),
         }
+    }
+
+    /// Records provenance for a node already pushed this frame. Debug builds only.
+    #[cfg(debug_assertions)]
+    pub(crate) fn record_node_info(&mut self, id: NodeId, info: debug::NodeDebugInfo) {
+        self.node_info.insert(id, info);
     }
 
     #[must_use]
@@ -362,6 +461,7 @@ impl A11yNodeBuilder {
         if let Some(parent) = self.nodes_stack.last_mut() {
             parent.push_child(id);
         }
+        crate::fast::a11y::A11yLog::push(&mut self.fast, id);
         self.ids_stack.push(id);
         self.nodes_stack.push(node);
         true
@@ -380,6 +480,7 @@ impl A11yNodeBuilder {
         if let Some(parent) = self.nodes_stack.last_mut() {
             parent.push_child(id);
         }
+        crate::fast::a11y::A11yLog::leaf(&mut self.fast, self.all_nodes.len());
         self.all_nodes.push((id, node));
         true
     }
@@ -394,6 +495,7 @@ impl A11yNodeBuilder {
         debug_assert!(self.ids_stack.len() > 1, "pop would remove the root node");
 
         if let (Some(id), Some(node)) = (self.ids_stack.pop(), self.nodes_stack.pop()) {
+            crate::fast::a11y::A11yLog::pop(&mut self.fast, self.all_nodes.len());
             self.all_nodes.push((id, node));
         }
     }
@@ -404,6 +506,8 @@ impl A11yNodeBuilder {
         self.ids_stack.clear();
         self.nodes_stack.clear();
         self.seen_ids.clear();
+        #[cfg(debug_assertions)]
+        self.node_info.clear();
         let mut root_node = accesskit::Node::new(accesskit::Role::Window);
         if let Some(title) = window_title {
             root_node.set_label(title.to_string());
@@ -504,7 +608,7 @@ impl A11yNodeBuilder {
         let nodes = std::mem::take(&mut self.all_nodes);
         let update = TreeUpdate {
             nodes,
-            tree: Some(accesskit::Tree::new(ROOT_NODE_ID)),
+            tree: Some(accesskit::TreeInfo::new(ROOT_NODE_ID)),
             tree_id: accesskit::TreeId::ROOT,
             focus,
         };
@@ -582,6 +686,19 @@ mod tests {
         let mut a11y = A11y::new(Arc::new(AtomicBool::new(true)), false, None);
         a11y.begin_frame();
         a11y
+    }
+
+    #[test]
+    fn accessibility_enabled_is_independent_of_activation() {
+        for force_disabled in [false, true] {
+            for active in [false, true] {
+                let mut a11y = A11y::new(Arc::new(AtomicBool::new(active)), force_disabled, None);
+                a11y.sync_active_flag();
+
+                assert_eq!(a11y.is_enabled(), !force_disabled);
+                assert_eq!(a11y.is_active(), !force_disabled && active);
+            }
+        }
     }
 
     #[test]
@@ -812,7 +929,7 @@ mod tests {
         a11y.nodes.pop(); // c
         a11y.nodes.pop(); // b
 
-        let update = a11y.end_frame();
+        let update = a11y.end_frame(Default::default());
         assert_eq!(update.focus, a);
     }
 }

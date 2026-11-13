@@ -75,7 +75,9 @@ extern "C" {
 pub trait BlockArguments: Sized {
     /// Calls the given `Block` with self as the arguments.
     ///
-    /// Unsafe because `block` must point to a valid `Block` and this invokes
+    /// # Safety
+    ///
+    /// `block` must point to a valid `Block` and this invokes
     /// foreign code whose safety the compiler cannot verify.
     unsafe fn call_block<R>(self, block: *mut Block<Self, R>) -> R;
 }
@@ -130,7 +132,9 @@ where
 {
     /// Call self with the given arguments.
     ///
-    /// Unsafe because this invokes foreign code that the caller must verify
+    /// # Safety
+    ///
+    /// This invokes foreign code that the caller must verify
     /// doesn't violate any of Rust's safety rules. For example, if this block
     /// is shared with multiple references, the caller must ensure that calling
     /// it will not cause a data race.
@@ -148,19 +152,23 @@ impl<A, R> RcBlock<A, R> {
     /// Construct an `RcBlock` for the given block without copying it.
     /// The caller must ensure the block has a +1 reference count.
     ///
-    /// Unsafe because `ptr` must point to a valid `Block` and must have a +1
+    /// # Safety
+    ///
+    /// `ptr` must point to a valid `Block` and must have a +1
     /// reference count or it will be overreleased when the `RcBlock` is
     /// dropped.
     pub unsafe fn new(ptr: *mut Block<A, R>) -> Self {
-        RcBlock { ptr: ptr }
+        RcBlock { ptr }
     }
 
     /// Constructs an `RcBlock` by copying the given block.
     ///
-    /// Unsafe because `ptr` must point to a valid `Block`.
+    /// # Safety
+    ///
+    /// `ptr` must point to a valid `Block`.
     pub unsafe fn copy(ptr: *mut Block<A, R>) -> Self {
         let ptr = _Block_copy(ptr as *const c_void) as *mut Block<A, R>;
-        RcBlock { ptr: ptr }
+        RcBlock { ptr }
     }
 }
 
@@ -218,7 +226,10 @@ macro_rules! concrete_block_impl {
 
                 let f: unsafe extern "C" fn(*mut ConcreteBlock<($($t,)*), R, X> $(, $a: $t)*) -> R = $f;
                 unsafe {
-                    ConcreteBlock::with_invoke(mem::transmute(f), self)
+                    ConcreteBlock::with_invoke(mem::transmute::<
+                        unsafe extern "C" fn(*mut ConcreteBlock<($($t,)*), R, X> $(, $t)*) -> R,
+                        unsafe extern "C" fn(*mut ConcreteBlock<($($t,)*), R, X>, ...) -> R,
+                    >(f), self)
                 }
             }
         }
@@ -272,10 +283,13 @@ impl<A, R, F> ConcreteBlock<A, R, F> {
                 // 1 << 25 = BLOCK_HAS_COPY_DISPOSE
                 flags: 1 << 25,
                 _reserved: 0,
-                invoke: mem::transmute(invoke),
+                invoke: mem::transmute::<
+                    unsafe extern "C" fn(*mut Self, ...) -> R,
+                    unsafe extern "C" fn(*mut Block<A, R>, ...) -> R,
+                >(invoke),
             },
             descriptor: Box::new(BlockDescriptor::new()),
-            closure: closure,
+            closure,
         }
     }
 }
@@ -304,7 +318,13 @@ where
 {
     fn clone(&self) -> Self {
         unsafe {
-            ConcreteBlock::with_invoke(mem::transmute(self.base.invoke), self.closure.clone())
+            ConcreteBlock::with_invoke(
+                mem::transmute::<
+                    unsafe extern "C" fn(*mut Block<A, R>, ...) -> R,
+                    unsafe extern "C" fn(*mut Self, ...) -> R,
+                >(self.base.invoke),
+                self.closure.clone(),
+            )
         }
     }
 }

@@ -4,8 +4,6 @@ use rand_xorshift::XorShiftRng;
 
 use std::ops::{Add, Div, Mul, Sub};
 
-#[path = "../common/macros.rs"]
-mod macros;
 
 bench_binop!(vec2_add_v_f32, Vector2<f32>, Vector2<f32>, add);
 bench_binop!(vec3_add_v_f32, Vector3<f32>, Vector3<f32>, add);

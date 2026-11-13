@@ -263,7 +263,7 @@ impl Parameters {
                             "Overriding model input shape named \"{}\". Replacing {} by {:?}.",
                             name.0,
                             String::from_utf8_lossy(&formatted),
-                            &shape
+                            shape
                         );
                         inv.arguments[0].rvalue = tract_nnef::ser::tdims(&shape);
                     }
@@ -414,8 +414,8 @@ impl Parameters {
                 let (name, tensor) =
                     tensor::for_data(symbol_table, file.path().to_str().unwrap(), fd)?;
                 result.push(TensorValues {
-                    input_index: Some(ix).filter(|_| is_input),
-                    output_index: Some(ix).filter(|_| is_output),
+                    input_index: is_input.then_some(ix),
+                    output_index: is_output.then_some(ix),
                     name,
                     values: tensor.value.concretize().map(|t| vec![t.into_tensor().into()]),
                     fact: Some(tensor.without_value()),
@@ -657,11 +657,11 @@ impl Parameters {
                         }
                         Err(e) => {
                             if e.is::<ModelBuildingError>() {
-                                return Err(e)?;
+                                Err(e)?;
                             } else if let Some(last_model) = last_model.take() {
-                                return Err(ModelBuildingError(last_model, e.into()))?;
+                                Err(ModelBuildingError(last_model, e.into()))?;
                             } else {
-                                return Err(e)?;
+                                Err(e)?;
                             }
                         }
                     }

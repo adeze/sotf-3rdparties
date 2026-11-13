@@ -1679,8 +1679,7 @@ impl<P: Vst3Plugin> IAudioProcessor for Wrapper<P> {
                                 // kTempoValid
                                 transport.pos_beats = Some(
                                     context.project_time_music
-                                        + (block_start as f64 / sample_rate as f64 / 60.0
-                                            * context.tempo),
+                                        + (block_start as f64 / sample_rate / 60.0 * context.tempo),
                                 );
                             } else {
                                 transport.pos_beats = Some(context.project_time_music);

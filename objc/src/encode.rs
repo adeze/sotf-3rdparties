@@ -6,7 +6,7 @@ use std::str;
 
 use runtime::{Class, Object, Sel};
 
-const QUALIFIERS: &'static [char] = &[
+const QUALIFIERS: &[char] = &[
     'r', // const
     'n', // in
     'N', // inout
@@ -39,6 +39,9 @@ pub struct Encoding {
 
 impl Encoding {
     /// Constructs an `Encoding` from its string representation.
+    ///
+    /// # Safety
+    ///
     /// Unsafe because the caller must ensure the string is a valid encoding.
     pub unsafe fn from_str(code: &str) -> Encoding {
         from_str(code)
@@ -115,6 +118,8 @@ pub unsafe fn from_malloc_str(ptr: *mut c_char) -> Encoding {
 }
 
 /// Types that have an Objective-C type encoding.
+///
+/// # Safety
 ///
 /// Unsafe because Objective-C will make assumptions about the type (like its
 /// size and alignment) from its encoding, so the implementer must verify that

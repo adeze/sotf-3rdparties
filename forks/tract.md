@@ -13,6 +13,10 @@ Keep ONNX random operators compatible with rand 0.10 and deterministic replay te
 ## Retained changes
 
 SmallRng feature/API migration and explicit f32 replay tests on tract 0.22.4.
+Release preparation updates derive-new to 0.7, replaces deprecated APIs,
+resolves current strict lints, and refreshes TensorFlow documentation examples.
+Generated constructor lint allowances are limited to affected derived types.
+
 Read [the existing detail record](../tract/Cargo.toml) before updating.
 This inventory review does not claim a fresh upstream parity or security audit.
 

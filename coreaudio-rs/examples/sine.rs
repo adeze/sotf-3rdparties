@@ -67,7 +67,7 @@ fn main() -> Result<(), coreaudio::Error> {
     // audio data to the AudioUnit representing the output device. This is separate from the
     // format the AudioUnit later uses to send the data to the hardware device.
     let stream_format = audio_unit.output_stream_format()?;
-    println!("{:#?}", &stream_format);
+    println!("{:#?}", stream_format);
 
     // For this example, our sine wave expects `f32` data.
     assert!(SampleFormat::F32 == stream_format.sample_format);

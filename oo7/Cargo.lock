@@ -4,9 +4,9 @@ version = 4
 
 [[package]]
 name = "aes"
-version = "0.9.3"
+version = "0.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "35f0f96ce78e38c3dc6d8948aa8163d06385be74000f3c7a95bf1eef35d3ea32"
+checksum = "fc0fc36d7440d015b45468ba08a21e80e056ebbd014c611c6298bb7503e04bd1"
 dependencies = [
  "cipher",
  "cpubits",
@@ -64,9 +64,9 @@ dependencies = [
 
 [[package]]
 name = "async-executor"
-version = "1.14.0"
+version = "1.14.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c96bf972d85afc50bf5ab8fe2d54d1586b4e0b46c97c50a0c9e71e2f7bcd812a"
+checksum = "f426a31126c735126297bc5ea7a521263c9faff4f63ca415267ee625651c4f37"
 dependencies = [
  "async-task",
  "concurrent-queue",
@@ -107,9 +107,9 @@ dependencies = [
 
 [[package]]
 name = "async-lock"
-version = "3.4.2"
+version = "3.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "290f7f2596bd5b78a9fec8088ccd89180d7f9f55b94b0576823bbbdc72ee8311"
+checksum = "0876700b0d007ad25d5508865a4259c3af9af6d296bf663a0d586d0bc3369f6f"
 dependencies = [
  "event-listener",
  "event-listener-strategy",
@@ -136,13 +136,13 @@ dependencies = [
 
 [[package]]
 name = "async-recursion"
-version = "1.1.1"
+version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3b43422f69d8ff38f95f1b2bb76517c91589a924d1559a0e935d7c8ce0274c11"
+checksum = "4f8abc12baad266b1c8cec146854c195b5864b4221d4b2ca7296a7ae82d9e451"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.119",
+ "syn 3.0.10",
 ]
 
 [[package]]
@@ -177,7 +177,7 @@ checksum = "82f6aeea286b8eb4dd3431a1be1b59d290ace00f5bfd8e2a159bc2a05e2c1667"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 3.0.6",
+ "syn 3.0.10",
 ]
 
 [[package]]
@@ -253,9 +253,9 @@ dependencies = [
 
 [[package]]
 name = "cc"
-version = "1.6.0"
+version = "1.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f74872d07caf508b30a21f6836e7d7016a2eaf7d9ff4f48deaa58cd8a0407630"
+checksum = "4ff2a8126fff0f8c839080d619675a585e61720bb12d2baceae45769fd66f155"
 dependencies = [
  "find-msvc-tools",
  "shlex",
@@ -296,9 +296,9 @@ dependencies = [
 
 [[package]]
 name = "const-oid"
-version = "0.10.2"
+version = "0.10.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a6ef517f0926dd24a1582492c791b6a4818a4d94e789a334894aa15b0d12f55c"
+checksum = "be95d4a884358a21a199689323c29e9256b4a1b315e22f183d155422041d3a9a"
 
 [[package]]
 name = "cpubits"
@@ -332,9 +332,9 @@ dependencies = [
 
 [[package]]
 name = "ctutils"
-version = "0.4.2"
+version = "0.4.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7d5515a3834141de9eafb9717ad39eea8247b5674e6066c404e8c4b365d2a29e"
+checksum = "261af4dc7a06ea8a527a8717d8cbba3417530d6ea14e1edb3de6b67806be474f"
 dependencies = [
  "cmov",
 ]
@@ -380,15 +380,15 @@ dependencies = [
 
 [[package]]
 name = "equivalent"
-version = "1.0.2"
+version = "1.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "877a4ace8713b0bcf2a4e7eec82529c029f1d0619886d18145fea96c3ffe5c0f"
+checksum = "00d174d5400e5e8fd687ad1049e2f578285fa914201b1af7e8b112a4546bd826"
 
 [[package]]
 name = "errno"
-version = "0.3.14"
+version = "0.3.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
+checksum = "e35d6e78f4cebb90e51d543db8fe41528851d6deeef6ef21ebd4bfdc1e784776"
 dependencies = [
  "libc",
  "windows-sys",
@@ -422,9 +422,9 @@ checksum = "da7c62ceae207dd37ea5b845da6a0696c799f85e97da1ab5b7910be3c1c80223"
 
 [[package]]
 name = "find-msvc-tools"
-version = "0.1.14"
+version = "0.1.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aedcfb3409746eddb02b9e19ebda1c3394f759a152e48ee875a0844d1b955484"
+checksum = "1c66915cc5391097de7a2b0b972e8505aa33c0df401fd3a6811dbdb32881ba48"
 
 [[package]]
 name = "foreign-types"
@@ -485,7 +485,7 @@ checksum = "9fb9654ba8355388abeb8dcb4fc62f511300867002afc858860463bdd9fe0c44"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 3.0.6",
+ "syn 3.0.10",
 ]
 
 [[package]]
@@ -590,9 +590,9 @@ dependencies = [
 
 [[package]]
 name = "inout"
-version = "0.2.2"
+version = "0.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4250ce6452e92010fdf7268ccc5d14faa80bb12fc741938534c58f16804e03c7"
+checksum = "3a580c13f0ffc335ef42dd3f6b1a41b726051c5e1656d9a3aa6fddb3c5dfbbf9"
 dependencies = [
  "block-padding",
  "hybrid-array",
@@ -600,9 +600,9 @@ dependencies = [
 
 [[package]]
 name = "js-sys"
-version = "0.3.106"
+version = "0.3.107"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7883d941dae510fb2d978fc3fe018c71c9e2892fd38854de3e8b92c2e5ad9cc5"
+checksum = "8dc09d2154098bbf4ef54eab6b117a3c24cbbffe94046b16ee6d6d4510584d3a"
 dependencies = [
  "cfg-if",
  "futures-util",
@@ -617,9 +617,9 @@ checksum = "20870f649af7073d53e38067b2a84312175d56ea15217e1b15bc83506ec50afb"
 
 [[package]]
 name = "libc"
-version = "0.2.190"
+version = "0.2.191"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ce5d3ddc6d3fa000eb1536d85e147bfe31aacaba692ed6a876f95cb7c855be78"
+checksum = "65cd87c9a6d60536580b316ad985726104730a5151c99845f2490428ef91240a"
 
 [[package]]
 name = "libm"
@@ -644,9 +644,9 @@ dependencies = [
 
 [[package]]
 name = "log"
-version = "0.4.34"
+version = "0.4.35"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f9f8bd3e56ce4dfc153cf470fffbfa98c7620958b312ca5c3a4b8d5181fd13c6"
+checksum = "5d15f86d12da44cd8d4ec3c73984537eb7f4cadcb9776a575a0a8a05ca11005c"
 
 [[package]]
 name = "matchers"
@@ -810,9 +810,9 @@ dependencies = [
 
 [[package]]
 name = "openssl"
-version = "0.10.81"
+version = "0.10.82"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "77823a27f0babb03091cb9ed9ef80af3b39dbc82f97e8fa530374b7dafd87a45"
+checksum = "4de8111e94a56adca7ebfe6c365b6d42f99deb69b74b6becacd4204e2f193aa2"
 dependencies = [
  "bitflags",
  "cfg-if",
@@ -835,9 +835,9 @@ dependencies = [
 
 [[package]]
 name = "openssl-sys"
-version = "0.9.117"
+version = "0.9.118"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b47e7e6bb2c38cd930d25a23b40fa52e068c10e85f3e03a7f5ba5aaca5713695"
+checksum = "19c413d6ec9ebaf5e1c829d355cb3e9f783778d700f135be0921d52fce3c60ae"
 dependencies = [
  "cc",
  "libc",
@@ -1036,9 +1036,9 @@ checksum = "d6f6ff9a378485b298a5286656da665ba74413d36db0979633275d2e708145d4"
 
 [[package]]
 name = "rustix"
-version = "1.1.5"
+version = "1.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "891efababe418670775f199f0d233d84843c227a0949a883ce15b37c78d6629d"
+checksum = "e5e76742e5294153d4dde1207dbec5bdd81eef6fabdc0d2118babadabfd858aa"
 dependencies = [
  "bitflags",
  "errno",
@@ -1096,7 +1096,7 @@ checksum = "e7a5d71263a5a7d47b41f6b3f06ba276f10cc18b0931f1799f710578e2309348"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 3.0.6",
+ "syn 3.0.10",
 ]
 
 [[package]]
@@ -1107,7 +1107,7 @@ checksum = "8d3b1629de253c70a0508c3899572da79ca359fdab27c7920ff00406df418906"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 3.0.6",
+ "syn 3.0.10",
 ]
 
 [[package]]
@@ -1137,9 +1137,9 @@ dependencies = [
 
 [[package]]
 name = "sha2"
-version = "0.11.0"
+version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "446ba717509524cb3f22f17ecc096f10f4822d76ab5c0b9822c5f9c284e825f4"
+checksum = "47d7069beb7d6ac7b9acd1039986e73443f24234f41074da099d6f994ac9ad19"
 dependencies = [
  "cfg-if",
  "cpufeatures",
@@ -1179,9 +1179,9 @@ checksum = "0c790de23124f9ab44544d7ac05d60440adc586479ce501c1d6d7da3cd8c9cf5"
 
 [[package]]
 name = "smallvec"
-version = "1.16.2"
+version = "1.16.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f9395f0f0eee849a9b707b2f06bb92a6a422090e2123bb2ef8e87a0e61892a8e"
+checksum = "149309498a5f7334b12ddae0cad8aba81ce785fe91755068867e017cf98fee46"
 
 [[package]]
 name = "socket2"
@@ -1252,9 +1252,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "3.0.6"
+version = "3.0.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8593e8e72159ed2257d083c7a454a85cbf854f37a0966d8d483aff8c8a3ebcee"
+checksum = "4ae9ccbea3a7b0b09443036490c8f34a8b1b760fd345e5c0dae0aac718faea79"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1285,9 +1285,9 @@ dependencies = [
 
 [[package]]
 name = "tokio"
-version = "1.53.2"
+version = "1.54.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e95f91fcc7a621e8b030f6aa23c71fe9838ae2fb4d8118b75602a328f5144044"
+checksum = "b52fd3255258d26fac7264ab5a76b53c13367136dc011d3d6ad4f8ed070396a3"
 dependencies = [
  "bytes",
  "libc",
@@ -1308,23 +1308,23 @@ checksum = "78773a2a397f451582ce068015985c33193cf6dea8b74d2a639fe457b2f07b0e"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 3.0.6",
+ "syn 3.0.10",
 ]
 
 [[package]]
 name = "toml_datetime"
-version = "1.1.1+spec-1.1.0"
+version = "1.1.3+spec-1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3165f65f62e28e0115a00b2ebdd37eb6f3b641855f9d636d3cd4103767159ad7"
+checksum = "173f25c883cd2176a2d8212155638c0a60d484a9d84546d270866f40f56b6e49"
 dependencies = [
  "serde_core",
 ]
 
 [[package]]
 name = "toml_edit"
-version = "0.25.15+spec-1.1.0"
+version = "0.25.19+spec-1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1340ea94a5856333492c9064b02c778b191dd2c853778d9609debdcdfea3a614"
+checksum = "dd43688c4858d7264ae1cf9a9f874a67c3feb74a883b1cd7bebd6a4ea8307218"
 dependencies = [
  "indexmap",
  "toml_datetime",
@@ -1334,9 +1334,9 @@ dependencies = [
 
 [[package]]
 name = "toml_parser"
-version = "1.1.3+spec-1.1.0"
+version = "1.1.5+spec-1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1d38ac1cf9b95face32296c0a3ede1fdc270627c9d9c02a7274dd6d960dc4d56"
+checksum = "baa693a8032d7e1cada7d0041e96126df243179ff061456783ac7f12bda4744c"
 dependencies = [
  "winnow",
 ]
@@ -1421,15 +1421,15 @@ dependencies = [
 
 [[package]]
 name = "unicode-ident"
-version = "1.0.26"
+version = "1.0.27"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d245f478577f809a851594d02313b640fb437e0bb33866753cff937863096954"
+checksum = "a2c754d6c33795a1c324727428e5a7dedb5b06195f9890bdbcba760d3e246563"
 
 [[package]]
 name = "uuid"
-version = "1.27.0"
+version = "1.29.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "97277d36b9c3ace13e58fa6e753f8b0bbbf302a18dd193240d70f9e29681059a"
+checksum = "bed99139f7dac9b5cfe5f17be4d66dc7079a34dee1d74bcc77217119240e267c"
 dependencies = [
  "js-sys",
  "serde_core",
@@ -1465,12 +1465,11 @@ dependencies = [
 
 [[package]]
 name = "wasm-bindgen"
-version = "0.2.129"
+version = "0.2.130"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9bb54f33acc68fd454578d9820b0bde1a1a3d17aa17bb7b6595806d02886d409"
+checksum = "a0181c14ddd6c7b8b0b0132a5f1ea2f32be0d893cd3ea97b6e3b28886b8a3d1c"
 dependencies = [
  "cfg-if",
- "once_cell",
  "rustversion",
  "wasm-bindgen-macro",
  "wasm-bindgen-shared",
@@ -1478,9 +1477,9 @@ dependencies = [
 
 [[package]]
 name = "wasm-bindgen-macro"
-version = "0.2.129"
+version = "0.2.130"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2e29d0c35b16e224a7eeb5cd2d25e3e1968fbd65604117b44d3b789d00ee8535"
+checksum = "6e931a02a39abdbf66966fc35902b5ed58344750a70885bed4ebb3d8eaf28ed9"
 dependencies = [
  "quote",
  "wasm-bindgen-macro-support",
@@ -1488,22 +1487,22 @@ dependencies = [
 
 [[package]]
 name = "wasm-bindgen-macro-support"
-version = "0.2.129"
+version = "0.2.130"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6f501a8bc3719dba86ef8ae4728879c08001bea749eb1333ac5b91e040e2a6b7"
+checksum = "2ca4b54280e455bd831e33a6b8e734baf432fe63fbc35c42ac14ce67a043a53a"
 dependencies = [
  "bumpalo",
  "proc-macro2",
  "quote",
- "syn 3.0.6",
+ "syn 3.0.10",
  "wasm-bindgen-shared",
 ]
 
 [[package]]
 name = "wasm-bindgen-shared"
-version = "0.2.129"
+version = "0.2.130"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "23f0c9c52aa7cd7d77769a4cfe2a9adb1b331f489a41d912ce14513d5ab995c6"
+checksum = "3b1f9c3798725016c6ee5f2f57869ec0831e8bbc0ab0310a86e787e97f41389e"
 dependencies = [
  "unicode-ident",
 ]
@@ -1525,9 +1524,9 @@ dependencies = [
 
 [[package]]
 name = "winnow"
-version = "1.0.4"
+version = "1.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "23b97319f7b8343df12cc98938e5c3eb436064524c8d2b4e30a1d3a36eecdf81"
+checksum = "8c3b93199df0ab874cdf0c6a94f0a0dc3423fe41f1cafb62b8bd7b1deb277aef"
 dependencies = [
  "memchr",
 ]
@@ -1583,7 +1582,7 @@ dependencies = [
  "proc-macro-crate",
  "proc-macro2",
  "quote",
- "syn 3.0.6",
+ "syn 3.0.10",
  "zbus_names",
  "zvariant",
  "zvariant_utils",
@@ -1591,9 +1590,9 @@ dependencies = [
 
 [[package]]
 name = "zbus_names"
-version = "4.3.4"
+version = "4.3.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d8bf88b4a3ff53e883001e0e0115b297a9d53c31b9c1edd2bfdd853e3428624e"
+checksum = "812a12be4ead7a59e18ea8f047d08add0066b73bc62fc1467066a2472ae088dd"
 dependencies = [
  "serde",
  "winnow",
@@ -1602,27 +1601,27 @@ dependencies = [
 
 [[package]]
 name = "zcheapstr"
-version = "1.1.0"
+version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d1afec51604565183aeb5c54c20aeab286120d4e4460f7f76e3e8bb8c0d99473"
+checksum = "939f186d9ecebe044315a5cb6d6f78568bbc21152adc954d5a0c2f58bdbc9920"
 dependencies = [
  "serde",
 ]
 
 [[package]]
 name = "zerocopy"
-version = "0.8.59"
+version = "0.8.63"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6df92bf3d9227be3d53173901ddbffac2babc27ae50f397776ffd6dc33f800cb"
+checksum = "e5fe1f8f1b06191a00962174c61aa5005e0bb391a6d80d07e24d115c01a92ed8"
 dependencies = [
  "zerocopy-derive",
 ]
 
 [[package]]
 name = "zerocopy-derive"
-version = "0.8.59"
+version = "0.8.63"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ac4f328cf2f05d084e496c3e9c3f33ed0a183656a16e1fcec4d464d8373aec82"
+checksum = "863ad3ac83293fb4d740aedbfdc9240dd8d1a50c1099acd76ce80ce7c7230c7f"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1631,9 +1630,9 @@ dependencies = [
 
 [[package]]
 name = "zeroize"
-version = "1.9.0"
+version = "1.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e13c156562582aa81c60cb29407084cdb54c4164760106ab78e6c5b0858cf64e"
+checksum = "e13084392c5e4bc371903e2935a5eaeed24905a7511356b883835e18a78f6879"
 dependencies = [
  "zeroize_derive",
 ]
@@ -1651,9 +1650,9 @@ dependencies = [
 
 [[package]]
 name = "zvariant"
-version = "5.15.0"
+version = "5.15.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c1d34c27cc6cdd1f458427519dd6b8612f7b7e3f7b9a0b2355d041dda9869147"
+checksum = "80bf6d6cd6a4b601acb64cfb8284cdc643fcfa75ef26ae3c46ec8aa4e8a1fbb7"
 dependencies = [
  "endi",
  "enumflags2",
@@ -1667,14 +1666,14 @@ dependencies = [
 
 [[package]]
 name = "zvariant_derive"
-version = "5.15.0"
+version = "5.15.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "864155e69b4352db0c7f374917bf45d1e0c8d17659c8b3dbf9795f3673f8c497"
+checksum = "ef2672456ba1cb54b5eaec136e63135b3c7495fb938e53b28a62e633496d486d"
 dependencies = [
  "proc-macro-crate",
  "proc-macro2",
  "quote",
- "syn 3.0.6",
+ "syn 3.0.10",
  "zvariant_utils",
 ]
 
@@ -1687,6 +1686,222 @@ dependencies = [
  "proc-macro2",
  "quote",
  "serde",
- "syn 3.0.6",
+ "syn 3.0.10",
  "winnow",
 ]
+
+[[patch.unused]]
+name = "math-dsp"
+version = "0.5.37"
+
+[[patch.unused]]
+name = "gpui-android"
+version = "0.11.0"
+
+[[patch.unused]]
+name = "gpui-au"
+version = "0.11.0"
+
+[[patch.unused]]
+name = "gpui-audio-kit"
+version = "0.11.0"
+
+[[patch.unused]]
+name = "gpui-builder"
+version = "0.11.0"
+
+[[patch.unused]]
+name = "gpui-component-lab"
+version = "0.11.0"
+
+[[patch.unused]]
+name = "gpui-d3rs"
+version = "0.11.0"
+
+[[patch.unused]]
+name = "gpui-design"
+version = "0.11.0"
+
+[[patch.unused]]
+name = "gpui-design-tools"
+version = "0.11.0"
+
+[[patch.unused]]
+name = "gpui-ios"
+version = "0.11.0"
+
+[[patch.unused]]
+name = "gpui-keybinding"
+version = "0.11.0"
+
+[[patch.unused]]
+name = "gpui-layout-expr"
+version = "0.11.0"
+
+[[patch.unused]]
+name = "gpui-miniapp"
+version = "0.11.0"
+
+[[patch.unused]]
+name = "gpui-pretext"
+version = "0.11.0"
+
+[[patch.unused]]
+name = "gpui-profiler"
+version = "0.11.0"
+
+[[patch.unused]]
+name = "gpui-px"
+version = "0.11.0"
+
+[[patch.unused]]
+name = "gpui-themes"
+version = "0.11.0"
+
+[[patch.unused]]
+name = "gpui-ui-kit"
+version = "0.11.0"
+
+[[patch.unused]]
+name = "gpui-ui-kit-macros"
+version = "0.11.0"
+
+[[patch.unused]]
+name = "sotf-assert_no_alloc"
+version = "1.1.2"
+
+[[patch.unused]]
+name = "sotf-coreaudio-rs"
+version = "0.14.2"
+
+[[patch.unused]]
+name = "sotf-dst-decoder"
+version = "0.1.2"
+
+[[patch.unused]]
+name = "sotf-gpui-toolkit-gpui"
+version = "0.2.4"
+
+[[patch.unused]]
+name = "sotf-gpui-toolkit-gpui-linux"
+version = "0.1.0"
+
+[[patch.unused]]
+name = "sotf-gpui-toolkit-gpui-macos"
+version = "0.1.2"
+
+[[patch.unused]]
+name = "sotf-gpui-toolkit-gpui-web"
+version = "0.1.1"
+
+[[patch.unused]]
+name = "sotf-gpui-toolkit-gpui-wgpu"
+version = "0.1.3"
+
+[[patch.unused]]
+name = "sotf-gpui-toolkit-gpui-windows"
+version = "0.1.2"
+
+[[patch.unused]]
+name = "sotf-librespot-core"
+version = "0.8.0"
+
+[[patch.unused]]
+name = "sotf-librespot-metadata"
+version = "0.8.0"
+
+[[patch.unused]]
+name = "sotf-librespot-playback"
+version = "0.8.0"
+
+[[patch.unused]]
+name = "sotf-librespot-protocol"
+version = "0.8.0"
+
+[[patch.unused]]
+name = "sotf-metaheuristics-nature"
+version = "10.1.0"
+
+[[patch.unused]]
+name = "sotf-nalgebra"
+version = "0.35.0"
+
+[[patch.unused]]
+name = "sotf-nih_plug"
+version = "0.0.0"
+
+[[patch.unused]]
+name = "sotf-nnnoiseless"
+version = "0.1.1"
+
+[[patch.unused]]
+name = "sotf-objc"
+version = "0.2.7"
+
+[[patch.unused]]
+name = "sotf-predicates"
+version = "3.1.5"
+
+[[patch.unused]]
+name = "sotf-rdsd2pcm"
+version = "0.4.0"
+
+[[patch.unused]]
+name = "sotf-rfd"
+version = "0.17.2"
+
+[[patch.unused]]
+name = "sotf-rubato"
+version = "5.0.0"
+
+[[patch.unused]]
+name = "sotf-tract-onnx"
+version = "0.22.4"
+
+[[patch.unused]]
+name = "sotf-vello"
+version = "0.10.0"
+
+[[patch.unused]]
+name = "sotf-vst3-com"
+version = "0.1.0"
+
+[[patch.unused]]
+name = "sotf-vst3-sys"
+version = "0.1.0"
+
+[[patch.unused]]
+name = "sotf-wgpu"
+version = "29.0.3"
+
+[[patch.unused]]
+name = "sotf-zed-font-kit"
+version = "0.14.1-zed"
+
+[[patch.unused]]
+name = "math-delaunay"
+version = "0.5.4"
+
+[[patch.unused]]
+name = "symphonia-codec-dsd"
+version = "0.2.0"
+
+[[patch.unused]]
+name = "symphonia-codec-dst"
+version = "0.2.0"
+
+[[patch.unused]]
+name = "symphonia-codec-wavpack"
+version = "0.1.1"
+
+[[patch.unused]]
+name = "symphonia-format-sacd"
+version = "0.1.2"
+
+[[patch.unused]]
+name = "symphonia-iamf-core"
+version = "0.1.0"
+
+[[patch.unused]]
+name = "sofa-reader"
+version = "0.2.2"

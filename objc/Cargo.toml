@@ -13,6 +13,7 @@
 [package]
 name = "sotf-objc"
 version = "0.2.7"
+edition = "2015"
 authors = ["Steven Sheldon"]
 exclude = [".gitignore", ".travis.yml", "doc.sh", "travis_install.sh", "travis_test.sh", "tests-ios/**", "Cargo.toml.orig"]
 description = "Objective-C Runtime bindings and wrapper for Rust."

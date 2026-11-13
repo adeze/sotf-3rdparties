@@ -4,10 +4,14 @@ use std::fmt;
 mod decluttered;
 mod optimized;
 
-pub use optimized::{OptScan, State};
 pub use decluttered::Scan;
+pub use optimized::{OptScan, State};
 
 #[derive(Clone, new, Hash, Eq, PartialEq, Copy, Debug)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct ScanInfo {
     pub axis: usize,
     pub chunk: isize,
@@ -38,6 +42,10 @@ impl InputMapping {
 }
 
 #[derive(Clone, new, Hash, Default)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct OutputMapping<F: Clone> {
     pub scan: Option<(usize, ScanInfo)>,
     pub full_dim_hint: Option<F>,

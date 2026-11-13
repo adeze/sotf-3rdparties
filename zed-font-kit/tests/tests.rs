@@ -1,18 +1,15 @@
-use font_kit::canvas::{Canvas, Format, RasterizationOptions};
+extern crate zed_font_kit as font_kit;
+
+use font_kit::canvas::RasterizationOptions;
 use font_kit::family_name::FamilyName;
-use font_kit::file_type::FileType;
-use font_kit::font::Font;
 use font_kit::hinting::HintingOptions;
 use font_kit::outline::{Contour, Outline, OutlineBuilder, PointFlags};
 use font_kit::properties::{Properties, Stretch, Weight};
 #[cfg(feature = "source")]
 use font_kit::source::SystemSource;
-use pathfinder_geometry::rect::{RectF, RectI};
+use pathfinder_geometry::rect::RectF;
 use pathfinder_geometry::transform2d::Transform2F;
-use pathfinder_geometry::vector::{Vector2F, Vector2I};
-use std::fs::File;
-use std::io::Read;
-use std::sync::Arc;
+use pathfinder_geometry::vector::Vector2F;
 
 #[path = "tests/check.rs"]
 mod check;

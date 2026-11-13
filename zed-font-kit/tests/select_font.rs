@@ -8,12 +8,13 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-extern crate font_kit;
+extern crate zed_font_kit as font_kit;
 
 use font_kit::error::SelectionError;
 use font_kit::family_name::FamilyName;
 use font_kit::handle::Handle;
 use font_kit::properties::Properties;
+#[cfg(all(feature = "source", target_os = "linux"))]
 use std::ffi::OsStr;
 
 #[cfg(feature = "source")]
@@ -49,6 +50,7 @@ macro_rules! match_handle {
     };
 }
 
+#[cfg(all(feature = "source", target_os = "linux"))]
 #[inline(always)]
 fn check_filename(handle: &Handle, filename: &str) {
     match *handle {

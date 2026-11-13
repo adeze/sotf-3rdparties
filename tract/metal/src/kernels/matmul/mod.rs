@@ -18,17 +18,12 @@ use tract_core::internal::*;
 use tract_gpu::tensor::DeviceTensor;
 use tract_gpu::utils::as_q40_tensor;
 
-#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy, Default)]
 pub enum MetalGemmImplKind {
     Mlx,
     Mfa,
+    #[default]
     Ggml,
-}
-
-impl Default for MetalGemmImplKind {
-    fn default() -> Self {
-        Self::Ggml
-    }
 }
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]

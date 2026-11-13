@@ -34,7 +34,7 @@ mod bench_asyncro {
         fn $f(c: &mut Criterion) {
             let chunksize = 1024;
             let sinc_len = 256;
-            let f_cutoff = 0.9473371669037001;
+            let f_cutoff = 0.947_337_15;
             let oversampling_factor = 256;
             let window = WindowFunction::BlackmanHarris2;
             let resample_ratio = 192000 as f64 / 44100 as f64;

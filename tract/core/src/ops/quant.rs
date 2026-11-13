@@ -4,9 +4,9 @@ use crate::internal::*;
 use crate::ops::element_wise::ElementWiseOp;
 use crate::ops::math::QScale;
 use num_traits::AsPrimitive;
+use tract_linalg::Scaler;
 use tract_linalg::lut::Lut;
 use tract_linalg::mmm::RoundingPolicy;
-use tract_linalg::Scaler;
 
 use super::binary::TypedBinOp;
 use super::math::round_ties_to_even;
@@ -72,6 +72,10 @@ fn info_quantize_linear_i8(q: &QuantizeLinearI8) -> TractResult<Vec<String>> {
 }
 
 #[derive(Clone, Debug, new)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct DequantizeLinearF32 {
     pub scale: f32,
     pub zero_point: i32,

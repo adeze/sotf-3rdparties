@@ -40,7 +40,7 @@ impl From<bool> for PaddedBool32 {
 #[expect(missing_docs)]
 pub struct Scene {
     pub(crate) paint_operations: Vec<PaintOperation>,
-    primitive_bounds: BoundsTree<ScaledPixels>,
+    pub(crate) primitive_bounds: BoundsTree<ScaledPixels>,
     layer_stack: Vec<DrawOrder>,
     pub shadows: Vec<Shadow>,
     pub quads: Vec<Quad>,
@@ -51,11 +51,15 @@ pub struct Scene {
     pub polychrome_sprites: Vec<PolychromeSprite>,
     pub surfaces: Vec<PaintSurface>,
     pub custom_primitives: Vec<CustomPrimitive>,
+    pub(crate) sort_scratch: crate::fast::scene::SortScratch,
+    pub(crate) fast_rounded_clip: crate::fast::rounded_clip::SceneClips,
+    pub layers: crate::fast::layers::scene::SceneLayers,
 }
 
 #[expect(missing_docs)]
 impl Scene {
     pub fn clear(&mut self) {
+        crate::fast::rounded_clip::clear(self);
         self.paint_operations.clear();
         self.primitive_bounds.clear();
         self.layer_stack.clear();
@@ -68,10 +72,26 @@ impl Scene {
         self.polychrome_sprites.clear();
         self.surfaces.clear();
         self.custom_primitives.clear();
+        crate::fast::layers::scene::SceneLayers::clear(&mut self.layers);
     }
 
     pub fn len(&self) -> usize {
         self.paint_operations.len()
+    }
+
+    /// A scene may have paint operations that only open and close empty
+    /// layers, so `len() == 0` is not equivalent to having no visible
+    /// primitives. (From gpui-fast, extended with custom primitives.)
+    pub fn is_empty(&self) -> bool {
+        self.shadows.is_empty()
+            && self.quads.is_empty()
+            && self.paths.is_empty()
+            && self.underlines.is_empty()
+            && self.monochrome_sprites.is_empty()
+            && self.subpixel_sprites.is_empty()
+            && self.polychrome_sprites.is_empty()
+            && self.surfaces.is_empty()
+            && self.custom_primitives.is_empty()
     }
 
     pub fn push_layer(&mut self, bounds: Bounds<ScaledPixels>) {
@@ -145,27 +165,22 @@ impl Scene {
     }
 
     pub fn replay(&mut self, range: Range<usize>, prev_scene: &Scene) {
+        crate::fast::layers::paint::replay_layers(self, range.clone(), prev_scene);
         for operation in &prev_scene.paint_operations[range] {
             match operation {
                 PaintOperation::Primitive(primitive) => self.insert_primitive(primitive.clone()),
                 PaintOperation::StartLayer(bounds) => self.push_layer(*bounds),
                 PaintOperation::EndLayer => self.pop_layer(),
+                PaintOperation::FastRoundedClip(fast_clip) => {
+                    crate::fast::rounded_clip::record(self, *fast_clip)
+                }
             }
         }
     }
 
     pub fn finish(&mut self) {
-        self.shadows.sort_by_key(|shadow| shadow.order);
-        self.quads.sort_by_key(|quad| quad.order);
-        self.paths.sort_by_key(|path| path.order);
-        self.underlines.sort_by_key(|underline| underline.order);
-        self.monochrome_sprites
-            .sort_by_key(|sprite| (sprite.order, sprite.tile.tile_id));
-        self.subpixel_sprites
-            .sort_by_key(|sprite| (sprite.order, sprite.tile.tile_id));
-        self.polychrome_sprites
-            .sort_by_key(|sprite| (sprite.order, sprite.tile.tile_id));
-        self.surfaces.sort_by_key(|surface| surface.order);
+        crate::fast::scene::sort_in_drawing_order(self);
+        // Local addition: gpui-fast has no custom primitives to sort.
         self.custom_primitives.sort_by_key(|custom| custom.order);
     }
 
@@ -225,6 +240,7 @@ pub(crate) enum PaintOperation {
     Primitive(Primitive),
     StartLayer(Bounds<ScaledPixels>),
     EndLayer,
+    FastRoundedClip(crate::fast::rounded_clip::ClipOperation),
 }
 
 #[derive(Clone)]
@@ -529,6 +545,41 @@ pub enum PrimitiveBatch {
     Custom(Range<usize>),
 }
 
+impl PrimitiveBatch {
+    #[expect(missing_docs)]
+    pub fn label(&self) -> String {
+        match self {
+            Self::Shadows(range) => format!("shadows ({})", range.len()),
+            Self::Quads(range) => format!("quads ({})", range.len()),
+            Self::Paths(range) => format!("paths ({})", range.len()),
+            Self::Underlines(range) => format!("underlines ({})", range.len()),
+            Self::MonochromeSprites { texture_id, range } => {
+                format!(
+                    "monochrome sprites ({}) on atlas {}",
+                    range.len(),
+                    texture_id.index
+                )
+            }
+            Self::SubpixelSprites { texture_id, range } => {
+                format!(
+                    "subpixel sprites ({}) on atlas {}",
+                    range.len(),
+                    texture_id.index
+                )
+            }
+            Self::PolychromeSprites { texture_id, range } => {
+                format!(
+                    "polychrome sprites ({}) on atlas {}",
+                    range.len(),
+                    texture_id.index
+                )
+            }
+            Self::Surfaces(range) => format!("surfaces ({})", range.len()),
+            Self::Custom(range) => format!("custom ({})", range.len()),
+        }
+    }
+}
+
 #[derive(Default, Debug, Copy, Clone)]
 #[repr(C)]
 #[expect(missing_docs)]
@@ -769,8 +820,8 @@ pub struct PaintSurface {
     pub order: DrawOrder,
     pub bounds: Bounds<ScaledPixels>,
     pub content_mask: ContentMask<ScaledPixels>,
-    #[cfg(target_os = "macos")]
-    pub image_buffer: core_video::pixel_buffer::CVPixelBuffer,
+    #[cfg(any(target_os = "macos", target_os = "ios"))]
+    pub image_buffer: objc2_core_foundation::CFRetained<objc2_core_video::CVPixelBuffer>,
 }
 
 impl From<PaintSurface> for Primitive {

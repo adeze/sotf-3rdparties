@@ -91,3 +91,7 @@ features = ["vi"]
 
 [package.metadata.release]
 tag-name = "{{crate_name}}-v{{version}}"
+
+# Explicitly no lint inheritance (cargo::missing_lints_inheritance):
+# this crate's workspace defines no [workspace.lints].
+[lints]

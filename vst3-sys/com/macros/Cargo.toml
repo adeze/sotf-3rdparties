@@ -24,7 +24,7 @@ trybuild = "1.0.13"
 vst3-com = { version = "0.1.0", package = "sotf-vst3-com", path = ".." }
 
 [dependencies]
-syn = { version = "1.0.5", features = ["full"] }
+syn = { version = "3.0.9", features = ["full"] }
 quote = "1.0.3"
 proc-macro2 = "1.0.1"
 vst3-com-macros-support = { version = "0.2.0", package = "sotf-vst3-com-macros-support", path = "support" }

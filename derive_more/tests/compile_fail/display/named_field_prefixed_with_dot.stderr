@@ -1,0 +1,5 @@
+error: expected expression, found `.`
+ --> tests/compile_fail/display/named_field_prefixed_with_dot.rs:2:24
+  |
+2 | #[display("Stuff({})", .bar)]
+  |                        ^ expected expression

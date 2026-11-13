@@ -16,6 +16,10 @@ pub fn depthwise_conv2d(_ctx: &ParsingContext, pb: &NodeDef) -> TractResult<Box<
 }
 
 #[derive(Debug, Clone, new, Hash)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct DepthwiseConv2d {
     data_format: DataFormat,
     padding: PaddingSpec,
@@ -23,13 +27,10 @@ pub struct DepthwiseConv2d {
     dilations: TVec<usize>,
 }
 
-
-
 impl Expansion for DepthwiseConv2d {
     fn name(&self) -> StaticName {
         "DepthwiseConv2dNative".into()
     }
-
 
     fn rules<'r, 'p: 'r, 's: 'r>(
         &'s self,

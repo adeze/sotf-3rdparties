@@ -2,7 +2,7 @@ use super::vptr;
 
 use proc_macro2::{Ident, TokenStream as HelperTokenStream};
 use quote::{format_ident, quote, ToTokens};
-use syn::{FnArg, ItemTrait, TraitItem, TraitItemMethod};
+use syn::{FnArg, ItemTrait, TraitItem, TraitItemFn};
 
 pub fn generate(interface: &ItemTrait) -> HelperTokenStream {
     let interface_ident = &interface.ident;
@@ -10,7 +10,7 @@ pub fn generate(interface: &ItemTrait) -> HelperTokenStream {
 
     for trait_item in &interface.items {
         match trait_item {
-            TraitItem::Method(n) => {
+            TraitItem::Fn(n) => {
                 impl_methods.push(gen_impl_method(&interface.ident, n));
             }
             _ => panic!("COM interfaces may only contain methods"),
@@ -28,7 +28,7 @@ pub fn generate(interface: &ItemTrait) -> HelperTokenStream {
     }
 }
 
-fn gen_impl_method(interface_ident: &Ident, method: &TraitItemMethod) -> HelperTokenStream {
+fn gen_impl_method(interface_ident: &Ident, method: &TraitItemFn) -> HelperTokenStream {
     let method_sig = &method.sig;
     let vptr_ident = vptr::ident(&interface_ident.to_string());
     let method_ident = format_ident!(

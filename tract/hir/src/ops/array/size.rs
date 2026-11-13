@@ -2,16 +2,18 @@ use crate::infer::*;
 use crate::internal::*;
 
 #[derive(Debug, Clone, new, Hash)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct Size {
     pub dt: DatumType,
 }
-
 
 impl Expansion for Size {
     fn name(&self) -> StaticName {
         "Size".into()
     }
-
 
     fn rules<'r, 'p: 'r, 's: 'r>(
         &'s self,

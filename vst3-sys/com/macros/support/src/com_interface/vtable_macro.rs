@@ -1,6 +1,6 @@
 use proc_macro2::{Ident, TokenStream as HelperTokenStream};
 use quote::{format_ident, quote};
-use syn::{ItemStruct, Type, TypeBareFn};
+use syn::{ItemStruct, Type, TypeFnPtr};
 
 pub fn generate(item: &ItemStruct) -> HelperTokenStream {
     let vtable_macro = ident(&item.ident);
@@ -63,7 +63,7 @@ fn gen_vtable_functions(item: &ItemStruct) -> HelperTokenStream {
             .expect("Only works with structs with named fields");
         match &field.ty {
             Type::Path(_) => {}
-            Type::BareFn(fun) => {
+            Type::FnPtr(fun) => {
                 functions.push(gen_vtable_function(&item.ident, method_name, fun));
             }
             _ => panic!("Only supports structs with fields that are functions"),
@@ -77,7 +77,7 @@ fn gen_vtable_functions(item: &ItemStruct) -> HelperTokenStream {
 fn gen_vtable_function(
     struct_ident: &Ident,
     method_name: &Ident,
-    fun: &TypeBareFn,
+    fun: &TypeFnPtr,
 ) -> HelperTokenStream {
     assert!(fun.unsafety.is_some(), "Function must be marked unsafe");
     assert!(fun.abi.is_some(), "Function must have marked ABI");

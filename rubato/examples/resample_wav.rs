@@ -146,8 +146,8 @@ fn run(opts: Options) -> Result<(), Box<dyn std::error::Error>> {
     let format_in = reader.sample_format().ok_or_else(|| {
         format!(
             "the input file cannot be decoded, format code 0x{:04X} with {} bits per sample",
-            reader.params().format_code,
-            reader.params().bits_per_sample
+            reader.params().fmt.format_code,
+            reader.params().fmt.bits_per_sample
         )
     })?;
     println!(

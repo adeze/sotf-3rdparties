@@ -1,6 +1,6 @@
 extern crate proc_macro;
 use proc_macro::TokenStream;
-use syn::{AttributeArgs, ItemStruct};
+use syn::{ItemStruct, Meta};
 
 use std::iter::FromIterator;
 
@@ -8,7 +8,7 @@ mod com_struct;
 mod com_struct_impl;
 mod iunknown_impl;
 
-pub fn expand_aggr_co_class(input: &ItemStruct, attr_args: &AttributeArgs) -> TokenStream {
+pub fn expand_aggr_co_class(input: &ItemStruct, attr_args: &[Meta]) -> TokenStream {
     let base_interface_idents = crate::utils::base_interface_idents(attr_args);
     let aggr_interface_idents = crate::utils::get_aggr_map(attr_args);
     let out: Vec<TokenStream> = vec![

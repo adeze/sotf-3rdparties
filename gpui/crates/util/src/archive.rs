@@ -82,6 +82,11 @@ pub async fn extract_zip<R: AsyncRead + Unpin>(destination: &Path, reader: R) ->
     extract_seekable_zip(destination, file).await
 }
 
+// async_zip 0.0.19 deprecates base::read::seek in favor of the rewritten
+// read1 module. Migrating means reworking the extraction loop and its
+// path-sanitization contract; upstream Zed's util still uses the old API,
+// so track that migration instead of forking the logic here.
+#[allow(deprecated)]
 #[cfg(unix)]
 pub async fn extract_seekable_zip<R: AsyncRead + AsyncSeek + Unpin>(
     destination: &Path,

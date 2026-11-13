@@ -43,7 +43,7 @@ name = "headers"
 path = "src/lib.rs"
 
 [dependencies.base64]
-version = "0.22"
+version = "0.23.1"
 
 [dependencies.bytes]
 version = "1"

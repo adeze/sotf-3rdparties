@@ -92,7 +92,7 @@ impl Concat {
         let kernel_name = self.kernel_name(output.datum_type(), broadcast_kind)?;
         let func = cuda_context().load_pipeline(LibraryName::Array, kernel_name)?;
 
-        for (input, offset) in inputs.iter().zip(offsets.into_iter()) {
+        for (input, offset) in inputs.iter().zip(offsets) {
             if input.len() == 0 {
                 continue;
             }

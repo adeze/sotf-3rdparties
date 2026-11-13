@@ -2,11 +2,13 @@ use tract_hir::internal::*;
 use tract_ndarray::prelude::*;
 
 #[derive(Debug, Clone, new, Hash)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct SpaceToBatch {
     datum_type: DatumType,
 }
-
-
 
 impl Op for SpaceToBatch {
     fn name(&self) -> StaticName {
@@ -96,11 +98,13 @@ impl InferenceRulesOp for SpaceToBatch {
 }
 
 #[derive(Debug, Clone, new, Hash)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct BatchToSpace {
     datum_type: DatumType,
 }
-
-
 
 impl Op for BatchToSpace {
     fn name(&self) -> StaticName {

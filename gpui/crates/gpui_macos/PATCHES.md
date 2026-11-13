@@ -24,3 +24,20 @@ drawable texture, and resumes GPUI rendering with a `Load` pass.
 Metal callbacks own their render encoder: they must use a `Load` color
 attachment action, scissor to the supplied bounds after applying
 `scale_factor`, and leave command-buffer submission to the GPUI renderer.
+
+## 2. Zero-warnings allowances (Zed v1.25.2 re-vendor, issue #6 Phase C)
+
+- **`src/gpui_macos.rs`**: crate-level `#![allow(deprecated)]`. This
+  vendored upstream crate is written against the deprecated `cocoa` crate
+  (~2.5k deprecation diagnostics); the objc2 migration is an
+  upstream-scale rewrite and is not cherry-picked here.
+- **`Cargo.toml`**: `[lints.rust] unexpected_cfgs` declares
+  `cfg(feature, values("cargo-clippy"))` because objc 0.2's
+  `msg_send!`/`sel!` macros expand through
+  `cfg_attr(feature = "cargo-clippy", ...)` in this crate.
+- Known residual: cargo prints a future-incompatibility notice for the
+  registry `block 0.1.6` crate (pulled by `cocoa`/`metal`;
+  uninhabited-type static, rust#74840). It is not a `-D warnings`
+  failure and cannot be patched to this repo's `sotf-block` fork
+  (which carries the fix) because `[patch]` replacements must keep the
+  original package name. It disappears with the cocoa→objc2 migration.

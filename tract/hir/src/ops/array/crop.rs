@@ -2,19 +2,20 @@ use crate::infer::*;
 use crate::internal::*;
 
 #[derive(Debug, Clone, new, Default, Hash)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct Crop {
     pub axis: usize,
     pub start: usize,
     pub end: usize,
 }
 
-
-
 impl Expansion for Crop {
     fn name(&self) -> StaticName {
         "Crop".into()
     }
-
 
     fn rules<'r, 'p: 'r, 's: 'r>(
         &'s self,
@@ -50,11 +51,7 @@ impl Expansion for Crop {
         let len = target.outlet_fact(inputs[0])?.shape[self.axis].clone();
         target.wire_node(
             prefix,
-            crate::ops::array::Slice::new(
-                self.axis,
-                self.start.to_dim(),
-                len - self.end.to_dim(),
-            ),
+            crate::ops::array::Slice::new(self.axis, self.start.to_dim(), len - self.end.to_dim()),
             inputs,
         )
     }

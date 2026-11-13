@@ -117,7 +117,39 @@ impl Args {
 
 impl Parse for Args {
     fn parse(input: ParseStream) -> syn::Result<Self> {
-        let pairs = Punctuated::<MetaNameValue, Token![,]>::parse_terminated(input)?;
+        // Local patch: syn 3's MetaNameValue parser rejects struct-literal
+        // values (`config = ProptestConfig { .. }`), so split name/value
+        // pairs on top-level commas manually and parse each side.
+        let mut pairs = Vec::new();
+        while !input.is_empty() {
+            let path: syn::Path = input.parse()?;
+            let eq_token: Token![=] = input.parse()?;
+            // Fork so the value can be parsed as a full expression (struct
+            // literals included) up to the next top-level comma. Groups
+            // arrive as single token trees, so commas inside braces never
+            // terminate the value early.
+            let fork = input.fork();
+            let mut value_tokens = TokenStream::new();
+            while !fork.is_empty() && !fork.peek(Token![,]) {
+                let tt: proc_macro2::TokenTree = fork.parse()?;
+                value_tokens.extend([tt]);
+            }
+            let value: Expr = parse2(value_tokens)?;
+            // Advance the real stream past the value and the separator comma.
+            while !input.is_empty() {
+                if input.peek(Token![,]) {
+                    input.parse::<Token![,]>()?;
+                    break;
+                }
+                input.parse::<proc_macro2::TokenTree>()?;
+            }
+            pairs.push(MetaNameValue {
+                path,
+                eq_token,
+                value,
+            });
+        }
+        let pairs = pairs;
 
         let mut config = None;
         let mut remaining_args = vec![];
@@ -270,4 +302,43 @@ fn is_path_with_last_segment(arg: &FnArg, last_segment: &str) -> bool {
         .segments
         .last()
         .is_some_and(|seg| seg.ident == last_segment)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn expands_struct_literal_config() {
+        let out = test(
+            quote! {
+                config = ProptestConfig {
+                    cases: 4,
+                    ..Default::default()
+                }
+            },
+            quote! {
+                fn my_case(cx: &mut TestAppContext, seed: u64) {
+                    let _ = (cx, seed);
+                }
+            },
+        );
+        let rendered = out.to_string();
+        assert!(
+            rendered.contains("apply_seed_to_proptest_config"),
+            "{rendered}"
+        );
+    }
+
+    #[test]
+    fn parses_struct_literal_config() {
+        let args: Args = parse2(quote! {
+            config = ProptestConfig {
+                cases: 4,
+                ..Default::default()
+            }
+        })
+        .expect("struct-literal config should parse");
+        assert!(args.config.is_some());
+    }
 }

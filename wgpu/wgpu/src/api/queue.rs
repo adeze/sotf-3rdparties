@@ -1,4 +1,6 @@
 use alloc::boxed::Box;
+// SOTF local (sotf-3rdparties#6): Deref is only used by non-wasm dispatch paths.
+#[cfg_attr(target_family = "wasm", allow(unused_imports))]
 use core::ops::{Deref, RangeBounds};
 
 use crate::{api::DeferredCommandBufferActions, *};

@@ -1,6 +1,6 @@
 use super::{FusedKerSpec, FusedSpec, MatMatMulKer, OutputStoreKer};
 use crate::{BinOp, LADatum};
-use downcast_rs::{impl_downcast, Downcast};
+use downcast_rs::{Downcast, impl_downcast};
 use std::cell::RefCell;
 use std::fmt::Debug;
 use std::sync::atomic::AtomicUsize;
@@ -79,6 +79,10 @@ pub struct ScratchSpaceImpl<TI: LADatum> {
 }
 
 #[derive(Debug, new)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 struct LocDependant {
     spec: usize,
     ker_spec: usize,

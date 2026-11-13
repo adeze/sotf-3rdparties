@@ -262,8 +262,8 @@ mod test {
         .map(std::fs::read) else {
             return;
         };
-        let regular = FontRef::from_index(&sfns, 0).unwrap();
-        let italic = FontRef::from_index(&sfns_italic, 0).unwrap();
+        let regular = FontRef::from_index(&sfns, 0).expect("SFNS must contain a valid regular font");
+        let italic = FontRef::from_index(&sfns_italic, 0).expect("SFNSItalic must contain a valid italic font");
         let wght = Tag::from_be_bytes(*b"wght");
 
         let render = |ctx: &mut ScaleContext, font: FontRef, weight: f32, use_normalized| {

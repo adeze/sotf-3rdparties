@@ -6,6 +6,10 @@ use tract_core::ops::scan::ScanInfo;
 pub use tract_core::ops::scan::{InputMapping, OutputMapping};
 
 #[derive(Debug, Clone, new, Default)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct InferenceScan {
     pub body: InferenceModel,
     pub input_mapping: Vec<InputMapping>,

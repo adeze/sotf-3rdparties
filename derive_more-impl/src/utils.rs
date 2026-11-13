@@ -441,7 +441,7 @@ impl<'input> State<'input> {
         let default_enabled = if trait_name == "Error" {
             true
         } else {
-            first_match.map_or(true, |info| !info.enabled.unwrap())
+            first_match.is_none_or(|info| !info.enabled.unwrap())
         };
 
         let defaults = struct_meta_info.into_full(FullMetaInfo {
@@ -452,7 +452,7 @@ impl<'input> State<'input> {
             // - not a single attribute means default true
             // - an attribute, but non of owned, ref or ref_mut means default true
             // - an attribute, and owned, ref or ref_mut means default false
-            owned: first_match.map_or(true, |info| {
+            owned: first_match.is_none_or(|info| {
                 info.owned.is_none() && info.ref_.is_none() || info.ref_mut.is_none()
             }),
             ref_: false,
@@ -544,7 +544,7 @@ impl<'input> State<'input> {
         let default_enabled = if trait_name == "Error" {
             true
         } else {
-            first_match.map_or(true, |info| !info.enabled.unwrap())
+            first_match.is_none_or(|info| !info.enabled.unwrap())
         };
 
         let default_info = FullMetaInfo {

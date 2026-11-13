@@ -63,6 +63,11 @@ pub trait Loader: Clone + Sized {
     }
 
     /// Creates a font from a native API handle.
+    ///
+    /// # Safety
+    ///
+    /// The handle must refer to a valid native font and satisfy the backend
+    /// API's lifetime and ownership requirements.
     unsafe fn from_native_font(native_font: &Self::NativeFont) -> Self;
 
     /// Loads the font pointed to by a handle.

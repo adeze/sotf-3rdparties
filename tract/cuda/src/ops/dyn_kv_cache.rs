@@ -7,6 +7,10 @@ use tract_gpu::tensor::{DeviceTensor, DeviceTensorExt, IntoDevice};
 use tract_transformers::ops::dyn_kv_cache::{DynKeyValueCache, DynKeyValueCacheState};
 
 #[derive(Debug, Clone, new)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct CudaDynKVCacheState {
     node_id: usize,
     name: String,
@@ -107,6 +111,10 @@ impl FrozenOpState for FrozenCudaDynKVCacheState {
 }
 
 #[derive(new, Debug, Clone, Hash)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct CudaDynKVCache {
     name: String,
     past_sequence_fact: TypedFact,

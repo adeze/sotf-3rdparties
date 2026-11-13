@@ -14,7 +14,9 @@ pub struct Match {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Default)]
 pub enum MatchTarget {
+    #[default]
     Pattern,
     Font,
     Scan,
@@ -25,10 +27,4 @@ parse_enum! {
     (Pattern, "pattern"),
     (Font, "font"),
     (Scan, "scan"),
-}
-
-impl Default for MatchTarget {
-    fn default() -> Self {
-        MatchTarget::Pattern
-    }
 }

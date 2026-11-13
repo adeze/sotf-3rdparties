@@ -1,0 +1,8 @@
+# Cross-compile checks for the Linux backend from non-Linux hosts.
+# Usage (from this directory):
+#   cross check --target x86_64-unknown-linux-gnu -p sotf-gpui-toolkit-gpui-linux
+# On Apple Silicon, prefix with DOCKER_DEFAULT_PLATFORM=linux/amd64.
+[target.x86_64-unknown-linux-gnu]
+pre-build = [
+    "apt-get update && apt-get install -y --no-install-recommends libfontconfig1-dev libfreetype6-dev libxkbcommon-dev libwayland-dev libx11-xcb-dev libxcb1-dev libzstd-dev",
+]

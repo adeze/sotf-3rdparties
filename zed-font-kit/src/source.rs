@@ -65,7 +65,7 @@ pub use crate::sources::fs::FsSource as SystemSource;
     target_os = "watchos",
     target_os = "visionos"
 ))]
-const DEFAULT_FONT_FAMILY_SERIF: &'static str = "Times New Roman";
+const DEFAULT_FONT_FAMILY_SERIF: &str = "Times New Roman";
 #[cfg(any(
     target_family = "windows",
     target_os = "macos",
@@ -74,7 +74,7 @@ const DEFAULT_FONT_FAMILY_SERIF: &'static str = "Times New Roman";
     target_os = "watchos",
     target_os = "visionos"
 ))]
-const DEFAULT_FONT_FAMILY_SANS_SERIF: &'static str = "Arial";
+const DEFAULT_FONT_FAMILY_SANS_SERIF: &str = "Arial";
 #[cfg(target_env = "ohos")]
 const DEFAULT_FONT_FAMILY_SANS_SERIF: &str = "HarmonyOS Sans";
 #[cfg(any(
@@ -85,7 +85,7 @@ const DEFAULT_FONT_FAMILY_SANS_SERIF: &str = "HarmonyOS Sans";
     target_os = "watchos",
     target_os = "visionos"
 ))]
-const DEFAULT_FONT_FAMILY_MONOSPACE: &'static str = "Courier New";
+const DEFAULT_FONT_FAMILY_MONOSPACE: &str = "Courier New";
 #[cfg(target_env = "ohos")]
 const DEFAULT_FONT_FAMILY_MONOSPACE: &str = "HarmonyOS Sans";
 #[cfg(any(
@@ -96,7 +96,7 @@ const DEFAULT_FONT_FAMILY_MONOSPACE: &str = "HarmonyOS Sans";
     target_os = "watchos",
     target_os = "visionos"
 ))]
-const DEFAULT_FONT_FAMILY_CURSIVE: &'static str = "Comic Sans MS";
+const DEFAULT_FONT_FAMILY_CURSIVE: &str = "Comic Sans MS";
 #[cfg(target_family = "windows")]
 const DEFAULT_FONT_FAMILY_FANTASY: &'static str = "Impact";
 #[cfg(any(
@@ -106,7 +106,7 @@ const DEFAULT_FONT_FAMILY_FANTASY: &'static str = "Impact";
     target_os = "watchos",
     target_os = "visionos"
 ))]
-const DEFAULT_FONT_FAMILY_FANTASY: &'static str = "Papyrus";
+const DEFAULT_FONT_FAMILY_FANTASY: &str = "Papyrus";
 
 #[cfg(not(any(
     target_family = "windows",

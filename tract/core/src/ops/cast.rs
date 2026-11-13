@@ -26,6 +26,10 @@ pub fn wire_cast(
 }
 
 #[derive(Debug, Clone, new, Hash, PartialEq, Eq)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct Cast {
     pub to: DatumType,
 }

@@ -16,6 +16,10 @@ pub fn gemm(
 }
 
 #[derive(Debug, Clone, new)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct Gemm {
     alpha: f32,
     beta: f32,

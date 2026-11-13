@@ -2,8 +2,6 @@ use na::{Quaternion, UnitQuaternion, Vector3};
 use rand_xorshift::XorShiftRng;
 use std::ops::{Add, Div, Mul, Sub};
 
-#[path = "../common/macros.rs"]
-mod macros;
 
 bench_binop!(quaternion_add_q, Quaternion<f32>, Quaternion<f32>, add);
 bench_binop!(quaternion_sub_q, Quaternion<f32>, Quaternion<f32>, sub);

@@ -36,3 +36,12 @@ Replace this source only when a selected upstream release covers the retained be
 Owner: SOTF dependency maintainers. Inventory reviewed 2026-10-07;
 re-evaluate the upstream delta within 90 days and on every update.
 Follow [the collection update procedure](../README.md#updating-a-fork).
+
+## 2026-10-30 release validation
+
+Strict default/all-feature Clippy, tests/doctests and nextest pass on macOS:
+23 default and 22 all-feature nextest cases, zero skipped. Added existing unsafe
+contract documentation, equivalent mechanical style fixes, explicit Rust 2015,
+and a feature-specific test import. The arm64 generic dispatcher interface is
+intentionally retained with scoped lint expectations: all return types use the
+same runtime entry point on that architecture.

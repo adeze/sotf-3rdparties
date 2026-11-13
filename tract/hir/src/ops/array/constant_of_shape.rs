@@ -2,17 +2,18 @@ use crate::infer::*;
 use crate::internal::*;
 
 #[derive(Debug, Clone, new, Hash)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct ConstantOfShape {
     scalar: Arc<Tensor>,
 }
-
-
 
 impl Expansion for ConstantOfShape {
     fn name(&self) -> StaticName {
         "ConstantOfShape".into()
     }
-
 
     fn rules<'r, 'p: 'r, 's: 'r>(
         &'s self,

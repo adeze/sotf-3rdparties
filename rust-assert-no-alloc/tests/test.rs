@@ -32,67 +32,67 @@ fn do_alloc() {
 
 #[test]
 fn ok_noop() {
-	assert_eq!(check_and_reset(), false);
+	assert!(!check_and_reset());
 	do_alloc();
-	assert_eq!(check_and_reset(), false);
+	assert!(!check_and_reset());
 }
 
 #[test]
 fn ok_simple() {
-	assert_eq!(check_and_reset(), false);
+	assert!(!check_and_reset());
 	assert_no_alloc(|| {
 	});
 
 	do_alloc();
-	assert_eq!(check_and_reset(), false);
+	assert!(!check_and_reset());
 }
 
 #[test]
 fn ok_nested() {
-	assert_eq!(check_and_reset(), false);
+	assert!(!check_and_reset());
 	assert_no_alloc(|| {
 		assert_no_alloc(|| {
 		});
 	});
 
 	do_alloc();
-	assert_eq!(check_and_reset(), false);
+	assert!(!check_and_reset());
 }
 
 #[test]
 fn forbidden_simple() {
-	assert_eq!(check_and_reset(), false);
+	assert!(!check_and_reset());
 	assert_no_alloc(|| {
 		do_alloc();
 	});
-	assert_eq!(check_and_reset(), true);
+	assert!(check_and_reset());
 }
 
 #[test]
 fn forbidden_in_nested() {
-	assert_eq!(check_and_reset(), false);
+	assert!(!check_and_reset());
 	assert_no_alloc(|| {
 		assert_no_alloc(|| {
 			do_alloc();
 		});
 	});
-	assert_eq!(check_and_reset(), true);
+	assert!(check_and_reset());
 }
 
 #[test]
 fn forbidden_after_nested() {
-	assert_eq!(check_and_reset(), false);
+	assert!(!check_and_reset());
 	assert_no_alloc(|| {
 		assert_no_alloc(|| {
 		});
 		do_alloc();
 	});
-	assert_eq!(check_and_reset(), true);
+	assert!(check_and_reset());
 }
 
 #[test]
 fn unwind_ok() {
-	assert_eq!(check_and_reset(), false);
+	assert!(!check_and_reset());
 	assert_no_alloc(|| {
 		let r = catch_unwind(|| {
 			assert_no_alloc(|| {
@@ -103,12 +103,12 @@ fn unwind_ok() {
 	});
 	check_and_reset(); // unwinding might have allocated memory; we don't care about that.
 	do_alloc();
-	assert_eq!(check_and_reset(), false);
+	assert!(!check_and_reset());
 }
 
 #[test]
 fn unwind_nested() {
-	assert_eq!(check_and_reset(), false);
+	assert!(!check_and_reset());
 	assert_no_alloc(|| {
 		let r = catch_unwind(|| {
 			assert_no_alloc(|| {
@@ -119,13 +119,13 @@ fn unwind_nested() {
 		
 		check_and_reset(); // unwinding might have allocated memory; we don't care about that.
 		do_alloc();
-		assert_eq!(check_and_reset(), true);
+		assert!(check_and_reset());
 	});
 }
 
 #[test]
 fn unwind_nested2() {
-	assert_eq!(check_and_reset(), false);
+	assert!(!check_and_reset());
 	assert_no_alloc(|| {
 		assert_no_alloc(|| {
 		let r = catch_unwind(|| {
@@ -139,10 +139,10 @@ fn unwind_nested2() {
 		
 		check_and_reset(); // unwinding might have allocated memory; we don't care about that.
 		do_alloc();
-		assert_eq!(check_and_reset(), true);
+		assert!(check_and_reset());
 		});
 	});
 	check_and_reset(); // unwinding might have allocated memory; we don't care about that.
 	do_alloc();
-	assert_eq!(check_and_reset(), false);
+	assert!(!check_and_reset());
 }

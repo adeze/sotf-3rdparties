@@ -95,7 +95,9 @@ pub enum Expression {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Default)]
 pub enum PropertyTarget {
+    #[default]
     Default,
     Font,
     Pattern,
@@ -106,12 +108,6 @@ parse_enum! {
     (Default, "default"),
     (Font, "font"),
     (Pattern, "pattern"),
-}
-
-impl Default for PropertyTarget {
-    fn default() -> Self {
-        PropertyTarget::Default
-    }
 }
 
 pub type CharSet = Vec<IntOrRange>;

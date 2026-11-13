@@ -4,7 +4,7 @@ macro_rules! define_property {
     (
         $(
             $(#[$attr:meta])*
-            $variant:ident($value_ty:ident, $name:expr),
+            $variant:ident($value_ty:ident, $name:expr) $(=> $default:ident)?,
         )+
     ) => {
         #[derive(Clone, Debug, PartialEq)]
@@ -28,11 +28,12 @@ macro_rules! define_property {
             }
         }
 
-        #[derive(Clone, Debug, PartialEq, Eq)]
+        #[derive(Clone, Debug, Default, PartialEq, Eq)]
         #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
         pub enum PropertyKind {
             $(
                 $(#[$attr])*
+                $(#[$default])?
                 $variant,
             )+
             Dynamic(String),
@@ -61,7 +62,7 @@ macro_rules! define_property {
 
 define_property! {
     /// Font family names
-    Family(String, "family"),
+    Family(String, "family") => default,
     /// Languages corresponding to each family
     FamilyLang(String, "familylang"),
     /// Font style. Overrides weight and slant
@@ -166,11 +167,5 @@ define_property! {
 impl Default for Property {
     fn default() -> Self {
         Property::Family(Expression::Simple(Value::String(String::default())))
-    }
-}
-
-impl Default for PropertyKind {
-    fn default() -> Self {
-        PropertyKind::Family
     }
 }

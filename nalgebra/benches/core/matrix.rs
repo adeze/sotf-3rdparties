@@ -3,8 +3,6 @@ use rand_xorshift::XorShiftRng;
 use std::hint::black_box;
 use std::ops::{Add, Div, Mul, Sub};
 
-#[path = "../common/macros.rs"]
-mod macros;
 
 bench_binop!(mat2_mul_m, Matrix2<f32>, Matrix2<f32>, mul);
 bench_binop!(mat3_mul_m, Matrix3<f32>, Matrix3<f32>, mul);
@@ -202,7 +200,7 @@ fn mat10_mul_mat10_static(bench: &mut criterion::Criterion) {
                     OMatrix::<f64, U10, U10>::new_random(),
                 )
             },
-            |args| (&args.0) * (&args.1),
+            |args| args.0 * args.1,
             criterion::BatchSize::SmallInput,
         )
     });

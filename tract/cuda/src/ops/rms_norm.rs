@@ -6,6 +6,10 @@ use tract_core::internal::*;
 use tract_gpu::tensor::DeviceTensorExt;
 
 #[derive(Clone, Debug, new, Hash)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct CudaRmsNorm {
     pub axis: usize,
     pub eps: Arc<Tensor>,

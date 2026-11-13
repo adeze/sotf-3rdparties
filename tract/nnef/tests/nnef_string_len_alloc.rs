@@ -20,13 +20,16 @@ static MAX_SINGLE_ALLOC: AtomicUsize = AtomicUsize::new(0);
 
 unsafe impl GlobalAlloc for CountingAllocator {
     unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
-        let size = layout.size();
-        let _ = MAX_SINGLE_ALLOC
-            .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |c| Some(c.max(size)));
-        System.alloc(layout)
+        unsafe {
+            let size = layout.size();
+            MAX_SINGLE_ALLOC.fetch_max(size, Ordering::Relaxed);
+            System.alloc(layout)
+        }
     }
     unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
-        System.dealloc(ptr, layout);
+        unsafe {
+            System.dealloc(ptr, layout);
+        }
     }
 }
 

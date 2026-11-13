@@ -21,6 +21,10 @@ fn cast(
 }
 
 #[derive(Debug, Clone, new, Hash)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct Cast {
     to: DatumType,
 }
@@ -51,7 +55,11 @@ impl ElementWiseMiniOp for Cast {
             }
         } else {
             tract_hir::ops::cast::cast(self.to)
-                .eval_with_session(usize::MAX, &SessionState::default(), tvec!(t.clone().into_tvalue()))
+                .eval_with_session(
+                    usize::MAX,
+                    &SessionState::default(),
+                    tvec!(t.clone().into_tvalue()),
+                )
                 .map(|mut t| t.remove(0).into_tensor())
         }
     }

@@ -71,18 +71,18 @@ impl<R: 'static + Default, D: AsModal + 'static> ModalFuture<R, D> {
         let win = if let Some(win) = win {
             Some(win)
         } else {
-            unsafe { app.mainWindow() }.or_else(|| app.windows().firstObject())
+            app.mainWindow().or_else(|| app.windows().firstObject())
         };
 
         // if async exec is possible start sheet modal
         // otherwise fallback to sync
-        if unsafe { app.isRunning() } && win.is_some() {
+        if let (true, Some(win)) = (app.isRunning(), win) {
             let state = state.clone();
 
             // Hack to work around us getting the window above
             struct WindowWrapper(Retained<NSWindow>);
             unsafe impl Send for WindowWrapper {}
-            let window = WindowWrapper(win.unwrap());
+            let window = WindowWrapper(win);
 
             run_on_main(move |mtm| {
                 let window = window;

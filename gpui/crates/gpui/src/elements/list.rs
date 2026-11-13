@@ -18,16 +18,17 @@ use refineable::Refineable as _;
 use std::{cell::RefCell, ops::Range, rc::Rc};
 use sum_tree::{Bias, Dimensions, SumTree};
 
-type RenderItemFn = dyn FnMut(usize, &mut Window, &mut App) -> AnyElement + 'static;
+pub(crate) type RenderItemFn = dyn FnMut(usize, &mut Window, &mut App) -> AnyElement + 'static;
 
 /// Construct a new list element
 pub fn list(
     state: ListState,
     render_item: impl FnMut(usize, &mut Window, &mut App) -> AnyElement + 'static,
 ) -> List {
+    crate::fast::layers::invalidate::note_list_built();
     List {
         state,
-        render_item: Box::new(render_item),
+        render_item: crate::fast::layers::lists::spanned_render_item(render_item),
         style: StyleRefinement::default(),
         sizing_behavior: ListSizingBehavior::default(),
     }
@@ -51,7 +52,7 @@ impl List {
 
 /// The list state that views must hold on behalf of the list element.
 #[derive(Clone)]
-pub struct ListState(Rc<RefCell<StateInner>>);
+pub struct ListState(pub(crate) Rc<RefCell<StateInner>>);
 
 impl std::fmt::Debug for ListState {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -59,11 +60,11 @@ impl std::fmt::Debug for ListState {
     }
 }
 
-struct StateInner {
-    last_layout_bounds: Option<Bounds<Pixels>>,
-    last_padding: Option<Edges<Pixels>>,
-    items: SumTree<ListItem>,
-    logical_scroll_top: Option<ListOffset>,
+pub(crate) struct StateInner {
+    pub(crate) last_layout_bounds: Option<Bounds<Pixels>>,
+    pub(crate) last_padding: Option<Edges<Pixels>>,
+    pub(crate) items: SumTree<ListItem>,
+    pub(crate) logical_scroll_top: Option<ListOffset>,
     alignment: ListAlignment,
     overdraw: Pixels,
     reset: bool,
@@ -71,8 +72,9 @@ struct StateInner {
     scroll_handler: Option<Box<dyn FnMut(&ListScrollEvent, &mut Window, &mut App)>>,
     scrollbar_drag_start_height: Option<Pixels>,
     measuring_behavior: ListMeasuringBehavior,
-    pending_scroll: Option<PendingScroll>,
-    follow_state: FollowState,
+    pub(crate) pending_scroll: Option<PendingScroll>,
+    pub(crate) follow_state: FollowState,
+    pub(crate) version: crate::fast::dependencies::StateVersion,
 }
 
 /// Deferred scroll adjustment applied after the scroll-top item has been remeasured.
@@ -82,7 +84,7 @@ struct StateInner {
 /// proportional pending scroll preserves the same fractional position within the item,
 /// which is useful when the whole list is being resized and each item scales similarly.
 #[derive(Clone)]
-enum PendingScroll {
+pub(crate) enum PendingScroll {
     /// Preserve the same pixel offset into the item after it is remeasured.
     Absolute { item_ix: usize, offset: Pixels },
     /// Preserve the same fractional offset into the item after it is remeasured.
@@ -92,7 +94,7 @@ enum PendingScroll {
 /// Keeps track of a fractional scroll position within an item for restoration
 /// after remeasurement.
 #[derive(Clone)]
-struct PendingScrollFraction {
+pub(crate) struct PendingScrollFraction {
     /// The index of the item to scroll within.
     item_ix: usize,
     /// Fractional offset (0.0 to 1.0) within the item's height.
@@ -119,7 +121,7 @@ pub enum FollowMode {
 }
 
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
-enum FollowState {
+pub(crate) enum FollowState {
     #[default]
     Normal,
     Tail {
@@ -242,7 +244,7 @@ pub struct ListPrepaintState {
 }
 
 #[derive(Clone)]
-enum ListItem {
+pub(crate) enum ListItem {
     Unmeasured {
         size_hint: Option<Size<Pixels>>,
         focus_handle: Option<FocusHandle>,
@@ -254,7 +256,7 @@ enum ListItem {
 }
 
 impl ListItem {
-    fn size(&self) -> Option<Size<Pixels>> {
+    pub(crate) fn size(&self) -> Option<Size<Pixels>> {
         if let ListItem::Measured { size, .. } = self {
             Some(*size)
         } else {
@@ -289,17 +291,17 @@ impl ListItem {
 }
 
 #[derive(Clone, Debug, Default, PartialEq)]
-struct ListItemSummary {
-    count: usize,
+pub(crate) struct ListItemSummary {
+    pub(crate) count: usize,
     rendered_count: usize,
     unrendered_count: usize,
-    height: Pixels,
+    pub(crate) height: Pixels,
     has_focus_handles: bool,
-    has_unknown_height: bool,
+    pub(crate) has_unknown_height: bool,
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
-struct Count(usize);
+pub(crate) struct Count(pub(crate) usize);
 
 #[derive(Clone, Debug, Default)]
 struct Height(Pixels);
@@ -325,6 +327,7 @@ impl ListState {
             measuring_behavior: ListMeasuringBehavior::default(),
             pending_scroll: None,
             follow_state: FollowState::default(),
+            version: crate::fast::dependencies::StateVersion::default(),
         })));
         this.splice(0..0, item_count);
         this
@@ -338,12 +341,24 @@ impl ListState {
         self
     }
 
+    /// Pre-populate every unmeasured item with a uniform height hint so the scrollbar thumb
+    /// is correctly sized from the first frame, without measuring all items up front.
+    ///
+    /// As items are actually rendered their real heights replace the hint, so the scrollbar
+    /// converges to the exact size over time. This is a cheaper alternative to [`Self::measure_all`]
+    /// for lists where items have roughly uniform heights (e.g. table rows).
+    pub fn with_uniform_item_height(self, height: Pixels) -> Self {
+        self.apply_uniform_item_height(height);
+        self
+    }
+
     /// Reset this instantiation of the list state.
     ///
     /// Note that this will cause scroll events to be dropped until the next paint.
     pub fn reset(&self, element_count: usize) {
         let old_count = {
             let state = &mut *self.0.borrow_mut();
+            crate::fast::dependencies::StateVersion::bump(&state.version);
             state.reset = true;
             state.measuring_behavior.reset();
             state.logical_scroll_top = None;
@@ -353,6 +368,34 @@ impl ListState {
         };
 
         self.splice(0..old_count, element_count);
+    }
+
+    /// Reset the list to `element_count` items, pre-populating every item with a
+    /// uniform height hint so the scrollbar thumb is correctly sized from the first
+    /// frame even for off-screen items.
+    pub fn reset_with_uniform_height(&self, element_count: usize, height: Pixels) {
+        self.reset(element_count);
+        self.apply_uniform_item_height(height);
+    }
+
+    fn apply_uniform_item_height(&self, height: Pixels) {
+        let size_hint = Size {
+            width: px(0.),
+            height,
+        };
+        let mut state = self.0.borrow_mut();
+        crate::fast::dependencies::StateVersion::bump(&state.version);
+        let new_items = state
+            .items
+            .iter()
+            .map(|item| ListItem::Unmeasured {
+                size_hint: Some(item.size_hint().unwrap_or(size_hint)),
+                focus_handle: item.focus_handle(),
+            })
+            .collect::<Vec<_>>();
+        let mut tree = SumTree::default();
+        tree.extend(new_items, ());
+        state.items = tree;
     }
 
     /// Remeasure all items while preserving proportional scroll position.
@@ -377,6 +420,7 @@ impl ListState {
 
     fn remeasure_items_with_scroll_anchor(&self, range: Range<usize>, scroll_anchor: ScrollAnchor) {
         let state = &mut *self.0.borrow_mut();
+        crate::fast::dependencies::StateVersion::bump(&state.version);
 
         if let Some(scroll_top) = state.logical_scroll_top {
             if range.contains(&scroll_top.item_ix) {
@@ -445,6 +489,7 @@ impl ListState {
     /// not scrollable or the total content height is not yet known.
     pub fn is_scrolled_to_end(&self) -> Option<bool> {
         let state = self.0.borrow();
+        crate::fast::layers::lists::note_at_end_read(&state);
         let bounds = state.last_layout_bounds?;
         let summary = state.items.summary();
         if summary.has_unknown_height {
@@ -476,6 +521,7 @@ impl ListState {
         focus_handles: impl IntoIterator<Item = Option<FocusHandle>>,
     ) {
         let state = &mut *self.0.borrow_mut();
+        crate::fast::dependencies::StateVersion::bump(&state.version);
 
         let mut old_items = state.items.cursor::<Count>(());
         let mut new_items = old_items.slice(&Count(old_range.start), Bias::Right);
@@ -520,6 +566,7 @@ impl ListState {
 
     /// Get the current scroll offset, in terms of the list's items.
     pub fn logical_scroll_top(&self) -> ListOffset {
+        crate::fast::layers::invalidate::note_offset_read(&self.0.borrow().version);
         self.0.borrow().logical_scroll_top()
     }
 
@@ -531,6 +578,7 @@ impl ListState {
 
         let current_offset = self.logical_scroll_top();
         let state = &mut *self.0.borrow_mut();
+        crate::fast::dependencies::StateVersion::bump(&state.version);
 
         if distance < px(0.) {
             state.follow_state.stop_following();
@@ -564,6 +612,7 @@ impl ListState {
     /// growing (e.g. during streaming).
     pub fn scroll_to_end(&self) {
         let state = &mut *self.0.borrow_mut();
+        crate::fast::layers::lists::note_scrolled_to_end(state);
         let item_count = state.items.summary().count;
         state.pending_scroll = None;
         state.logical_scroll_top = Some(ListOffset {
@@ -578,6 +627,7 @@ impl ListState {
     /// following occurs.
     pub fn set_follow_mode(&self, mode: FollowMode) {
         let state = &mut *self.0.borrow_mut();
+        crate::fast::dependencies::StateVersion::bump(&state.version);
 
         match mode {
             FollowMode::Normal => {
@@ -596,6 +646,20 @@ impl ListState {
         }
     }
 
+    /// Pause tail-following, freezing the list at its current scroll
+    /// position. Unlike [`Self::set_follow_mode`] with [`FollowMode::Normal`],
+    /// this keeps the list in `Tail` mode, so it will resume following
+    /// automatically once the view returns to the bottom. No-op when the list
+    /// isn't currently following.
+    ///
+    /// Useful when something other than the user grows an item (e.g. zooming a
+    /// diagram) and the current position should stay put rather than snapping
+    /// to the end.
+    pub fn pause_following_tail(&self) {
+        crate::fast::dependencies::note_list_following_paused(&self.0.borrow());
+        self.0.borrow_mut().follow_state.stop_following();
+    }
+
     /// Returns whether the list is currently actively following the
     /// tail (snapping to the end on each layout).
     pub fn is_following_tail(&self) -> bool {
@@ -608,6 +672,7 @@ impl ListState {
     /// Scroll the list to the given offset
     pub fn scroll_to(&self, mut scroll_top: ListOffset) {
         let state = &mut *self.0.borrow_mut();
+        let scroll_start = crate::fast::dependencies::ListScrollStart::of(state);
         let item_count = state.items.summary().count;
         if scroll_top.item_ix >= item_count {
             scroll_top.item_ix = item_count;
@@ -618,6 +683,7 @@ impl ListState {
             state.follow_state.stop_following();
         }
 
+        crate::fast::dependencies::ListScrollStart::note_scrolled(scroll_start, state, &scroll_top);
         state.rebase_pending_scroll(scroll_top);
         state.logical_scroll_top = Some(scroll_top);
     }
@@ -625,6 +691,7 @@ impl ListState {
     /// Scroll the list to the given item, such that the item is fully visible.
     pub fn scroll_to_reveal_item(&self, ix: usize) {
         let state = &mut *self.0.borrow_mut();
+        crate::fast::dependencies::StateVersion::bump(&state.version);
 
         let mut scroll_top = state.logical_scroll_top();
         let height = state
@@ -659,6 +726,7 @@ impl ListState {
     /// been rendered.
     pub fn bounds_for_item(&self, ix: usize) -> Option<Bounds<Pixels>> {
         let state = &*self.0.borrow();
+        crate::fast::layers::invalidate::note_offset_read(&state.version);
 
         let bounds = state.last_layout_bounds.unwrap_or_default();
         let scroll_top = state.logical_scroll_top();
@@ -691,6 +759,7 @@ impl ListState {
     /// as items in the overdraw get measured, and help offset scroll position changes accordingly.
     pub fn scrollbar_drag_started(&self) {
         let mut state = self.0.borrow_mut();
+        crate::fast::dependencies::StateVersion::bump(&state.version);
         state.scrollbar_drag_start_height = Some(state.items.summary().height);
     }
 
@@ -698,6 +767,7 @@ impl ListState {
     ///
     /// See `scrollbar_drag_started`.
     pub fn scrollbar_drag_ended(&self) {
+        crate::fast::dependencies::StateVersion::bump(&self.0.borrow().version);
         self.0.borrow_mut().scrollbar_drag_start_height.take();
     }
 
@@ -713,6 +783,7 @@ impl ListState {
 
     /// Set the offset from the scrollbar
     pub fn set_offset_from_scrollbar(&self, point: Point<Pixels>) {
+        crate::fast::layers::invalidate::list_offset_set(&self.0.borrow().version);
         self.0.borrow_mut().set_offset_from_scrollbar(point);
     }
 
@@ -729,6 +800,7 @@ impl ListState {
     /// how far the content has scrolled.
     pub fn scroll_px_offset_for_scrollbar(&self) -> Point<Pixels> {
         let state = &self.0.borrow();
+        crate::fast::layers::invalidate::note_offset_read(&state.version);
 
         if state.logical_scroll_top.is_none() && state.alignment == ListAlignment::Bottom {
             return Point::new(px(0.), -state.max_scroll_offset());
@@ -905,10 +977,11 @@ impl StateInner {
             );
         }
 
+        crate::fast::layers::invalidate::note_list_scrolled(window, &self.version, current_view);
         cx.notify(current_view);
     }
 
-    fn logical_scroll_top(&self) -> ListOffset {
+    pub(crate) fn logical_scroll_top(&self) -> ListOffset {
         self.logical_scroll_top
             .unwrap_or_else(|| match self.alignment {
                 ListAlignment::Top => ListOffset {
@@ -922,7 +995,7 @@ impl StateInner {
             })
     }
 
-    fn scroll_top(&self, logical_scroll_top: &ListOffset) -> Pixels {
+    pub(crate) fn scroll_top(&self, logical_scroll_top: &ListOffset) -> Pixels {
         let (start, ..) = self.items.find::<ListItemSummary, _>(
             (),
             &Count(logical_scroll_top.item_ix),
@@ -961,7 +1034,13 @@ impl StateInner {
         for (ix, item) in cursor.enumerate() {
             let size = item.size().unwrap_or_else(|| {
                 let mut element = render_item(ix, window, cx);
-                element.layout_as_root(available_item_space, window, cx)
+                crate::fast::layout_key::layout_as_list_item(
+                    &mut element,
+                    ix,
+                    available_item_space,
+                    window,
+                    cx,
+                )
             });
 
             measured_items.push(ListItem::Measured {
@@ -1000,7 +1079,7 @@ impl StateInner {
         let mut rendered_focused_item = false;
 
         let available_item_space = size(
-            available_width.map_or(AvailableSpace::MinContent, |width| {
+            available_width.map_or(AvailableSpace::MaxContent, |width| {
                 AvailableSpace::Definite(width)
             }),
             AvailableSpace::MinContent,
@@ -1020,10 +1099,24 @@ impl StateInner {
             let mut size = item.size();
 
             // If we're within the visible area or the height wasn't cached, render and measure the item's element
-            if visible_height < available_height || size.is_none() {
-                let item_index = scroll_top.item_ix + ix;
+            let item_index = scroll_top.item_ix + ix;
+            if (visible_height < available_height
+                && !crate::fast::layers::lists::keeps_row(
+                    window,
+                    &self.version,
+                    item_index,
+                    size.is_some(),
+                ))
+                || size.is_none()
+            {
                 let mut element = render_item(item_index, window, cx);
-                let element_size = element.layout_as_root(available_item_space, window, cx);
+                let element_size = crate::fast::layout_key::layout_as_list_item(
+                    &mut element,
+                    item_index,
+                    available_item_space,
+                    window,
+                    cx,
+                );
                 size = Some(element_size);
 
                 // If there's a pending scroll adjustment for the scroll-top
@@ -1084,7 +1177,13 @@ impl StateInner {
                 if let Some(item) = cursor.item() {
                     let item_index = cursor.start().0;
                     let mut element = render_item(item_index, window, cx);
-                    let element_size = element.layout_as_root(available_item_space, window, cx);
+                    let element_size = crate::fast::layout_key::layout_as_list_item(
+                        &mut element,
+                        item_index,
+                        available_item_space,
+                        window,
+                        cx,
+                    );
                     let focus_handle = item.focus_handle();
                     rendered_height += element_size.height;
                     measured_items.push_front(ListItem::Measured {
@@ -1133,7 +1232,13 @@ impl StateInner {
                     *size
                 } else {
                     let mut element = render_item(cursor.start().0, window, cx);
-                    element.layout_as_root(available_item_space, window, cx)
+                    crate::fast::layout_key::layout_as_list_item(
+                        &mut element,
+                        cursor.start().0,
+                        available_item_space,
+                        window,
+                        cx,
+                    )
                 };
 
                 leading_overdraw += size.height;
@@ -1178,7 +1283,13 @@ impl StateInner {
                 if item.contains_focused(window, cx) {
                     let item_index = cursor.start().0;
                     let mut element = render_item(cursor.start().0, window, cx);
-                    let size = element.layout_as_root(available_item_space, window, cx);
+                    let size = crate::fast::layout_key::layout_as_list_item(
+                        &mut element,
+                        item_index,
+                        available_item_space,
+                        window,
+                        cx,
+                    );
                     item_layouts.push_back(ItemLayout {
                         index: item_index,
                         element,
@@ -1229,8 +1340,19 @@ impl StateInner {
             // Only paint the visible items, if there is actually any space for them (taking padding into account)
             if bounds.size.height > padding.top + padding.bottom {
                 let mut item_origin = bounds.origin + Point::new(px(0.), padding.top);
-                item_origin.y -= layout_response.scroll_top.offset_in_item;
+                crate::fast::layers::lists::snap_item_origin(
+                    window,
+                    self,
+                    &layout_response.scroll_top,
+                    &mut item_origin,
+                );
                 for item in &mut layout_response.item_layouts {
+                    crate::fast::layers::lists::place_list_item(
+                        window,
+                        self,
+                        item.index,
+                        &mut item_origin,
+                    );
                     window.with_content_mask(Some(ContentMask { bounds }), |window| {
                         item.element.prepaint_at(item_origin, window, cx);
                     });
@@ -1261,7 +1383,13 @@ impl StateInner {
                                             bounds.size.width.into(),
                                             AvailableSpace::MinContent,
                                         );
-                                        element.layout_as_root(item_available_size, window, cx)
+                                        crate::fast::layout_key::layout_as_list_item(
+                                            &mut element,
+                                            cursor.start().0,
+                                            item_available_size,
+                                            window,
+                                            cx,
+                                        )
                                     });
                                     item_ix = cursor.start().0;
                                     offset_in_item += size.height;
@@ -1289,7 +1417,13 @@ impl StateInner {
                                     let mut item = render_item(cursor.start().0, window, cx);
                                     let item_available_size =
                                         size(bounds.size.width.into(), AvailableSpace::MinContent);
-                                    item.layout_as_root(item_available_size, window, cx)
+                                    crate::fast::layout_key::layout_as_list_item(
+                                        &mut item,
+                                        cursor.start().0,
+                                        item_available_size,
+                                        window,
+                                        cx,
+                                    )
                                 });
                                 height -= size.height;
                             }
@@ -1405,6 +1539,7 @@ impl Element for List {
         window: &mut Window,
         cx: &mut App,
     ) -> (crate::LayoutId, Self::RequestLayoutState) {
+        crate::fast::dependencies::note_state_read(cx, &self.state.0.borrow().version);
         let layout_id = match self.sizing_behavior {
             ListSizingBehavior::Infer => {
                 let mut style = Style::default();
@@ -1509,6 +1644,7 @@ impl Element for List {
         let padding = style
             .padding
             .to_pixels(bounds.size.into(), window.rem_size());
+        crate::fast::layers::lists::begin_list(window, cx, state, bounds);
         let layout =
             match state.prepaint_items(bounds, padding, true, &mut self.render_item, window, cx) {
                 Ok(layout) => layout,
@@ -1519,6 +1655,8 @@ impl Element for List {
                         .unwrap()
                 }
             };
+
+        crate::fast::layers::lists::end_list(window, cx, state, &mut self.render_item, bounds);
 
         state.last_layout_bounds = Some(bounds);
         state.last_padding = Some(padding);
@@ -1536,12 +1674,12 @@ impl Element for List {
         cx: &mut App,
     ) {
         let current_view = window.current_view();
-        window.with_content_mask(Some(ContentMask { bounds }), |window| {
-            for item in &mut prepaint.layout.item_layouts {
-                item.element.paint(window, cx);
-            }
-        });
 
+        // Register the scroll listener before painting children so that, in
+        // the bubble phase (which runs in reverse registration order),
+        // children's scroll-wheel handlers run first and can stop propagation
+        // to prevent the list from scrolling. This matches the ordering of
+        // div-based scroll containers.
         let list_state = self.state.clone();
         let height = bounds.size.height;
         let scroll_top = prepaint.layout.scroll_top;
@@ -1560,6 +1698,19 @@ impl Element for List {
                     cx,
                 )
             }
+        });
+
+        window.with_content_mask(Some(ContentMask { bounds }), |window| {
+            crate::fast::layers::lists::begin_paint_list(window, cx, &self.state);
+            for item in &mut prepaint.layout.item_layouts {
+                crate::fast::layers::lists::paint_row(
+                    window,
+                    cx,
+                    Some(item.index),
+                    |window, cx| item.element.paint(window, cx),
+                );
+            }
+            crate::fast::layers::lists::end_paint_list(window, cx, &self.state);
         });
     }
 }
@@ -1667,8 +1818,9 @@ mod test {
     use std::rc::Rc;
 
     use crate::{
-        self as gpui, AppContext, Bounds, Context, Element, FollowMode, IntoElement, ListState,
-        Render, Styled, TestAppContext, Window, canvas, div, list, point, px, size,
+        self as gpui, AppContext, Bounds, Context, Element, FollowMode, InteractiveElement,
+        IntoElement, ListState, Render, Styled, TestAppContext, Window, canvas, div, list, point,
+        px, size,
     };
 
     #[gpui::test]
@@ -1807,6 +1959,60 @@ mod test {
 
         // Test zero distance
         state.scroll_by(px(0.));
+        let offset = state.logical_scroll_top();
+        assert_eq!(offset.item_ix, 0);
+        assert_eq!(offset.offset_in_item, px(0.));
+    }
+
+    #[gpui::test]
+    fn test_child_scroll_handler_can_stop_list_scroll(cx: &mut TestAppContext) {
+        let cx = cx.add_empty_window();
+
+        let state = ListState::new(5, crate::ListAlignment::Top, px(10.));
+        let child_saw_event = Rc::new(Cell::new(false));
+
+        struct TestView {
+            state: ListState,
+            child_saw_event: Rc<Cell<bool>>,
+        }
+        impl Render for TestView {
+            fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
+                let child_saw_event = self.child_saw_event.clone();
+                list(self.state.clone(), move |_, _, _| {
+                    let child_saw_event = child_saw_event.clone();
+                    div()
+                        .h(px(20.))
+                        .w_full()
+                        .on_scroll_wheel(move |_, _, cx| {
+                            child_saw_event.set(true);
+                            cx.stop_propagation();
+                        })
+                        .into_any()
+                })
+                .w_full()
+                .h_full()
+            }
+        }
+
+        cx.draw(point(px(0.), px(0.)), size(px(100.), px(100.)), |_, cx| {
+            cx.new(|_| TestView {
+                state: state.clone(),
+                child_saw_event: child_saw_event.clone(),
+            })
+            .into_any_element()
+        });
+
+        cx.simulate_event(ScrollWheelEvent {
+            position: point(px(50.), px(10.)),
+            delta: ScrollDelta::Pixels(point(px(0.), px(-30.))),
+            ..Default::default()
+        });
+
+        assert!(
+            child_saw_event.get(),
+            "the child's scroll-wheel handler should run"
+        );
+        // The child stopped propagation, so the list must not have scrolled.
         let offset = state.logical_scroll_top();
         assert_eq!(offset.item_ix, 0);
         assert_eq!(offset.offset_in_item, px(0.));
@@ -2291,6 +2497,116 @@ mod test {
         assert_eq!(offset.item_ix, 7);
         assert_eq!(offset.offset_in_item, px(40.));
         assert!(state.is_following_tail());
+    }
+
+    #[gpui::test]
+    fn test_pause_following_tail_reengages_when_still_at_bottom(cx: &mut TestAppContext) {
+        let cx = cx.add_empty_window();
+
+        // 10 items × 50px = 500px total, 200px viewport.
+        let state = ListState::new(10, crate::ListAlignment::Top, px(0.));
+
+        struct TestView(ListState);
+        impl Render for TestView {
+            fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
+                list(self.0.clone(), |_, _, _| {
+                    div().h(px(50.)).w_full().into_any()
+                })
+                .w_full()
+                .h_full()
+            }
+        }
+
+        let view = cx.update(|_, cx| cx.new(|_| TestView(state.clone())));
+        state.set_follow_mode(FollowMode::Tail);
+
+        cx.draw(point(px(0.), px(0.)), size(px(100.), px(200.)), |_, _| {
+            view.clone().into_any_element()
+        });
+        assert!(state.is_following_tail());
+
+        // Pausing while the view is still at the bottom (e.g. a no-op zoom)
+        // must not strand follow-tail: the next layout has to re-engage so the
+        // invariant "at the bottom + new content => visible" is preserved.
+        state.pause_following_tail();
+        assert!(!state.is_following_tail());
+
+        cx.draw(point(px(0.), px(0.)), size(px(100.), px(200.)), |_, _| {
+            view.into_any_element()
+        });
+        assert!(
+            state.is_following_tail(),
+            "pausing while at the bottom must re-engage follow-tail on the next layout"
+        );
+    }
+
+    #[gpui::test]
+    fn test_pause_following_tail_freezes_off_bottom(cx: &mut TestAppContext) {
+        let cx = cx.add_empty_window();
+
+        // 10 items, 200px viewport. Item height is adjustable to simulate a
+        // diagram block growing/shrinking on zoom.
+        let item_height = Rc::new(Cell::new(50usize));
+        let state = ListState::new(10, crate::ListAlignment::Top, px(0.));
+
+        struct TestView {
+            state: ListState,
+            item_height: Rc<Cell<usize>>,
+        }
+        impl Render for TestView {
+            fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
+                let height = self.item_height.get();
+                list(self.state.clone(), move |_, _, _| {
+                    div().h(px(height as f32)).w_full().into_any()
+                })
+                .w_full()
+                .h_full()
+            }
+        }
+
+        let view = cx.update(|_, cx| {
+            cx.new(|_| TestView {
+                state: state.clone(),
+                item_height: item_height.clone(),
+            })
+        });
+        state.set_follow_mode(FollowMode::Tail);
+
+        // At the bottom: 500px content, 200px viewport → top at item 6.
+        cx.draw(point(px(0.), px(0.)), size(px(100.), px(200.)), |_, _| {
+            view.clone().into_any_element()
+        });
+        assert_eq!(state.logical_scroll_top().item_ix, 6);
+        assert!(state.is_following_tail());
+
+        // Pause, then grow items (a zoom-in that pushes content below the fold).
+        // The frozen top must stay put rather than snapping to the new end, and
+        // following stays paused since we're no longer at the bottom.
+        state.pause_following_tail();
+        item_height.set(80);
+        state.remeasure();
+        cx.draw(point(px(0.), px(0.)), size(px(100.), px(200.)), |_, _| {
+            view.clone().into_any_element()
+        });
+        let offset = state.logical_scroll_top();
+        assert_eq!(offset.item_ix, 6);
+        assert_eq!(offset.offset_in_item, px(0.));
+        assert!(
+            !state.is_following_tail(),
+            "a paused list must not re-engage while the frozen top is off the bottom"
+        );
+
+        // Shrink back (zoom-out) so the frozen top once again reaches the
+        // bottom: follow-tail must re-engage on its own.
+        item_height.set(50);
+        state.remeasure();
+        cx.draw(point(px(0.), px(0.)), size(px(100.), px(200.)), |_, _| {
+            view.into_any_element()
+        });
+        assert!(
+            state.is_following_tail(),
+            "returning to the bottom must restore follow-tail"
+        );
     }
 
     #[gpui::test]

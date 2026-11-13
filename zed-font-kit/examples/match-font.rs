@@ -10,7 +10,7 @@
 
 //! Looks up fonts by name.
 
-extern crate font_kit;
+extern crate zed_font_kit as font_kit;
 
 use font_kit::family_name::FamilyName;
 use font_kit::handle::Handle;

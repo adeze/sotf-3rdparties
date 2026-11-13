@@ -12,10 +12,10 @@ use nnnoiseless::{parse_rnnn_model, Activation, DenoiseState, RnnModel};
 use std::borrow::Cow;
 
 const LQ_RNNN: &[u8] = include_bytes!(
-    "../../../../crates/sotf-plugins/crates/plugins-denoiser/models/legacy-rnnoise-nu/leavened-quisling-2018-08-31/lq.rnnn"
+    "../../../sotf-daw/crates/sotf-plugins/crates/plugins-denoiser/models/legacy-rnnoise-nu/leavened-quisling-2018-08-31/lq.rnnn"
 );
 const SH_RNNN: &[u8] = include_bytes!(
-    "../../../../crates/sotf-plugins/crates/plugins-denoiser/models/legacy-rnnoise-nu/somnolent-hogwash-2018-09-01/sh.rnnn"
+    "../../../sotf-daw/crates/sotf-plugins/crates/plugins-denoiser/models/legacy-rnnoise-nu/somnolent-hogwash-2018-09-01/sh.rnnn"
 );
 
 /// Root-pinned SHA-256 from `source-manifest.json` (upstream commit 3eee541).

@@ -1,14 +1,17 @@
 # Vendoring Notes: gpui_windows
 
-## Upstream
+## Current identity
 
-- Source: `https://github.com/zed-industries/zed`
-- Upstream path: `crates/gpui_windows`
-- Upstream ref: `v1.9.0`
-- Local package: `gpui-toolkit-gpui-windows 0.1.2` (`gpui_windows` library)
-- Last reviewed: 2026-10-04 against pinned Zed `ced90fc636c4ede05402befc38a63bae7fd741bd`
+<!-- current-gpui-provenance:start -->
+Current upstream ref: `v1.25.2`.
+Local package: `sotf-gpui-toolkit-gpui-windows` `0.1.2` (`gpui_windows` library).
+<!-- current-gpui-provenance:end -->
 
-## Pinned source comparison
+The source is `https://github.com/zed-industries/zed`, at `crates/gpui_windows`. The identity above is generated from `FORKS.json` and the active manifest.
+
+## Historical comparison (2026-10-04)
+
+The comparison below used Zed v1.9.0 at `ced90fc636c4ede05402befc38a63bae7fd741bd`. It does not establish the current source delta or native Windows status.
 
 - Upstream `crates/gpui_windows` tree: `356dd80ca8b943a04d67898c1ee6a1d792eb0d6f`.
 - Local tree at toolkit `77d13fa8d9cf1f7462aece14dfd946a3900483be`:
@@ -37,13 +40,12 @@ git -C gpui-toolkit worktree add --detach /tmp/gpui-toolkit-audit 77d13fa8d9cf1f
 git diff --no-index -- /tmp/zed-gpui-audit/crates/gpui_windows/src /tmp/gpui-toolkit-audit/crates/3rdparties/gpui_windows/src
 ```
 
-## Build Status
+## Historical build and maintenance notes (2026-10-04)
 
-This directory is active. The root `Cargo.toml` patches
-`https://github.com/zed-industries/zed.git` so `gpui_windows` resolves to this
-local directory.
+At the time of that review, the toolkit root `Cargo.toml` patched
+`https://github.com/zed-industries/zed.git` so `gpui_windows` resolved to its local directory.
 
-Confirm with:
+The recorded check was:
 
 ```sh
 cargo tree -i gpui_windows

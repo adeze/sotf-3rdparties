@@ -3,6 +3,10 @@ use tract_hir::ops::nn::DataFormat;
 use tract_num_traits::AsPrimitive;
 
 #[derive(Debug, Clone, new, Default)]
+#[allow(
+    clippy::redundant_field_names,
+    reason = "derive-new emits explicit constructor field names"
+)]
 pub struct BatchNorm {
     data_format: DataFormat,
     epsilon: f32,

@@ -4,6 +4,7 @@ use crate::prelude::*;
 const OFFSET: f64 = 7.;
 
 /// An example for doctest.
+#[derive(Default)]
 pub struct TestObj;
 
 impl TestObj {
@@ -29,6 +30,7 @@ impl ObjFunc for TestObj {
 }
 
 /// A multi-objective example for doctest.
+#[derive(Default)]
 pub struct TestMO;
 
 impl TestMO {
